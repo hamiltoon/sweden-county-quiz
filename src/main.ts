@@ -35,7 +35,7 @@ function renderFooter(): HTMLElement {
     'Kartdata: ',
     el('a', { href: 'https://www.naturalearthdata.com/', target: '_blank', rel: 'noopener' }, 'Natural Earth'),
     ' (public domain) · ',
-    el('a', { href: 'https://github.com/hamiltoon/sverigespelet', target: '_blank', rel: 'noopener' }, 'Källkod'),
+    el('a', { href: 'https://github.com/hamiltoon/sweden-county-quiz', target: '_blank', rel: 'noopener' }, 'Källkod'),
   );
 }
 
