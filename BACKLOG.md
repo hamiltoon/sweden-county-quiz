@@ -189,6 +189,18 @@ klickade de andra) och att funktioner för daglig vana och bred publik väntar.
   2. Ett klick i havet på en område-fråga i live ger samma tips som i solospelet och räknas inte som svar.
   3. Svenska och engelska.
 
+### PO-28 Residensstad: prick i stället för ifyllt län
+- **Prioritet:** P2
+- **Insats:** S
+- **Koppling:** UX-12; **beslut av John 2026-10-25:** prick, utan att nollställa topplistan
+- **Värde:** När hela länet färgas efter varje svar kan de sista städerna räknas ut genom uteslutning. Med en prick
+  lär man sig var staden ligger, och topplistan blir rättvisare.
+- **Acceptanskriterier:**
+  1. I Residensstad markeras varje besvarad stad med en prick i resultatfärgen, som i Fler städer; länen fylls inte.
+  2. Minikartan på slutskärmen visar också prickar.
+  3. Blandat följer samma regel för residensstadsfrågor.
+  4. Topplistan och tidigare resultat lämnas orörda.
+
 ### PO-02 Live: se vilka som har svarat medan frågan pågår
 - **Prioritet:** P2
 - **Insats:** S (servern skickar redan `answered` per spelare)
@@ -377,7 +389,6 @@ klickade de andra) och att funktioner för daglig vana och bred publik väntar.
 | Finare poäng i live (500–1000 per fråga) | Ger lite utöver PO-07 och gör inte matchen roligare i sig. |
 | Svårighetsnivå "Expert" och omvänt läge | Nya spelsätt; väntar tills live-paketet är klart. Omvänt läge (flerval) skulle också ge ett sätt att spela utan att peka på kartan (UX-11). |
 | Spela kartan med tangentbord och skärmläsare (UX-11) | Stort arbete (L) för ingen i dagens spelarkrets. Tas upp om spelet ska nå fler, troligast via omvänt läge. |
-| Residensstad: prick i stället för ifyllt län (UX-12) | Gör läget svårare än det har varit, så nya resultat går inte att jämföra med gamla på topplistan. **Fråga till John.** |
 | Bredare layout på dator (UX-21), liggande mobil (UX-23), klippkant i grannkartan (UX-28) | Spelet spelas på mobil i stående läge; liten nytta för spelarna i dag. |
 
 ## UX-fynd
@@ -397,7 +408,7 @@ Fynd från UX-specialisten (UX-01, UX-02 …) läggs in här med prioritet och k
 | UX-09 | ✕ avslutar utan bekräftelse | P3 | PO-20 |
 | UX-10 | Namnbyte lämnar gamla resultat | P3 | PO-21 |
 | UX-11 | Kartan går inte att spela med tangentbord/skärmläsare | Parkerad | – |
-| UX-12 | Residensstad: ifyllt län avslöjar de sista svaren | Parkerad, fråga till John | – |
+| UX-12 | Residensstad: ifyllt län avslöjar de sista svaren | P2 | PO-28 |
 | UX-13 | Lobbyn tappar fokus | P2 | PO-22 |
 | UX-14 | Starta matchen under vecket | P2 | PO-22 |
 | UX-15 | Live-timern saknar siffror och 3–2–1 | P2 | PO-03 |
