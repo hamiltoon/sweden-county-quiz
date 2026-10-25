@@ -1,12 +1,10 @@
 # Idéer för Sverigespelet
 
 Saker vi har pratat om men inte byggt än, ungefär i den ordning vi tänkt ta dem.
+Klart: Landskap (oktober 2026).
 
 ## På gång
 
-- **Landskap** – de 25 landskapen (Uppland, Hälsingland …), spelas som länen. Kräver kartdata
-  med landskapsgränser; Natural Earth har bara länen. Tänkt källa: OpenStreetMap (landskapen finns
-  som gränsrelationer med Wikidata-id), byggt med `scripts/build-geodata.sh` som de andra kartorna.
 - **Live-läge** – tävla mot varandra i realtid:
   - Någon skapar ett rum och får en kod (t.ex. `KXR4`) och en länk att dela; de andra går med.
   - Alla får samma fråga samtidigt med nedräkning (cirka 10 s) och ett klick var.

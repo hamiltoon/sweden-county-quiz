@@ -2,6 +2,7 @@ import { el } from './dom';
 import { MODE_LABELS, questionLabel, type Mode, type Question, type Summary } from '../game/game';
 import { LAKES } from '../data/lakes';
 import { OTHER_CITIES } from '../data/cities';
+import { PROVINCES } from '../data/provinces';
 import { getBest } from '../game/storage';
 import { CONFIG } from '../game/config';
 import { modeIcon } from './icons';
@@ -16,6 +17,7 @@ export const ATTRIBUTION_HTML_ID = 'attribution';
 export function renderStart(onStart: (mode: Mode) => void, leaderboard?: HTMLElement, brandMap?: HTMLElement): HTMLElement {
   const modes: { mode: Mode; desc: string }[] = [
     { mode: 'lan', desc: 'Klicka på rätt län.' },
+    { mode: 'landskap', desc: `Klicka på rätt landskap, alla ${PROVINCES.length}.` },
     { mode: 'stad', desc: `Klicka där staden ligger (inom ${CONFIG.cityRadiusKm} km).` },
     {
       mode: 'ort',
@@ -55,7 +57,7 @@ export function renderStart(onStart: (mode: Mode) => void, leaderboard?: HTMLEle
         'div',
         { class: 'start-title' },
         el('h1', {}, 'Sverigespelet'),
-        el('p', { class: 'lead' }, 'Hitta Sveriges 21 län, residensstäder och största sjöar på kartan. Välj läge och starta.'),
+        el('p', { class: 'lead' }, 'Hitta Sveriges 21 län, 25 landskap, städer och största sjöar på kartan. Välj läge och starta.'),
       ),
     ),
     el('div', { class: 'mode-list' }, ...buttons),

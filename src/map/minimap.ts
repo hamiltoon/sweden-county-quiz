@@ -6,7 +6,10 @@ import type { Feature, FeatureCollection, Geometry } from 'geojson';
 import type { CountyProps, LakeProps, ResultState } from './map';
 
 export interface MiniMapOptions {
+  /** Topologin med länen (eller landskapen, se objectName). */
   counties: Topology;
+  /** Namnet på objektet i topologin: "lan" (standard) eller "landskap". */
+  objectName?: string;
   lakes?: Topology | null;
   width: number;
   height: number;
@@ -24,7 +27,7 @@ export interface MiniMapOptions {
 /** En liten, statisk Sverigekarta (ingen zoom, inga klick), t.ex. som dekoration eller sammanfattning. */
 export function renderMiniMap(opts: MiniMapOptions): SVGSVGElement {
   const { counties, lakes, width, height } = opts;
-  const countyFeatures = (feature(counties, counties.objects.lan as GeometryCollection<CountyProps>) as FeatureCollection<Geometry, CountyProps>)
+  const countyFeatures = (feature(counties, counties.objects[opts.objectName ?? 'lan'] as GeometryCollection<CountyProps>) as FeatureCollection<Geometry, CountyProps>)
     .features;
   const lakeFeatures = lakes
     ? ((feature(lakes, lakes.objects.sjoar as GeometryCollection<LakeProps>) as FeatureCollection<Geometry, LakeProps>).features)

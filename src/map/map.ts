@@ -58,8 +58,8 @@ interface Marker {
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 10;
 const PADDING = 8;
-/** Län som är så små på skärmen att de får en extra osynlig träffyta. */
-const SMALL_COUNTIES: ReadonlySet<string> = new Set(['K', 'I']);
+/** Län och landskap som är så små på skärmen att de får en extra osynlig träffyta. */
+const SMALL_COUNTIES: ReadonlySet<string> = new Set(['K', 'I', 'blekinge', 'oland']);
 /** Hur mycket av vyn ett län eller en sjö fyller när rätt svar visas, och hur långt in det zoomas som mest. */
 const REVEAL_FILL = 0.35;
 const REVEAL_MAX_ZOOM = 4;

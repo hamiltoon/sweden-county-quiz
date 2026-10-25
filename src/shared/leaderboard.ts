@@ -5,9 +5,10 @@
 import { COUNTIES } from '../data/counties';
 import { LAKES } from '../data/lakes';
 import { OTHER_CITIES } from '../data/cities';
+import { PROVINCES } from '../data/provinces';
 import { CONFIG } from '../game/config';
 
-export const LEADERBOARD_MODES = ['lan', 'stad', 'ort', 'sjo', 'blandat'] as const;
+export const LEADERBOARD_MODES = ['lan', 'landskap', 'stad', 'ort', 'sjo', 'blandat'] as const;
 export type LeaderboardMode = (typeof LEADERBOARD_MODES)[number];
 
 export const NAME_MAX_LENGTH = 20;
@@ -31,6 +32,7 @@ export function isLeaderboardView(value: unknown): value is LeaderboardView {
 /** Antal frågor i en omgång av ett läge. */
 export function questionsForMode(mode: LeaderboardMode): number {
   if (mode === 'sjo') return LAKES.length;
+  if (mode === 'landskap') return PROVINCES.length;
   if (mode === 'ort') return Math.min(CONFIG.otherCitiesPerRound, OTHER_CITIES.length);
   return COUNTIES.length;
 }
