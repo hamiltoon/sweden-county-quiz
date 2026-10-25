@@ -43,7 +43,8 @@ function renderTopList(): { node: HTMLElement; load: (mode: LeaderboardView) => 
             return el(
               'li',
               { class: sameName(entry.name, me) ? 'top-row is-me' : 'top-row' },
-              el('span', { class: 'top-rank' }, `${rank}`),
+              // Guld, silver och brons för de tre bästa placeringarna.
+              el('span', { class: rank <= 3 ? `top-rank medal medal-${rank}` : 'top-rank', 'aria-label': `Plats ${rank}` }, `${rank}`),
               el(
                 'span',
                 { class: 'top-name' },

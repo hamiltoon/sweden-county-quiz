@@ -2,7 +2,7 @@ import { geoCentroid, geoPath, geoTransverseMercator, type GeoPermissibleObjects
 import { pointer, select, type Selection } from 'd3-selection';
 import 'd3-transition';
 import { zoom, zoomIdentity, type D3ZoomEvent, type ZoomBehavior, type ZoomTransform } from 'd3-zoom';
-import { feature } from 'topojson-client';
+import { feature, merge } from 'topojson-client';
 import type { Topology, GeometryCollection } from 'topojson-specification';
 import type { Feature, FeatureCollection, Geometry, MultiPolygon, Polygon } from 'geojson';
 
@@ -25,6 +25,8 @@ export interface MapOptions {
   objectName?: string;
   /** Topologi med objektet "sjoar". Utan den ritas inga sjöar. */
   lakes?: Topology | null;
+  /** Topologi med objektet "grannar" (grannländerna). Utan den ritas bara Sverige. */
+  neighbors?: Topology | null;
   /**
    * Sjöläge: sjöarna går att klicka på, och en sjös namn visas först med showLakeLabel().
    * Annars är sjöarna bara riktmärken utan namn, och klicken går igenom till länen.
@@ -33,6 +35,8 @@ export interface MapOptions {
 }
 
 export type HighlightState = 'correct' | 'wrong' | 'reveal';
+/** Hur det gick för en fråga: rätt direkt, rätt efter fler försök eller missad. */
+export type ResultState = 'first' | 'later' | 'missed';
 export type MarkerKind = 'correct' | 'wrong' | 'reveal';
 
 export interface MapClick {
@@ -56,6 +60,10 @@ const MAX_ZOOM = 10;
 const PADDING = 8;
 /** Län som är så små på skärmen att de får en extra osynlig träffyta. */
 const SMALL_COUNTIES: ReadonlySet<string> = new Set(['K', 'I']);
+/** Hur mycket av vyn ett län eller en sjö fyller när rätt svar visas, och hur långt in det zoomas som mest. */
+const REVEAL_FILL = 0.35;
+const REVEAL_MAX_ZOOM = 4;
+const REVEAL_MIN_ZOOM = 1.3;
 /** Teckenstorlek och konturbredd (px på skärmen) för sjönamnen. */
 const LAKE_LABEL_PX = 11;
 const LAKE_LABEL_HALO_PX = 2.5;
@@ -76,6 +84,8 @@ const overlaps = (a: Box, b: Box): boolean => a.x0 < b.x1 && a.x1 > b.x0 && a.y0
 export class SwedenMap {
   private readonly svg: Selection<SVGSVGElement, unknown, null, undefined>;
   private readonly root: Selection<SVGGElement, unknown, null, undefined>;
+  private readonly coastG: Selection<SVGGElement, unknown, null, undefined>;
+  private readonly neighborsG: Selection<SVGGElement, unknown, null, undefined>;
   private readonly countiesG: Selection<SVGGElement, unknown, null, undefined>;
   private readonly hitG: Selection<SVGGElement, unknown, null, undefined>;
   private readonly lakeHitG: Selection<SVGGElement, unknown, null, undefined>;
@@ -88,6 +98,9 @@ export class SwedenMap {
   private readonly features: CountyFeature[];
   private readonly collection: FeatureCollection<Geometry, CountyProps>;
   private readonly lakeFeatures: LakeFeature[];
+  private readonly neighborFeatures: Feature<Geometry>[];
+  /** Sveriges yttre kontur (alla län sammanslagna), för kustglöden. */
+  private readonly swedenOutline: Geometry;
   private readonly lakeMode: boolean;
   private markers: Marker[] = [];
   private width = 0;
@@ -102,7 +115,7 @@ export class SwedenMap {
   constructor(
     private readonly container: HTMLElement,
     topology: Topology,
-    { objectName = 'lan', lakes = null, lakeMode = false }: MapOptions = {},
+    { objectName = 'lan', lakes = null, neighbors = null, lakeMode = false }: MapOptions = {},
   ) {
     const obj = topology.objects[objectName] as GeometryCollection<CountyProps>;
     if (!obj) throw new Error(`TopoJSON saknar objektet "${objectName}"`);
@@ -112,6 +125,10 @@ export class SwedenMap {
     if (lakes && !lakeObj) throw new Error('TopoJSON saknar objektet "sjoar"');
     this.lakeFeatures = lakes && lakeObj ? ((feature(lakes, lakeObj) as FeatureCollection).features as LakeFeature[]) : [];
     this.lakeMode = lakeMode;
+    // Länen är polygoner; merge() vill ha den typen uttryckligen.
+    this.swedenOutline = merge(topology, obj.geometries as Parameters<typeof merge>[1]);
+    const neighborObj = neighbors?.objects.grannar as GeometryCollection | undefined;
+    this.neighborFeatures = neighbors && neighborObj ? (feature(neighbors, neighborObj) as FeatureCollection).features : [];
 
     // Transversal Mercator centrerad på lon 15°E passar ett avlångt land som Sverige bra.
     this.projection = geoTransverseMercator().rotate([-15, 0]);
@@ -124,6 +141,9 @@ export class SwedenMap {
       .attr('role', 'img')
       .attr('aria-label', this.lakeFeatures.length ? 'Karta över Sveriges län och största sjöar' : 'Karta över Sveriges län');
     this.root = this.svg.append('g').attr('class', 'map-root');
+    // Underst: en ljus glöd längs alla kuster, sedan grannländerna som bakgrund. Ingen av dem tar emot klick.
+    this.coastG = this.root.append('g').attr('class', 'coast');
+    this.neighborsG = this.root.append('g').attr('class', 'neighbors');
     this.countiesG = this.root.append('g').attr('class', 'counties');
     this.hitG = this.root.append('g').attr('class', 'county-hits');
     // Sjöarnas träffytor ligger under själva sjöarna, så att ett klick inne i en sjö alltid
@@ -132,6 +152,18 @@ export class SwedenMap {
     this.lakesG = this.root.append('g').attr('class', 'lakes');
     this.lakeLabelsG = this.root.append('g').attr('class', 'lake-labels');
     this.markersG = this.root.append('g').attr('class', 'markers');
+
+    this.coastG
+      .selectAll('path')
+      .data<Feature<Geometry> | Geometry>([this.swedenOutline, ...this.neighborFeatures])
+      .join('path')
+      .attr('class', 'coast-glow');
+
+    this.neighborsG
+      .selectAll('path')
+      .data(this.neighborFeatures)
+      .join('path')
+      .attr('class', 'neighbor');
 
     this.countiesG
       .selectAll('path')
@@ -211,6 +243,8 @@ export class SwedenMap {
       ],
       this.collection as GeoPermissibleObjects,
     );
+    this.coastG.selectAll<SVGPathElement, Feature<Geometry> | Geometry>('path').attr('d', (d) => this.path(d));
+    this.neighborsG.selectAll<SVGPathElement, Feature<Geometry>>('path').attr('d', (d) => this.path(d));
     this.countiesG.selectAll<SVGPathElement, CountyFeature>('path').attr('d', (d) => this.path(d));
     this.hitG.selectAll<SVGPathElement, CountyFeature>('path').attr('d', (d) => this.path(d));
     this.lakesG.selectAll<SVGPathElement, LakeFeature>('path').attr('d', (d) => this.path(d));
@@ -260,6 +294,24 @@ export class SwedenMap {
     this.lakesG.selectAll('path').attr('class', 'lake');
     this.lakeLabelsG.selectAll('text').classed('is-shown', false);
     this.renderLakeLabels();
+  }
+
+  /**
+   * Färgar ett län efter hur frågan gick. Färgen sitter kvar resten av omgången, oberoende av
+   * clearHighlights(), som bara tar bort de tillfälliga markeringarna.
+   */
+  setCountyResult(code: string, state: ResultState): void {
+    this.countiesG
+      .selectAll<SVGPathElement, CountyFeature>('path')
+      .filter((d) => d.properties.code === code)
+      .attr('data-result', state);
+  }
+
+  setLakeResult(id: string, state: ResultState): void {
+    this.lakesG
+      .selectAll<SVGPathElement, LakeFeature>('path')
+      .filter((d) => d.properties.id === id)
+      .attr('data-result', state);
   }
 
   highlightLake(id: string, state: HighlightState): void {
@@ -400,23 +452,51 @@ export class SwedenMap {
     this.svg.transition().duration(200).call(this.zoomBehavior.scaleBy, factor);
   }
 
-  /** Zoomar in så att ett län fyller vyn (används för att visa rätt svar). */
-  focusCounty(code: string, duration = 400): void {
+  /** Zoomar mjukt in på ett län så att man ser var det ligger, med lite omgivning kvar. */
+  focusCounty(code: string, duration = 500): void {
     const f = this.features.find((d) => d.properties.code === code);
-    if (!f) return;
-    const [[x0, y0], [x1, y1]] = this.path.bounds(f);
-    const w = x1 - x0;
-    const h = y1 - y0;
-    const k = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, 0.5 / Math.max(w / this.width, h / this.height)));
-    const t = zoomIdentity
-      .translate(this.width / 2, this.height / 2)
-      .scale(k)
-      .translate(-(x0 + x1) / 2, -(y0 + y1) / 2);
+    if (f) this.focusBounds(this.path.bounds(f), duration);
+  }
+
+  /** Zoomar mjukt in på en sjö. */
+  focusLake(id: string, duration = 500): void {
+    const f = this.lakeFeatures.find((d) => d.properties.id === id);
+    if (f) this.focusBounds(this.path.bounds(f), duration);
+  }
+
+  /** Zoomar mjukt in kring en punkt, t.ex. en stad. */
+  focusPoint(lon: number, lat: number, k = 3, duration = 500): void {
+    const p = this.projection([lon, lat]);
+    if (p) this.focusOn(p[0], p[1], k, duration);
+  }
+
+  private focusBounds([[x0, y0], [x1, y1]]: [[number, number], [number, number]], duration: number): void {
+    const w = Math.max(x1 - x0, 1);
+    const h = Math.max(y1 - y0, 1);
+    const k = Math.min(REVEAL_MAX_ZOOM, REVEAL_FILL / Math.max(w / this.width, h / this.height));
+    // Stora län (t.ex. Norrbotten) syns redan tydligt; då behövs ingen zoom alls.
+    if (k < REVEAL_MIN_ZOOM) return;
+    this.focusOn((x0 + x1) / 2, (y0 + y1) / 2, k, duration);
+  }
+
+  /**
+   * Zoomar till skala k med (x, y) i mitten. zoom.transform() begränsar inte själv vyn, så
+   * transformen hålls här inom kartans kanter, precis som när man nyper och drar.
+   */
+  private focusOn(x: number, y: number, k: number, duration: number): void {
+    const target = zoomIdentity.translate(this.width / 2, this.height / 2).scale(k).translate(-x, -y);
+    const viewport: [[number, number], [number, number]] = [
+      [0, 0],
+      [this.width, this.height],
+    ];
+    const t = this.zoomBehavior.constrain()(target, viewport, this.zoomBehavior.translateExtent());
     this.svg.transition().duration(duration).call(this.zoomBehavior.transform, t);
   }
 
-  get zoomLevel(): number {
-    return this.k;
+  /** Är kartan inzoomad eller förflyttad från utgångsläget? */
+  get isTransformed(): boolean {
+    const t = this.transform;
+    return Math.abs(t.k - 1) > 0.01 || Math.abs(t.x) > 0.5 || Math.abs(t.y) > 0.5;
   }
 
   destroy(): void {

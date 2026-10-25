@@ -8,6 +8,14 @@ export const CONFIG = {
   cityRadiusKm: 40,
   /** Hur länge (ms) rätt svar visas efter en fråga innan nästa. */
   revealMs: 1500,
+  /** Efter en missad fråga zoomar kartan in på rätt svar, så det får visas lite längre. */
+  revealMissMs: 2400,
+  /**
+   * Färga län och sjöar efter hur frågan gick, redan under omgången. Obs: det gör de sista
+   * frågorna lättare, eftersom man kan räkna ut svaret genom uteslutning. Stäng av med false;
+   * kartsammanfattningen på slutskärmen visas ändå.
+   */
+  fillMapDuringRound: true,
   /** Hur länge (ms) en kort feedback-toast visas. */
   toastMs: 1200,
   /** Klick tätare än så här (ms) ignoreras, så ett dubbeltryck inte kostar två försök. */

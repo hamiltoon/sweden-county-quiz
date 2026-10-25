@@ -21,6 +21,8 @@ Det är en PWA, så det går att lägga till på hemskärmen och spela offline.
 
 En omgång går igenom alla 21 län (eller alla tio sjöar) i slumpad ordning. Rätt på första, andra eller tredje försöket ger 3, 2 respektive 1 poäng; därefter visas rätt svar och frågan ger 0 poäng (max 63 poäng per omgång, 30 i sjöläget).
 
+Under omgången fylls kartan: grönt för rätt direkt, gult för rätt efter fler försök och rött för missade. Det gör de sista frågorna lättare genom uteslutning; stäng av med `fillMapDuringRound` i `src/game/config.ts`. Vid en missad fråga zoomar kartan mjukt in på rätt svar. Slutskärmen visar poängen i en ring och en minikarta över hur varje fråga gick.
+
 I de andra lägena finns sjöarna kvar på kartan som riktmärken, utan namn. Klicken går igenom sjöarna till länen under. Poängfunktionen är utbytbar (`defaultScoring` i `src/game/config.ts`). Bästa resultat per läge sparas också i `localStorage` och visas på startskärmen.
 
 ## Topplista
@@ -68,12 +70,14 @@ API:
 
 `public/data/sjoar.topo.json` (ca 19 kB) innehåller Sveriges tio största sjöar från Natural Earth 1:10m *Lakes + Reservoirs*. Vilka sjöar som är störst, och i vilken ordning, följer SMHI:s sjöregister ([lista på Wikipedia](https://sv.wikipedia.org/wiki/Lista_%C3%B6ver_Sveriges_st%C3%B6rsta_sj%C3%B6ar)), inte ytan i Natural Earths förenklade geometri. Listan finns i `src/data/lakes.ts`.
 
+`public/data/grannar.topo.json` (ca 57 kB) innehåller grannländerna runt Östersjön som bakgrund, från Natural Earth 1:10m *Admin 0 – Countries*, klippta till området runt Sverige och förenklade.
+
 Natural Earth är public domain – ingen attribution krävs, men spelet länkar till källan i sidfoten. *Made with Natural Earth.*
 
-Bygg om kartdatan (laddar ner källfilerna, ca 45 MB, och kör mapshaper via `npx`):
+Bygg om kartdatan (laddar ner källfilerna, ca 60 MB, och kör mapshaper via `npx`):
 
 ```sh
-./scripts/build-geodata.sh [ne_10m_admin_1_states_provinces.geojson] [ne_10m_lakes.geojson]
+./scripts/build-geodata.sh [ne_10m_admin_1_states_provinces.geojson] [ne_10m_lakes.geojson] [ne_10m_admin_0_countries.geojson]
 ```
 
 Residensstädernas koordinater ligger i `src/data/counties.ts`.
@@ -89,7 +93,7 @@ Vite + TypeScript utan ramverk (vanilla DOM). Kartan ritas som SVG med [d3-geo](
 - `src/game/` – spellogik: frågor, försök, poäng (`config.ts`), avståndsberäkning och lagring av rekord, namn och osända resultat.
 - `src/shared/` – topplistans regler och typer, delade av spelet och Worker-scriptet.
 - `src/api/` – klienten för topplistans API, med kö för osända resultat.
-- `src/map/` – SVG-kartan: projektion, zoom, klick, markeringar, sjöar och sjönamn.
+- `src/map/` – SVG-kartan: projektion, zoom, klick, markeringar, sjöar, grannländer och minikartor.
 - `src/ui/` – start- och resultatskärm, topplista, DOM-hjälpare, toast.
 - `src/pwa.ts` – registrerar service workern i produktion.
 - `src/style.css` – stilar, mobile first, dark mode via `prefers-color-scheme`.
