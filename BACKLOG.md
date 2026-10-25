@@ -38,10 +38,10 @@ klickade de andra) och att funktioner för daglig vana och bred publik väntar.
 |---|---|
 | Pågår (utvecklaren) | PO-01b |
 | Nästa | PO-22, PO-14, PO-15, PO-16 |
-| Väntar på UX-verifiering | PO-06 (driftsatt i #23) |
+| Väntar på UX-verifiering | – |
 | Underkänd, rättas | PO-01: kriterium 8 underkänt av UX, rättas i PO-01b |
 | Väntar på svar från John | – |
-| Klart | – |
+| Klart | PO-06 |
 
 ## Backlog i prioritetsordning
 
@@ -88,7 +88,7 @@ klickade de andra) och att funktioner för daglig vana och bred publik väntar.
   5. Testat med 12 spelare i län, residensstad, sjöar och kommuner, på båda skärmstorlekarna.
 
 ### PO-06 Startskärmen: hitta Spela live direkt
-- **Prioritet:** P1. Driftsatt 2026-10-25 ([#23](https://github.com/hamiltoon/sweden-county-quiz/pull/23)), väntar på UX.
+- **Status:** ✅ Klar 2026-10-25 ([#23](https://github.com/hamiltoon/sweden-county-quiz/pull/23)). UX har godkänt alla fem kriterierna på produktion.
 - **Beslut (PO):** live-kortet flyttas upp direkt under rubriken.
 - **Insats:** S
 - **Koppling:** UX-04; eget fynd vid genomspelning på mobil (2026-10-25)
@@ -419,7 +419,7 @@ Fynd från UX-specialisten (UX-01, UX-02 …) läggs in här med prioritet och k
 | UX-01 | Kommuner: målen för små, zoomen nollställs | P1 | PO-16 |
 | UX-02 | Rätt/fel-rutan har för låg kontrast | P1 | PO-14 |
 | UX-03 | Rött mot grönt är enda skillnaden | P1 | PO-14 |
-| UX-04 | Spela live under vecket | P1 | PO-06 |
+| UX-04 | Spela live under vecket | ✅ Klar | PO-06 |
 | UX-05 | Spela igen under vecket | P2 | PO-17 |
 | UX-06 | Skyddat namn avvisas först efter en omgång | P2 | PO-18 |
 | UX-07 | Avslöjandet lär ut för lite | P1 | PO-15 |
@@ -449,4 +449,4 @@ Fynd från UX-specialisten (UX-01, UX-02 …) läggs in här med prioritet och k
 
 ## Klart
 
-Inget än.
+- **PO-06** Startskärmen: Spela live först (UX-04). Driftsatt i [#23](https://github.com/hamiltoon/sweden-county-quiz/pull/23), godkänd av UX 2026-10-25.
