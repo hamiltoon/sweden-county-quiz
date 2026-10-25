@@ -25,6 +25,28 @@ Beslutat med John 2026-10-25. Det är kontrollen av resultatet som begränsar os
 3. **Flera förslag när lösningen är osäker.** Två eller tre agenter bygger varsin variant på staging, och UX testar och rekommenderar; PO väljer. John testar inte. Först ut: PO-15 och PO-16.
 4. **Agenter per uppgift, inte per område.** När 1 och 2 finns kan en kortlivad agent ta en uppgift i egen gren. Den nuvarande utvecklaren sätter ihop och driftsätter.
 
+## Kostnad
+
+John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
+
+- **Plan:** kontot har Workers Free; den enda betalprodukten är R2 med betalning efter förbrukning, och den används inte
+  av Sverigespelet. På Free kan Sverigespelet inte ge någon räkning. Når vi en dagsgräns slutar tjänsten svara tills
+  gränsen nollställs vid midnatt UTC.
+- **Förbrukning 2026-10-25,** en dag med mycket testning:
+
+  | Resurs | Använt | Dagsgräns (Free) |
+  |---|---|---|
+  | Worker-anrop | cirka 1 100 | 100 000 |
+  | Durable Objects-anrop | cirka 2 850 | 100 000 |
+  | D1, lästa rader | cirka 27 900 | 5 000 000 |
+  | D1, skrivna rader | cirka 230 | 100 000 |
+
+- **Regler:**
+  1. Ingen session uppgraderar planen, lägger till betalprodukter eller skapar nya Cloudflare-resurser utöver dem
+     PO-29 kräver (en staging-Worker och en staging-D1). Det beslutar John.
+  2. E2e-sviten körs vid driftsättning, inte i loopar eller på schema.
+  3. Når förbrukningen 25 % av en dagsgräns tar PO upp det med John.
+
 ## Så prioriterar vi
 
 - **Vilka som spelar:** främst John och de närmaste, t.ex. Erika, som tävlar mot varandra, oftast i live på mobilen.
@@ -45,17 +67,16 @@ Beslutat med John 2026-10-25. Det är kontrollen av resultatet som begränsar os
 
 | Status | Punkter |
 |---|---|
-| Pågår (utvecklaren) | PO-01b (kriterium 2–3 underkända av UX, rättas) |
-| Nästa | PO-29, sedan PO-14, och PO-15 och PO-16 med flera förslag parallellt |
+| Pågår (utvecklaren) | PO-14 (på staging), PO-29b |
+| Nästa | PO-30, och PO-15 och PO-16 med flera förslag parallellt |
 | Väntar på UX-verifiering | – |
-| Underkänd, rättas | PO-01: kriterium 8 underkänt av UX, rättas i PO-01b |
 | Väntar på svar från John | – |
-| Klart | PO-06, PO-22 |
+| Klart | PO-01, PO-01b, PO-06, PO-22, PO-29 (kriterium 1–7) |
 
 ## Backlog i prioritetsordning
 
 ### PO-01 Live: se allas klick och vem som var snabbast när svaret visas
-- **Prioritet:** P1. Driftsatt 2026-10-25 ([#22](https://github.com/hamiltoon/sweden-county-quiz/pull/22)). UX: 1–7, 9 och 10 godkända; 8 underkänt med 12 spelare (vyn räknas innan ställningen ritats, och ställningen tar halva skärmen). Rättas i PO-01b.
+- **Status:** ✅ Klar 2026-10-25 ([#22](https://github.com/hamiltoon/sweden-county-quiz/pull/22), rättad i [#25](https://github.com/hamiltoon/sweden-county-quiz/pull/25) och [#27](https://github.com/hamiltoon/sweden-county-quiz/pull/27)). UX har godkänt alla kriterier, kriterium 8, 12 och 13 efter PO-01b.
 - **Insats:** M (servern sparar klick och svarstid för alla svar; kartan ritar prickar med namn)
 - **Koppling:** IDEER.md "Göra live mer levande" 4 och 5
 - **Värde:** Det är i avslöjandet som snacket uppstår: "Du klickade ju i Norge!" I dag ser man bara sitt eget
@@ -83,8 +104,7 @@ Beslutat med John 2026-10-25. Det är kontrollen av resultatet som begränsar os
       läsa prickar och ställning. (Tillagt 2026-10-25.)
 
 ### PO-01b Live: avslöjandet håller med många spelare
-- **Prioritet:** P1, pågår. Driftsatt i [#25](https://github.com/hamiltoon/sweden-county-quiz/pull/25). UX: kriterium 1 och 4 godkända,
-  2 och 3 underkända; dessutom täcker toasten prickar i kanten när hela Sverige visas.
+- **Status:** ✅ Klar 2026-10-25 ([#25](https://github.com/hamiltoon/sweden-county-quiz/pull/25), [#27](https://github.com/hamiltoon/sweden-county-quiz/pull/27)). UX har godkänt alla fem kriterierna med 12 spelare på iPhone och Android 360.
 - **Insats:** S–M
 - **Koppling:** PO-01 kriterium 8, 12 och 13; UX-07
 - **Beslut (PO):** med fler än 5 spelare visar ställningen under avslöjandet topp 3, den egna raden och "… och N till".
@@ -119,6 +139,22 @@ Beslutat med John 2026-10-25. Det är kontrollen av resultatet som begränsar os
   5. Testerna vägrar skriva till topplistan eller skapa passkeys mot produktionens adress. Det är kontrollerat med ett eget test.
   6. Hela sviten tar under 5 minuter och går igenom på main.
   7. Från och med nu driftsätter utvecklaren till staging först. Produktion kommer efter att testerna gått igenom och UX har godkänt.
+  8. Staging visar alltid en tydlig banderoll överst, "STAGING – testmiljö, inte den riktiga topplistan" (sv/en), och sidans titel
+     börjar med "[Staging]". Produktion visar ingen banderoll. (Tillagt 2026-10-25: John förväxlade staging med produktion.)
+
+### PO-29b Staging-banderoll och stramare tester
+- **Prioritet:** P1, före PO-14 i produktion
+- **Insats:** S
+- **Koppling:** PO-29 kriterium 8; UX förslag vid verifieringen av PO-29
+- **Status för PO-29:** kriterium 1–7 godkända av UX 2026-10-25 ([#29](https://github.com/hamiltoon/sweden-county-quiz/pull/29)). 276 kontroller på 92 s.
+- **Acceptanskriterier:**
+  1. Staging visar banderollen "STAGING – testmiljö, inte den riktiga topplistan" (sv/en) i en tydligt avvikande färg, och
+     titeln börjar med "[Staging]". Produktion har ingen banderoll. Kontrolleras i e2e.
+  2. Guard skyddar som standard och är bara avstängt för staging-värden och localhost.
+  3. 12-spelartestet blandar alla sorter, också sjöar och kommuner.
+  4. axe körs på startskärmen, spelskärmen, slutskärmen och lobbyn: inga serious/critical-fynd utöver en lista
+     med kända fynd som PO-25 rättar.
+  5. E2e kontrollerar att "Starta matchen" syns utan scroll i lobbyn (PO-22).
 
 ### PO-06 Startskärmen: hitta Spela live direkt
 - **Status:** ✅ Klar 2026-10-25 ([#23](https://github.com/hamiltoon/sweden-county-quiz/pull/23)). UX har godkänt alla fem kriterierna på produktion.
@@ -252,6 +288,15 @@ Beslutat med John 2026-10-25. Det är kontrollen av resultatet som begränsar os
   2. Minikartan på slutskärmen visar också prickar.
   3. Blandat följer samma regel för residensstadsfrågor.
   4. Topplistan och tidigare resultat lämnas orörda.
+
+### PO-30 Live: målets namn syns ovanpå prickarna
+- **Prioritet:** P2
+- **Insats:** S
+- **Koppling:** UX-verifieringen av PO-01b (putsning)
+- **Värde:** När alla klickat nära rätt svar täcker prickarna målets namn ("Umeå", "Uddjaure"). Namnet är det man ska lära sig.
+- **Acceptanskriterier:**
+  1. Målets namn ritas ovanpå prickarna och deras namn, eller på den sida av målet där det finns minst prickar.
+  2. Med 12 prickar inom 30 km från målet går målets namn att läsa helt på iPhone 13 och Android 360.
 
 ### PO-02 Live: se vilka som har svarat medan frågan pågår
 - **Prioritet:** P2
@@ -482,5 +527,6 @@ Fynd från UX-specialisten (UX-01, UX-02 …) läggs in här med prioritet och k
 
 ## Klart
 
+- **PO-01 och PO-01b** Live: allas klick, snabbast och ett avslöjande som håller med 12 spelare. Driftsatt i #22, #25 och #27, godkänd av UX 2026-10-25.
 - **PO-22** Live: Starta matchen nåbar i lobbyn (UX-13, UX-14). Driftsatt i [#26](https://github.com/hamiltoon/sweden-county-quiz/pull/26), godkänd av UX 2026-10-25.
 - **PO-06** Startskärmen: Spela live först (UX-04). Driftsatt i [#23](https://github.com/hamiltoon/sweden-county-quiz/pull/23), godkänd av UX 2026-10-25.
