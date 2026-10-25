@@ -67,11 +67,11 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
 
 | Status | Punkter |
 |---|---|
-| Pågår (utvecklaren) | PO-14 (på staging), banderollen i PO-29 |
+| Pågår (utvecklaren) | PO-14 (på staging), PO-29b |
 | Nästa | PO-30, och PO-15 och PO-16 med flera förslag parallellt |
-| Väntar på UX-verifiering | PO-29 (mergad i #29) |
+| Väntar på UX-verifiering | – |
 | Väntar på svar från John | – |
-| Klart | PO-01, PO-01b, PO-06, PO-22 |
+| Klart | PO-01, PO-01b, PO-06, PO-22, PO-29 (kriterium 1–7) |
 
 ## Backlog i prioritetsordning
 
@@ -141,6 +141,20 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
   7. Från och med nu driftsätter utvecklaren till staging först. Produktion kommer efter att testerna gått igenom och UX har godkänt.
   8. Staging visar alltid en tydlig banderoll överst, "STAGING – testmiljö, inte den riktiga topplistan" (sv/en), och sidans titel
      börjar med "[Staging]". Produktion visar ingen banderoll. (Tillagt 2026-10-25: John förväxlade staging med produktion.)
+
+### PO-29b Staging-banderoll och stramare tester
+- **Prioritet:** P1, före PO-14 i produktion
+- **Insats:** S
+- **Koppling:** PO-29 kriterium 8; UX förslag vid verifieringen av PO-29
+- **Status för PO-29:** kriterium 1–7 godkända av UX 2026-10-25 ([#29](https://github.com/hamiltoon/sweden-county-quiz/pull/29)). 276 kontroller på 92 s.
+- **Acceptanskriterier:**
+  1. Staging visar banderollen "STAGING – testmiljö, inte den riktiga topplistan" (sv/en) i en tydligt avvikande färg, och
+     titeln börjar med "[Staging]". Produktion har ingen banderoll. Kontrolleras i e2e.
+  2. Guard skyddar som standard och är bara avstängt för staging-värden och localhost.
+  3. 12-spelartestet blandar alla sorter, också sjöar och kommuner.
+  4. axe körs på startskärmen, spelskärmen, slutskärmen och lobbyn: inga serious/critical-fynd utöver en lista
+     med kända fynd som PO-25 rättar.
+  5. E2e kontrollerar att "Starta matchen" syns utan scroll i lobbyn (PO-22).
 
 ### PO-06 Startskärmen: hitta Spela live direkt
 - **Status:** ✅ Klar 2026-10-25 ([#23](https://github.com/hamiltoon/sweden-county-quiz/pull/23)). UX har godkänt alla fem kriterierna på produktion.
