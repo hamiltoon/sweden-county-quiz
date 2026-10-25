@@ -1,0 +1,2322 @@
+[
+ {
+  "code": "0114",
+  "short": "Upplands Väsby",
+  "name": "Upplands Väsby kommun",
+  "nameEn": "Upplands Väsby Municipality",
+  "county": "AB",
+  "osm": 397187
+ },
+ {
+  "code": "0115",
+  "short": "Vallentuna",
+  "name": "Vallentuna kommun",
+  "nameEn": "Vallentuna Municipality",
+  "county": "AB",
+  "osm": 959462
+ },
+ {
+  "code": "0117",
+  "short": "Österåker",
+  "name": "Österåkers kommun",
+  "nameEn": "Österåker Municipality",
+  "county": "AB",
+  "osm": 398037
+ },
+ {
+  "code": "0120",
+  "short": "Värmdö",
+  "name": "Värmdö kommun",
+  "nameEn": "Värmdö Municipality",
+  "county": "AB",
+  "osm": 398649
+ },
+ {
+  "code": "0123",
+  "short": "Järfälla",
+  "name": "Järfälla kommun",
+  "nameEn": "Järfälla Municipality",
+  "county": "AB",
+  "osm": 398022
+ },
+ {
+  "code": "0125",
+  "short": "Ekerö",
+  "name": "Ekerö kommun",
+  "nameEn": "Ekerö Municipality",
+  "county": "AB",
+  "osm": 398920
+ },
+ {
+  "code": "0126",
+  "short": "Huddinge",
+  "name": "Huddinge kommun",
+  "nameEn": "Huddinge Municipality",
+  "county": "AB",
+  "osm": 398567
+ },
+ {
+  "code": "0127",
+  "short": "Botkyrka",
+  "name": "Botkyrka kommun",
+  "nameEn": "Botkyrka Municipality",
+  "county": "AB",
+  "osm": 398626
+ },
+ {
+  "code": "0128",
+  "short": "Salem",
+  "name": "Salems kommun",
+  "nameEn": "Salem Municipality",
+  "county": "AB",
+  "osm": 398918
+ },
+ {
+  "code": "0136",
+  "short": "Haninge",
+  "name": "Haninge kommun",
+  "nameEn": "Haninge Municipality",
+  "county": "AB",
+  "osm": 398625
+ },
+ {
+  "code": "0138",
+  "short": "Tyresö",
+  "name": "Tyresö kommun",
+  "nameEn": "Tyresö Municipality",
+  "county": "AB",
+  "osm": 398575
+ },
+ {
+  "code": "0139",
+  "short": "Upplands-Bro",
+  "name": "Upplands-Bro kommun",
+  "nameEn": "Upplands-Bro Municipality",
+  "county": "AB",
+  "osm": 369474
+ },
+ {
+  "code": "0140",
+  "short": "Nykvarn",
+  "name": "Nykvarns kommun",
+  "nameEn": "Nykvarn Municipality",
+  "county": "AB",
+  "osm": 935473
+ },
+ {
+  "code": "0160",
+  "short": "Täby",
+  "name": "Täby kommun",
+  "nameEn": "Täby Municipality",
+  "county": "AB",
+  "osm": 397194
+ },
+ {
+  "code": "0162",
+  "short": "Danderyd",
+  "name": "Danderyds kommun",
+  "nameEn": "Danderyd Municipality",
+  "county": "AB",
+  "osm": 398034
+ },
+ {
+  "code": "0163",
+  "short": "Sollentuna",
+  "name": "Sollentuna kommun",
+  "nameEn": "Sollentuna Municipality",
+  "county": "AB",
+  "osm": 398023
+ },
+ {
+  "code": "0180",
+  "short": "Stockholm",
+  "name": "Stockholms kommun",
+  "nameEn": "Stockholm Municipality",
+  "county": "AB",
+  "osm": 398021
+ },
+ {
+  "code": "0181",
+  "short": "Södertälje",
+  "name": "Södertälje kommun",
+  "nameEn": "Södertälje Municipality",
+  "county": "AB",
+  "osm": 398919
+ },
+ {
+  "code": "0182",
+  "short": "Nacka",
+  "name": "Nacka kommun",
+  "nameEn": "Nacka Municipality",
+  "county": "AB",
+  "osm": 398038
+ },
+ {
+  "code": "0183",
+  "short": "Sundbyberg",
+  "name": "Sundbybergs kommun",
+  "nameEn": "Sundbyberg Municipality",
+  "county": "AB",
+  "osm": 398039
+ },
+ {
+  "code": "0184",
+  "short": "Solna",
+  "name": "Solna kommun",
+  "nameEn": "Solna Municipality",
+  "county": "AB",
+  "osm": 398040
+ },
+ {
+  "code": "0186",
+  "short": "Lidingö",
+  "name": "Lidingö kommun",
+  "nameEn": "Lidingö Municipality",
+  "county": "AB",
+  "osm": 398035
+ },
+ {
+  "code": "0187",
+  "short": "Vaxholm",
+  "name": "Vaxholms kommun",
+  "nameEn": "Vaxholm Municipality",
+  "county": "AB",
+  "osm": 398036
+ },
+ {
+  "code": "0188",
+  "short": "Norrtälje",
+  "name": "Norrtälje kommun",
+  "nameEn": "Norrtälje Municipality",
+  "county": "AB",
+  "osm": 397159
+ },
+ {
+  "code": "0191",
+  "short": "Sigtuna",
+  "name": "Sigtuna kommun",
+  "nameEn": "Sigtuna Municipality",
+  "county": "AB",
+  "osm": 397127
+ },
+ {
+  "code": "0192",
+  "short": "Nynäshamn",
+  "name": "Nynäshamns kommun",
+  "nameEn": "Nynäshamn Municipality",
+  "county": "AB",
+  "osm": 398627
+ },
+ {
+  "code": "0305",
+  "short": "Håbo",
+  "name": "Håbo kommun",
+  "nameEn": "Håbo Municipality",
+  "county": "C",
+  "osm": 308558
+ },
+ {
+  "code": "0319",
+  "short": "Älvkarleby",
+  "name": "Älvkarleby kommun",
+  "nameEn": "Älvkarleby Municipality",
+  "county": "C",
+  "osm": 289344
+ },
+ {
+  "code": "0330",
+  "short": "Knivsta",
+  "name": "Knivsta kommun",
+  "nameEn": "Knivsta Municipality",
+  "county": "C",
+  "osm": 397128
+ },
+ {
+  "code": "0331",
+  "short": "Heby",
+  "name": "Heby kommun",
+  "nameEn": "Heby Municipality",
+  "county": "C",
+  "osm": 305452
+ },
+ {
+  "code": "0360",
+  "short": "Tierp",
+  "name": "Tierps kommun",
+  "nameEn": "Tierp Municipality",
+  "county": "C",
+  "osm": 305453
+ },
+ {
+  "code": "0380",
+  "short": "Uppsala",
+  "name": "Uppsala kommun",
+  "nameEn": "Uppsala Municipality",
+  "county": "C",
+  "osm": 305455
+ },
+ {
+  "code": "0381",
+  "short": "Enköping",
+  "name": "Enköpings kommun",
+  "nameEn": "Enköping Municipality",
+  "county": "C",
+  "osm": 308557
+ },
+ {
+  "code": "0382",
+  "short": "Östhammar",
+  "name": "Östhammars kommun",
+  "nameEn": "Östhammar Municipality",
+  "county": "C",
+  "osm": 398892
+ },
+ {
+  "code": "0428",
+  "short": "Vingåker",
+  "name": "Vingåkers kommun",
+  "nameEn": "Vingåker Municipality",
+  "county": "D",
+  "osm": 935676
+ },
+ {
+  "code": "0461",
+  "short": "Gnesta",
+  "name": "Gnesta kommun",
+  "nameEn": "Gnesta Municipality",
+  "county": "D",
+  "osm": 935602
+ },
+ {
+  "code": "0480",
+  "short": "Nyköping",
+  "name": "Nyköpings kommun",
+  "nameEn": "Nyköping Municipality",
+  "county": "D",
+  "osm": 935516
+ },
+ {
+  "code": "0481",
+  "short": "Oxelösund",
+  "name": "Oxelösunds kommun",
+  "nameEn": "Oxelösund Municipality",
+  "county": "D",
+  "osm": 935524
+ },
+ {
+  "code": "0482",
+  "short": "Flen",
+  "name": "Flens kommun",
+  "nameEn": "Flen Municipality",
+  "county": "D",
+  "osm": 935683
+ },
+ {
+  "code": "0483",
+  "short": "Katrineholm",
+  "name": "Katrineholms kommun",
+  "nameEn": "Katrineholm Municipality",
+  "county": "D",
+  "osm": 935400
+ },
+ {
+  "code": "0484",
+  "short": "Eskilstuna",
+  "name": "Eskilstuna kommun",
+  "nameEn": "Eskilstuna Municipality",
+  "county": "D",
+  "osm": 935569
+ },
+ {
+  "code": "0486",
+  "short": "Strängnäs",
+  "name": "Strängnäs kommun",
+  "nameEn": "Strängnäs Municipality",
+  "county": "D",
+  "osm": 398917
+ },
+ {
+  "code": "0488",
+  "short": "Trosa",
+  "name": "Trosa kommun",
+  "nameEn": "Trosa Municipality",
+  "county": "D",
+  "osm": 935460
+ },
+ {
+  "code": "0509",
+  "short": "Ödeshög",
+  "name": "Ödeshögs kommun",
+  "nameEn": "Ödeshög Municipality",
+  "county": "E",
+  "osm": 935434
+ },
+ {
+  "code": "0512",
+  "short": "Ydre",
+  "name": "Ydre kommun",
+  "nameEn": "Ydre Municipality",
+  "county": "E",
+  "osm": 935618
+ },
+ {
+  "code": "0513",
+  "short": "Kinda",
+  "name": "Kinda kommun",
+  "nameEn": "Kinda Municipality",
+  "county": "E",
+  "osm": 935596
+ },
+ {
+  "code": "0560",
+  "short": "Boxholm",
+  "name": "Boxholms kommun",
+  "nameEn": "Boxholm Municipality",
+  "county": "E",
+  "osm": 935594
+ },
+ {
+  "code": "0561",
+  "short": "Åtvidaberg",
+  "name": "Åtvidabergs kommun",
+  "nameEn": "Åtvidaberg Municipality",
+  "county": "E",
+  "osm": 935464
+ },
+ {
+  "code": "0562",
+  "short": "Finspång",
+  "name": "Finspångs kommun",
+  "nameEn": "Finspång Municipality",
+  "county": "E",
+  "osm": 935444
+ },
+ {
+  "code": "0563",
+  "short": "Valdemarsvik",
+  "name": "Valdemarsviks kommun",
+  "nameEn": "Valdemarsvik Municipality",
+  "county": "E",
+  "osm": 935443
+ },
+ {
+  "code": "0580",
+  "short": "Linköping",
+  "name": "Linköpings kommun",
+  "nameEn": "Linköping Municipality",
+  "county": "E",
+  "osm": 935467
+ },
+ {
+  "code": "0581",
+  "short": "Norrköping",
+  "name": "Norrköpings kommun",
+  "nameEn": "Norrköping Municipality",
+  "county": "E",
+  "osm": 935447
+ },
+ {
+  "code": "0582",
+  "short": "Söderköping",
+  "name": "Söderköpings kommun",
+  "nameEn": "Söderköping Municipality",
+  "county": "E",
+  "osm": 935556
+ },
+ {
+  "code": "0583",
+  "short": "Motala",
+  "name": "Motala kommun",
+  "nameEn": "Motala Municipality",
+  "county": "E",
+  "osm": 935668
+ },
+ {
+  "code": "0584",
+  "short": "Vadstena",
+  "name": "Vadstena kommun",
+  "nameEn": "Vadstena Municipality",
+  "county": "E",
+  "osm": 935553
+ },
+ {
+  "code": "0586",
+  "short": "Mjölby",
+  "name": "Mjölby kommun",
+  "nameEn": "Mjölby Municipality",
+  "county": "E",
+  "osm": 935507
+ },
+ {
+  "code": "0604",
+  "short": "Aneby",
+  "name": "Aneby kommun",
+  "nameEn": "Aneby Municipality",
+  "county": "F",
+  "osm": 935684
+ },
+ {
+  "code": "0617",
+  "short": "Gnosjö",
+  "name": "Gnosjö kommun",
+  "nameEn": "Gnosjö Municipality",
+  "county": "F",
+  "osm": 935543
+ },
+ {
+  "code": "0642",
+  "short": "Mullsjö",
+  "name": "Mullsjö kommun",
+  "nameEn": "Mullsjö Municipality",
+  "county": "F",
+  "osm": 935634
+ },
+ {
+  "code": "0643",
+  "short": "Habo",
+  "name": "Habo kommun",
+  "nameEn": "Habo Municipality",
+  "county": "F",
+  "osm": 935405
+ },
+ {
+  "code": "0662",
+  "short": "Gislaved",
+  "name": "Gislaveds kommun",
+  "nameEn": "Gislaved Municipality",
+  "county": "F",
+  "osm": 935604
+ },
+ {
+  "code": "0665",
+  "short": "Vaggeryd",
+  "name": "Vaggeryds kommun",
+  "nameEn": "Vaggeryd Municipality",
+  "county": "F",
+  "osm": 935581
+ },
+ {
+  "code": "0680",
+  "short": "Jönköping",
+  "name": "Jönköpings kommun",
+  "nameEn": "Jönköping Municipality",
+  "county": "F",
+  "osm": 935495
+ },
+ {
+  "code": "0682",
+  "short": "Nässjö",
+  "name": "Nässjö kommun",
+  "nameEn": "Nässjö Municipality",
+  "county": "F",
+  "osm": 935670
+ },
+ {
+  "code": "0683",
+  "short": "Värnamo",
+  "name": "Värnamo kommun",
+  "nameEn": "Värnamo Municipality",
+  "county": "F",
+  "osm": 935439
+ },
+ {
+  "code": "0684",
+  "short": "Sävsjö",
+  "name": "Sävsjö kommun",
+  "nameEn": "Sävsjö Municipality",
+  "county": "F",
+  "osm": 935481
+ },
+ {
+  "code": "0685",
+  "short": "Vetlanda",
+  "name": "Vetlanda kommun",
+  "nameEn": "Vetlanda Municipality",
+  "county": "F",
+  "osm": 935454
+ },
+ {
+  "code": "0686",
+  "short": "Eksjö",
+  "name": "Eksjö kommun",
+  "nameEn": "Eksjö Municipality",
+  "county": "F",
+  "osm": 935636
+ },
+ {
+  "code": "0687",
+  "short": "Tranås",
+  "name": "Tranås kommun",
+  "nameEn": "Tranås Municipality",
+  "county": "F",
+  "osm": 935570
+ },
+ {
+  "code": "0760",
+  "short": "Uppvidinge",
+  "name": "Uppvidinge kommun",
+  "nameEn": "Uppvidinge Municipality",
+  "county": "G",
+  "osm": 935488
+ },
+ {
+  "code": "0761",
+  "short": "Lessebo",
+  "name": "Lessebo kommun",
+  "nameEn": "Lessebo Municipality",
+  "county": "G",
+  "osm": 935521
+ },
+ {
+  "code": "0763",
+  "short": "Tingsryd",
+  "name": "Tingsryds kommun",
+  "nameEn": "Tingsryd Municipality",
+  "county": "G",
+  "osm": 935578
+ },
+ {
+  "code": "0764",
+  "short": "Alvesta",
+  "name": "Alvesta kommun",
+  "nameEn": "Alvesta Municipality",
+  "county": "G",
+  "osm": 935435
+ },
+ {
+  "code": "0765",
+  "short": "Älmhult",
+  "name": "Älmhults kommun",
+  "nameEn": "Älmhult Municipality",
+  "county": "G",
+  "osm": 935538
+ },
+ {
+  "code": "0767",
+  "short": "Markaryd",
+  "name": "Markaryds kommun",
+  "nameEn": "Markaryd Municipality",
+  "county": "G",
+  "osm": 935621
+ },
+ {
+  "code": "0780",
+  "short": "Växjö",
+  "name": "Växjö kommun",
+  "nameEn": "Växjö Municipality",
+  "county": "G",
+  "osm": 935654
+ },
+ {
+  "code": "0781",
+  "short": "Ljungby",
+  "name": "Ljungby kommun",
+  "nameEn": "Ljungby Municipality",
+  "county": "G",
+  "osm": 935542
+ },
+ {
+  "code": "0821",
+  "short": "Högsby",
+  "name": "Högsby kommun",
+  "nameEn": "Högsby Municipality",
+  "county": "H",
+  "osm": 935487
+ },
+ {
+  "code": "0834",
+  "short": "Torsås",
+  "name": "Torsås kommun",
+  "nameEn": "Torsås Municipality",
+  "county": "H",
+  "osm": 935512
+ },
+ {
+  "code": "0840",
+  "short": "Mörbylånga",
+  "name": "Mörbylånga kommun",
+  "nameEn": "Mörbylånga Municipality",
+  "county": "H",
+  "osm": 935518
+ },
+ {
+  "code": "0860",
+  "short": "Hultsfred",
+  "name": "Hultsfreds kommun",
+  "nameEn": "Hultsfred Municipality",
+  "county": "H",
+  "osm": 935677
+ },
+ {
+  "code": "0861",
+  "short": "Mönsterås",
+  "name": "Mönsterås kommun",
+  "nameEn": "Mönsterås Municipality",
+  "county": "H",
+  "osm": 935575
+ },
+ {
+  "code": "0862",
+  "short": "Emmaboda",
+  "name": "Emmaboda kommun",
+  "nameEn": "Emmaboda Municipality",
+  "county": "H",
+  "osm": 935598
+ },
+ {
+  "code": "0880",
+  "short": "Kalmar",
+  "name": "Kalmar kommun",
+  "nameEn": "Kalmar Municipality",
+  "county": "H",
+  "osm": 935466
+ },
+ {
+  "code": "0881",
+  "short": "Nybro",
+  "name": "Nybro kommun",
+  "nameEn": "Nybro Municipality",
+  "county": "H",
+  "osm": 935475
+ },
+ {
+  "code": "0882",
+  "short": "Oskarshamn",
+  "name": "Oskarshamns kommun",
+  "nameEn": "Oskarshamn Municipality",
+  "county": "H",
+  "osm": 935653
+ },
+ {
+  "code": "0883",
+  "short": "Västervik",
+  "name": "Västerviks kommun",
+  "nameEn": "Västervik Municipality",
+  "county": "H",
+  "osm": 935408
+ },
+ {
+  "code": "0884",
+  "short": "Vimmerby",
+  "name": "Vimmerby kommun",
+  "nameEn": "Vimmerby Municipality",
+  "county": "H",
+  "osm": 935546
+ },
+ {
+  "code": "0885",
+  "short": "Borgholm",
+  "name": "Borgholms kommun",
+  "nameEn": "Borgholm Municipality",
+  "county": "H",
+  "osm": 935406
+ },
+ {
+  "code": "0980",
+  "short": "Gotland",
+  "name": "Gotlands kommun",
+  "nameEn": "Gotland Municipality",
+  "county": "I",
+  "osm": 1125739
+ },
+ {
+  "code": "1060",
+  "short": "Olofström",
+  "name": "Olofströms kommun",
+  "nameEn": "Olofström Municipality",
+  "county": "K",
+  "osm": 935603
+ },
+ {
+  "code": "1080",
+  "short": "Karlskrona",
+  "name": "Karlskrona kommun",
+  "nameEn": "Karlskrona Municipality",
+  "county": "K",
+  "osm": 935548
+ },
+ {
+  "code": "1081",
+  "short": "Ronneby",
+  "name": "Ronneby kommun",
+  "nameEn": "Ronneby Municipality",
+  "county": "K",
+  "osm": 935527
+ },
+ {
+  "code": "1082",
+  "short": "Karlshamn",
+  "name": "Karlshamns kommun",
+  "nameEn": "Karlshamn Municipality",
+  "county": "K",
+  "osm": 935522
+ },
+ {
+  "code": "1083",
+  "short": "Sölvesborg",
+  "name": "Sölvesborgs kommun",
+  "nameEn": "Sölvesborg Municipality",
+  "county": "K",
+  "osm": 935608
+ },
+ {
+  "code": "1214",
+  "short": "Svalöv",
+  "name": "Svalövs kommun",
+  "nameEn": "Svalöv Municipality",
+  "county": "M",
+  "osm": 935403
+ },
+ {
+  "code": "1230",
+  "short": "Staffanstorp",
+  "name": "Staffanstorps kommun",
+  "nameEn": "Staffanstorp Municipality",
+  "county": "M",
+  "osm": 935502
+ },
+ {
+  "code": "1231",
+  "short": "Burlöv",
+  "name": "Burlövs kommun",
+  "nameEn": "Burlöv Municipality",
+  "county": "M",
+  "osm": 935642
+ },
+ {
+  "code": "1233",
+  "short": "Vellinge",
+  "name": "Vellinge kommun",
+  "nameEn": "Vellinge Municipality",
+  "county": "M",
+  "osm": 935451
+ },
+ {
+  "code": "1256",
+  "short": "Östra Göinge",
+  "name": "Östra Göinge kommun",
+  "nameEn": "Östra Göinge Municipality",
+  "county": "M",
+  "osm": 935535
+ },
+ {
+  "code": "1257",
+  "short": "Örkelljunga",
+  "name": "Örkelljunga kommun",
+  "nameEn": "Örkelljunga Municipality",
+  "county": "M",
+  "osm": 935449
+ },
+ {
+  "code": "1260",
+  "short": "Bjuv",
+  "name": "Bjuvs kommun",
+  "nameEn": "Bjuv Municipality",
+  "county": "M",
+  "osm": 935478
+ },
+ {
+  "code": "1261",
+  "short": "Kävlinge",
+  "name": "Kävlinge kommun",
+  "nameEn": "Kävlinge Municipality",
+  "county": "M",
+  "osm": 935625
+ },
+ {
+  "code": "1262",
+  "short": "Lomma",
+  "name": "Lomma kommun",
+  "nameEn": "Lomma Municipality",
+  "county": "M",
+  "osm": 935410
+ },
+ {
+  "code": "1263",
+  "short": "Svedala",
+  "name": "Svedala kommun",
+  "nameEn": "Svedala Municipality",
+  "county": "M",
+  "osm": 935510
+ },
+ {
+  "code": "1264",
+  "short": "Skurup",
+  "name": "Skurups kommun",
+  "nameEn": "Skurup Municipality",
+  "county": "M",
+  "osm": 935437
+ },
+ {
+  "code": "1265",
+  "short": "Sjöbo",
+  "name": "Sjöbo kommun",
+  "nameEn": "Sjöbo Municipality",
+  "county": "M",
+  "osm": 935525
+ },
+ {
+  "code": "1266",
+  "short": "Hörby",
+  "name": "Hörby kommun",
+  "nameEn": "Hörby Municipality",
+  "county": "M",
+  "osm": 935623
+ },
+ {
+  "code": "1267",
+  "short": "Höör",
+  "name": "Höörs kommun",
+  "nameEn": "Höör Municipality",
+  "county": "M",
+  "osm": 935450
+ },
+ {
+  "code": "1270",
+  "short": "Tomelilla",
+  "name": "Tomelilla kommun",
+  "nameEn": "Tomelilla Municipality",
+  "county": "M",
+  "osm": 935671
+ },
+ {
+  "code": "1272",
+  "short": "Bromölla",
+  "name": "Bromölla kommun",
+  "nameEn": "Bromölla Municipality",
+  "county": "M",
+  "osm": 935659
+ },
+ {
+  "code": "1273",
+  "short": "Osby",
+  "name": "Osby kommun",
+  "nameEn": "Osby Municipality",
+  "county": "M",
+  "osm": 935492
+ },
+ {
+  "code": "1275",
+  "short": "Perstorp",
+  "name": "Perstorps kommun",
+  "nameEn": "Perstorp Municipality",
+  "county": "M",
+  "osm": 935530
+ },
+ {
+  "code": "1276",
+  "short": "Klippan",
+  "name": "Klippans kommun",
+  "nameEn": "Klippan Municipality",
+  "county": "M",
+  "osm": 935658
+ },
+ {
+  "code": "1277",
+  "short": "Åstorp",
+  "name": "Åstorps kommun",
+  "nameEn": "Åstorp Municipality",
+  "county": "M",
+  "osm": 935517
+ },
+ {
+  "code": "1278",
+  "short": "Båstad",
+  "name": "Båstads kommun",
+  "nameEn": "Båstad Municipality",
+  "county": "M",
+  "osm": 935399
+ },
+ {
+  "code": "1280",
+  "short": "Malmö",
+  "name": "Malmö kommun",
+  "nameEn": "Malmö Municipality",
+  "county": "M",
+  "osm": 935416
+ },
+ {
+  "code": "1281",
+  "short": "Lund",
+  "name": "Lunds kommun",
+  "nameEn": "Lund Municipality",
+  "county": "M",
+  "osm": 935666
+ },
+ {
+  "code": "1282",
+  "short": "Landskrona",
+  "name": "Landskrona kommun",
+  "nameEn": "Landskrona Municipality",
+  "county": "M",
+  "osm": 935414
+ },
+ {
+  "code": "1283",
+  "short": "Helsingborg",
+  "name": "Helsingborgs kommun",
+  "nameEn": "Helsingborg Municipality",
+  "county": "M",
+  "osm": 935560
+ },
+ {
+  "code": "1284",
+  "short": "Höganäs",
+  "name": "Höganäs kommun",
+  "nameEn": "Höganäs Municipality",
+  "county": "M",
+  "osm": 935552
+ },
+ {
+  "code": "1285",
+  "short": "Eslöv",
+  "name": "Eslövs kommun",
+  "nameEn": "Eslöv Municipality",
+  "county": "M",
+  "osm": 935571
+ },
+ {
+  "code": "1286",
+  "short": "Ystad",
+  "name": "Ystads kommun",
+  "nameEn": "Ystad Municipality",
+  "county": "M",
+  "osm": 935599
+ },
+ {
+  "code": "1287",
+  "short": "Trelleborg",
+  "name": "Trelleborgs kommun",
+  "nameEn": "Trelleborg Municipality",
+  "county": "M",
+  "osm": 935531
+ },
+ {
+  "code": "1290",
+  "short": "Kristianstad",
+  "name": "Kristianstads kommun",
+  "nameEn": "Kristianstad Municipality",
+  "county": "M",
+  "osm": 935448
+ },
+ {
+  "code": "1291",
+  "short": "Simrishamn",
+  "name": "Simrishamns kommun",
+  "nameEn": "Simrishamn Municipality",
+  "county": "M",
+  "osm": 935529
+ },
+ {
+  "code": "1292",
+  "short": "Ängelholm",
+  "name": "Ängelholms kommun",
+  "nameEn": "Ängelholm Municipality",
+  "county": "M",
+  "osm": 935679
+ },
+ {
+  "code": "1293",
+  "short": "Hässleholm",
+  "name": "Hässleholms kommun",
+  "nameEn": "Hässleholm Municipality",
+  "county": "M",
+  "osm": 935519
+ },
+ {
+  "code": "1315",
+  "short": "Hylte",
+  "name": "Hylte kommun",
+  "nameEn": "Hylte Municipality",
+  "county": "N",
+  "osm": 935407
+ },
+ {
+  "code": "1380",
+  "short": "Halmstad",
+  "name": "Halmstads kommun",
+  "nameEn": "Halmstad Municipality",
+  "county": "N",
+  "osm": 935442
+ },
+ {
+  "code": "1381",
+  "short": "Laholm",
+  "name": "Laholms kommun",
+  "nameEn": "Laholm Municipality",
+  "county": "N",
+  "osm": 935662
+ },
+ {
+  "code": "1382",
+  "short": "Falkenberg",
+  "name": "Falkenbergs kommun",
+  "nameEn": "Falkenberg Municipality",
+  "county": "N",
+  "osm": 935411
+ },
+ {
+  "code": "1383",
+  "short": "Varberg",
+  "name": "Varbergs kommun",
+  "nameEn": "Varberg Municipality",
+  "county": "N",
+  "osm": 935585
+ },
+ {
+  "code": "1384",
+  "short": "Kungsbacka",
+  "name": "Kungsbacka kommun",
+  "nameEn": "Kungsbacka Municipality",
+  "county": "N",
+  "osm": 935626
+ },
+ {
+  "code": "1401",
+  "short": "Härryda",
+  "name": "Härryda kommun",
+  "nameEn": "Härryda Municipality",
+  "county": "O",
+  "osm": 935649
+ },
+ {
+  "code": "1402",
+  "short": "Partille",
+  "name": "Partille kommun",
+  "nameEn": "Partille Municipality",
+  "county": "O",
+  "osm": 935656
+ },
+ {
+  "code": "1407",
+  "short": "Öckerö",
+  "name": "Öckerö kommun",
+  "nameEn": "Öckerö Municipality",
+  "county": "O",
+  "osm": 1120170
+ },
+ {
+  "code": "1415",
+  "short": "Stenungsund",
+  "name": "Stenungsunds kommun",
+  "nameEn": "Stenungsund Municipality",
+  "county": "O",
+  "osm": 935503
+ },
+ {
+  "code": "1419",
+  "short": "Tjörn",
+  "name": "Tjörns kommun",
+  "nameEn": "Tjörn Municipality",
+  "county": "O",
+  "osm": 1120171
+ },
+ {
+  "code": "1421",
+  "short": "Orust",
+  "name": "Orusts kommun",
+  "nameEn": "Orust Municipality",
+  "county": "O",
+  "osm": 935532
+ },
+ {
+  "code": "1427",
+  "short": "Sotenäs",
+  "name": "Sotenäs kommun",
+  "nameEn": "Sotenäs Municipality",
+  "county": "O",
+  "osm": 935430
+ },
+ {
+  "code": "1430",
+  "short": "Munkedal",
+  "name": "Munkedals kommun",
+  "nameEn": "Munkedal Municipality",
+  "county": "O",
+  "osm": 935678
+ },
+ {
+  "code": "1435",
+  "short": "Tanum",
+  "name": "Tanums kommun",
+  "nameEn": "Tanum Municipality",
+  "county": "O",
+  "osm": 935640
+ },
+ {
+  "code": "1438",
+  "short": "Dals-Ed",
+  "name": "Dals-Eds kommun",
+  "nameEn": "Dals-Ed Municipality",
+  "county": "O",
+  "osm": 935404
+ },
+ {
+  "code": "1439",
+  "short": "Färgelanda",
+  "name": "Färgelanda kommun",
+  "nameEn": "Färgelanda Municipality",
+  "county": "O",
+  "osm": 935431
+ },
+ {
+  "code": "1440",
+  "short": "Ale",
+  "name": "Ale kommun",
+  "nameEn": "Ale Municipality",
+  "county": "O",
+  "osm": 935506
+ },
+ {
+  "code": "1441",
+  "short": "Lerum",
+  "name": "Lerums kommun",
+  "nameEn": "Lerum Municipality",
+  "county": "O",
+  "osm": 935550
+ },
+ {
+  "code": "1442",
+  "short": "Vårgårda",
+  "name": "Vårgårda kommun",
+  "nameEn": "Vårgårda Municipality",
+  "county": "O",
+  "osm": 935441
+ },
+ {
+  "code": "1443",
+  "short": "Bollebygd",
+  "name": "Bollebygds kommun",
+  "nameEn": "Bollebygd Municipality",
+  "county": "O",
+  "osm": 935565
+ },
+ {
+  "code": "1444",
+  "short": "Grästorp",
+  "name": "Grästorps kommun",
+  "nameEn": "Grästorp Municipality",
+  "county": "O",
+  "osm": 935415
+ },
+ {
+  "code": "1445",
+  "short": "Essunga",
+  "name": "Essunga kommun",
+  "nameEn": "Essunga Municipality",
+  "county": "O",
+  "osm": 935417
+ },
+ {
+  "code": "1446",
+  "short": "Karlsborg",
+  "name": "Karlsborgs kommun",
+  "nameEn": "Karlsborg Municipality",
+  "county": "O",
+  "osm": 935617
+ },
+ {
+  "code": "1447",
+  "short": "Gullspång",
+  "name": "Gullspångs kommun",
+  "nameEn": "Gullspång Municipality",
+  "county": "O",
+  "osm": 935470
+ },
+ {
+  "code": "1452",
+  "short": "Tranemo",
+  "name": "Tranemo kommun",
+  "nameEn": "Tranemo Municipality",
+  "county": "O",
+  "osm": 935584
+ },
+ {
+  "code": "1460",
+  "short": "Bengtsfors",
+  "name": "Bengtsfors kommun",
+  "nameEn": "Bengtsfors Municipality",
+  "county": "O",
+  "osm": 935491
+ },
+ {
+  "code": "1461",
+  "short": "Mellerud",
+  "name": "Melleruds kommun",
+  "nameEn": "Mellerud Municipality",
+  "county": "O",
+  "osm": 935622
+ },
+ {
+  "code": "1462",
+  "short": "Lilla Edet",
+  "name": "Lilla Edets kommun",
+  "nameEn": "Lilla Edet Municipality",
+  "county": "O",
+  "osm": 935526
+ },
+ {
+  "code": "1463",
+  "short": "Mark",
+  "name": "Marks kommun",
+  "nameEn": "Mark Municipality",
+  "county": "O",
+  "osm": 935639
+ },
+ {
+  "code": "1465",
+  "short": "Svenljunga",
+  "name": "Svenljunga kommun",
+  "nameEn": "Svenljunga Municipality",
+  "county": "O",
+  "osm": 935586
+ },
+ {
+  "code": "1466",
+  "short": "Herrljunga",
+  "name": "Herrljunga kommun",
+  "nameEn": "Herrljunga Municipality",
+  "county": "O",
+  "osm": 935533
+ },
+ {
+  "code": "1470",
+  "short": "Vara",
+  "name": "Vara kommun",
+  "nameEn": "Vara Municipality",
+  "county": "O",
+  "osm": 935476
+ },
+ {
+  "code": "1471",
+  "short": "Götene",
+  "name": "Götene kommun",
+  "nameEn": "Götene Municipality",
+  "county": "O",
+  "osm": 935419
+ },
+ {
+  "code": "1472",
+  "short": "Tibro",
+  "name": "Tibro kommun",
+  "nameEn": "Tibro Municipality",
+  "county": "O",
+  "osm": 935650
+ },
+ {
+  "code": "1473",
+  "short": "Töreboda",
+  "name": "Töreboda kommun",
+  "nameEn": "Töreboda Municipality",
+  "county": "O",
+  "osm": 935637
+ },
+ {
+  "code": "1480",
+  "short": "Göteborg",
+  "name": "Göteborgs kommun",
+  "nameEn": "Gothenburg Municipality",
+  "county": "O",
+  "osm": 935611
+ },
+ {
+  "code": "1481",
+  "short": "Mölndal",
+  "name": "Mölndals kommun",
+  "nameEn": "Mölndal Municipality",
+  "county": "O",
+  "osm": 935463
+ },
+ {
+  "code": "1482",
+  "short": "Kungälv",
+  "name": "Kungälvs kommun",
+  "nameEn": "Kungälv Municipality",
+  "county": "O",
+  "osm": 935505
+ },
+ {
+  "code": "1484",
+  "short": "Lysekil",
+  "name": "Lysekils kommun",
+  "nameEn": "Lysekil Municipality",
+  "county": "O",
+  "osm": 935549
+ },
+ {
+  "code": "1485",
+  "short": "Uddevalla",
+  "name": "Uddevalla kommun",
+  "nameEn": "Uddevalla Municipality",
+  "county": "O",
+  "osm": 935644
+ },
+ {
+  "code": "1486",
+  "short": "Strömstad",
+  "name": "Strömstads kommun",
+  "nameEn": "Strömstad Municipality",
+  "county": "O",
+  "osm": 935489
+ },
+ {
+  "code": "1487",
+  "short": "Vänersborg",
+  "name": "Vänersborgs kommun",
+  "nameEn": "Vänersborg Municipality",
+  "county": "O",
+  "osm": 935453
+ },
+ {
+  "code": "1488",
+  "short": "Trollhättan",
+  "name": "Trollhättans kommun",
+  "nameEn": "Trollhättan Municipality",
+  "county": "O",
+  "osm": 935609
+ },
+ {
+  "code": "1489",
+  "short": "Alingsås",
+  "name": "Alingsås kommun",
+  "nameEn": "Alingsås Municipality",
+  "county": "O",
+  "osm": 935547
+ },
+ {
+  "code": "1490",
+  "short": "Borås",
+  "name": "Borås kommun",
+  "nameEn": "Borås Municipality",
+  "county": "O",
+  "osm": 935544
+ },
+ {
+  "code": "1491",
+  "short": "Ulricehamn",
+  "name": "Ulricehamns kommun",
+  "nameEn": "Ulricehamn Municipality",
+  "county": "O",
+  "osm": 935554
+ },
+ {
+  "code": "1492",
+  "short": "Åmål",
+  "name": "Åmåls kommun",
+  "nameEn": "Åmål Municipality",
+  "county": "O",
+  "osm": 935601
+ },
+ {
+  "code": "1493",
+  "short": "Mariestad",
+  "name": "Mariestads kommun",
+  "nameEn": "Mariestad Municipality",
+  "county": "O",
+  "osm": 935422
+ },
+ {
+  "code": "1494",
+  "short": "Lidköping",
+  "name": "Lidköpings kommun",
+  "nameEn": "Lidköping Municipality",
+  "county": "O",
+  "osm": 935469
+ },
+ {
+  "code": "1495",
+  "short": "Skara",
+  "name": "Skara kommun",
+  "nameEn": "Skara Municipality",
+  "county": "O",
+  "osm": 935508
+ },
+ {
+  "code": "1496",
+  "short": "Skövde",
+  "name": "Skövde kommun",
+  "nameEn": "Skövde Municipality",
+  "county": "O",
+  "osm": 935485
+ },
+ {
+  "code": "1497",
+  "short": "Hjo",
+  "name": "Hjo kommun",
+  "nameEn": "Hjo Municipality",
+  "county": "O",
+  "osm": 935672
+ },
+ {
+  "code": "1498",
+  "short": "Tidaholm",
+  "name": "Tidaholms kommun",
+  "nameEn": "Tidaholm Municipality",
+  "county": "O",
+  "osm": 935567
+ },
+ {
+  "code": "1499",
+  "short": "Falköping",
+  "name": "Falköpings kommun",
+  "nameEn": "Falköping Municipality",
+  "county": "O",
+  "osm": 935600
+ },
+ {
+  "code": "1715",
+  "short": "Kil",
+  "name": "Kils kommun",
+  "nameEn": "Kil Municipality",
+  "county": "S",
+  "osm": 935606
+ },
+ {
+  "code": "1730",
+  "short": "Eda",
+  "name": "Eda kommun",
+  "nameEn": "Eda Municipality",
+  "county": "S",
+  "osm": 935657
+ },
+ {
+  "code": "1737",
+  "short": "Torsby",
+  "name": "Torsby kommun",
+  "nameEn": "Torsby Municipality",
+  "county": "S",
+  "osm": 935682
+ },
+ {
+  "code": "1760",
+  "short": "Storfors",
+  "name": "Storfors kommun",
+  "nameEn": "Storfors Municipality",
+  "county": "S",
+  "osm": 935493
+ },
+ {
+  "code": "1761",
+  "short": "Hammarö",
+  "name": "Hammarö kommun",
+  "nameEn": "Hammarö Municipality",
+  "county": "S",
+  "osm": 1076755
+ },
+ {
+  "code": "1762",
+  "short": "Munkfors",
+  "name": "Munkfors kommun",
+  "nameEn": "Munkfors Municipality",
+  "county": "S",
+  "osm": 935501
+ },
+ {
+  "code": "1763",
+  "short": "Forshaga",
+  "name": "Forshaga kommun",
+  "nameEn": "Forshaga Municipality",
+  "county": "S",
+  "osm": 935539
+ },
+ {
+  "code": "1764",
+  "short": "Grums",
+  "name": "Grums kommun",
+  "nameEn": "Grums Municipality",
+  "county": "S",
+  "osm": 935612
+ },
+ {
+  "code": "1765",
+  "short": "Årjäng",
+  "name": "Årjängs kommun",
+  "nameEn": "Årjäng Municipality",
+  "county": "S",
+  "osm": 935665
+ },
+ {
+  "code": "1766",
+  "short": "Sunne",
+  "name": "Sunne kommun",
+  "nameEn": "Sunne Municipality",
+  "county": "S",
+  "osm": 935627
+ },
+ {
+  "code": "1780",
+  "short": "Karlstad",
+  "name": "Karlstads kommun",
+  "nameEn": "Karlstad Municipality",
+  "county": "S",
+  "osm": 935514
+ },
+ {
+  "code": "1781",
+  "short": "Kristinehamn",
+  "name": "Kristinehamns kommun",
+  "nameEn": "Kristinehamn Municipality",
+  "county": "S",
+  "osm": 935461
+ },
+ {
+  "code": "1782",
+  "short": "Filipstad",
+  "name": "Filipstads kommun",
+  "nameEn": "Filipstad Municipality",
+  "county": "S",
+  "osm": 935619
+ },
+ {
+  "code": "1783",
+  "short": "Hagfors",
+  "name": "Hagfors kommun",
+  "nameEn": "Hagfors Municipality",
+  "county": "S",
+  "osm": 935638
+ },
+ {
+  "code": "1784",
+  "short": "Arvika",
+  "name": "Arvika kommun",
+  "nameEn": "Arvika Municipality",
+  "county": "S",
+  "osm": 935465
+ },
+ {
+  "code": "1785",
+  "short": "Säffle",
+  "name": "Säffle kommun",
+  "nameEn": "Säffle Municipality",
+  "county": "S",
+  "osm": 935597
+ },
+ {
+  "code": "1814",
+  "short": "Lekeberg",
+  "name": "Lekebergs kommun",
+  "nameEn": "Lekeberg Municipality",
+  "county": "T",
+  "osm": 935673
+ },
+ {
+  "code": "1860",
+  "short": "Laxå",
+  "name": "Laxå kommun",
+  "nameEn": "Laxå Municipality",
+  "county": "T",
+  "osm": 935605
+ },
+ {
+  "code": "1861",
+  "short": "Hallsberg",
+  "name": "Hallsbergs kommun",
+  "nameEn": "Hallsberg Municipality",
+  "county": "T",
+  "osm": 935572
+ },
+ {
+  "code": "1862",
+  "short": "Degerfors",
+  "name": "Degerfors kommun",
+  "nameEn": "Degerfors Municipality",
+  "county": "T",
+  "osm": 935498
+ },
+ {
+  "code": "1863",
+  "short": "Hällefors",
+  "name": "Hällefors kommun",
+  "nameEn": "Hällefors Municipality",
+  "county": "T",
+  "osm": 935486
+ },
+ {
+  "code": "1864",
+  "short": "Ljusnarsberg",
+  "name": "Ljusnarsbergs kommun",
+  "nameEn": "Ljusnarsberg Municipality",
+  "county": "T",
+  "osm": 935563
+ },
+ {
+  "code": "1880",
+  "short": "Örebro",
+  "name": "Örebro kommun",
+  "nameEn": "Örebro Municipality",
+  "county": "T",
+  "osm": 935628
+ },
+ {
+  "code": "1881",
+  "short": "Kumla",
+  "name": "Kumla kommun",
+  "nameEn": "Kumla Municipality",
+  "county": "T",
+  "osm": 935494
+ },
+ {
+  "code": "1882",
+  "short": "Askersund",
+  "name": "Askersunds kommun",
+  "nameEn": "Askersund Municipality",
+  "county": "T",
+  "osm": 935513
+ },
+ {
+  "code": "1883",
+  "short": "Karlskoga",
+  "name": "Karlskoga kommun",
+  "nameEn": "Karlskoga Municipality",
+  "county": "T",
+  "osm": 935520
+ },
+ {
+  "code": "1884",
+  "short": "Nora",
+  "name": "Nora kommun",
+  "nameEn": "Nora Municipality",
+  "county": "T",
+  "osm": 935472
+ },
+ {
+  "code": "1885",
+  "short": "Lindesberg",
+  "name": "Lindesbergs kommun",
+  "nameEn": "Lindesberg Municipality",
+  "county": "T",
+  "osm": 935557
+ },
+ {
+  "code": "1904",
+  "short": "Skinnskatteberg",
+  "name": "Skinnskattebergs kommun",
+  "nameEn": "Skinnskatteberg Municipality",
+  "county": "U",
+  "osm": 935423
+ },
+ {
+  "code": "1907",
+  "short": "Surahammar",
+  "name": "Surahammars kommun",
+  "nameEn": "Surahammar Municipality",
+  "county": "U",
+  "osm": 935426
+ },
+ {
+  "code": "1960",
+  "short": "Kungsör",
+  "name": "Kungsörs kommun",
+  "nameEn": "Kungsör Municipality",
+  "county": "U",
+  "osm": 935537
+ },
+ {
+  "code": "1961",
+  "short": "Hallstahammar",
+  "name": "Hallstahammars kommun",
+  "nameEn": "Hallstahammar Municipality",
+  "county": "U",
+  "osm": 935590
+ },
+ {
+  "code": "1962",
+  "short": "Norberg",
+  "name": "Norbergs kommun",
+  "nameEn": "Norberg Municipality",
+  "county": "U",
+  "osm": 307885
+ },
+ {
+  "code": "1980",
+  "short": "Västerås",
+  "name": "Västerås kommun",
+  "nameEn": "Västerås Municipality",
+  "county": "U",
+  "osm": 935588
+ },
+ {
+  "code": "1981",
+  "short": "Sala",
+  "name": "Sala kommun",
+  "nameEn": "Sala Municipality",
+  "county": "U",
+  "osm": 369508
+ },
+ {
+  "code": "1982",
+  "short": "Fagersta",
+  "name": "Fagersta kommun",
+  "nameEn": "Fagersta Municipality",
+  "county": "U",
+  "osm": 935504
+ },
+ {
+  "code": "1983",
+  "short": "Köping",
+  "name": "Köpings kommun",
+  "nameEn": "Köping Municipality",
+  "county": "U",
+  "osm": 935409
+ },
+ {
+  "code": "1984",
+  "short": "Arboga",
+  "name": "Arboga kommun",
+  "nameEn": "Arboga Municipality",
+  "county": "U",
+  "osm": 935652
+ },
+ {
+  "code": "2021",
+  "short": "Vansbro",
+  "name": "Vansbro kommun",
+  "nameEn": "Vansbro Municipality",
+  "county": "W",
+  "osm": 57891
+ },
+ {
+  "code": "2023",
+  "short": "Malung-Sälen",
+  "name": "Malung-Sälens kommun",
+  "nameEn": "Malung-Sälen Municipality",
+  "county": "W",
+  "osm": 935398
+ },
+ {
+  "code": "2026",
+  "short": "Gagnef",
+  "name": "Gagnefs kommun",
+  "nameEn": "Gagnef Municipality",
+  "county": "W",
+  "osm": 307849
+ },
+ {
+  "code": "2029",
+  "short": "Leksand",
+  "name": "Leksands kommun",
+  "nameEn": "Leksand Municipality",
+  "county": "W",
+  "osm": 307848
+ },
+ {
+  "code": "2031",
+  "short": "Rättvik",
+  "name": "Rättviks kommun",
+  "nameEn": "Rättvik Municipality",
+  "county": "W",
+  "osm": 300964
+ },
+ {
+  "code": "2034",
+  "short": "Orsa",
+  "name": "Orsa kommun",
+  "nameEn": "Orsa Municipality",
+  "county": "W",
+  "osm": 290048
+ },
+ {
+  "code": "2039",
+  "short": "Älvdalen",
+  "name": "Älvdalens kommun",
+  "nameEn": "Älvdalen Municipality",
+  "county": "W",
+  "osm": 935540
+ },
+ {
+  "code": "2061",
+  "short": "Smedjebacken",
+  "name": "Smedjebackens kommun",
+  "nameEn": "Smedjebacken Municipality",
+  "county": "W",
+  "osm": 307884
+ },
+ {
+  "code": "2062",
+  "short": "Mora",
+  "name": "Mora kommun",
+  "nameEn": "Mora Municipality",
+  "county": "W",
+  "osm": 304100
+ },
+ {
+  "code": "2080",
+  "short": "Falun",
+  "name": "Falu kommun",
+  "nameEn": "Falun Municipality",
+  "county": "W",
+  "osm": 300963
+ },
+ {
+  "code": "2081",
+  "short": "Borlänge",
+  "name": "Borlänge kommun",
+  "nameEn": "Borlänge Municipality",
+  "county": "W",
+  "osm": 307850
+ },
+ {
+  "code": "2082",
+  "short": "Säter",
+  "name": "Säters kommun",
+  "nameEn": "Säter Municipality",
+  "county": "W",
+  "osm": 300938
+ },
+ {
+  "code": "2083",
+  "short": "Hedemora",
+  "name": "Hedemora kommun",
+  "nameEn": "Hedemora Municipality",
+  "county": "W",
+  "osm": 300939
+ },
+ {
+  "code": "2084",
+  "short": "Avesta",
+  "name": "Avesta kommun",
+  "nameEn": "Avesta Municipality",
+  "county": "W",
+  "osm": 312618
+ },
+ {
+  "code": "2085",
+  "short": "Ludvika",
+  "name": "Ludvika kommun",
+  "nameEn": "Ludvika Municipality",
+  "county": "W",
+  "osm": 57886
+ },
+ {
+  "code": "2101",
+  "short": "Ockelbo",
+  "name": "Ockelbo kommun",
+  "nameEn": "Ockelbo Municipality",
+  "county": "X",
+  "osm": 278632
+ },
+ {
+  "code": "2104",
+  "short": "Hofors",
+  "name": "Hofors kommun",
+  "nameEn": "Hofors Municipality",
+  "county": "X",
+  "osm": 289354
+ },
+ {
+  "code": "2121",
+  "short": "Ovanåker",
+  "name": "Ovanåkers kommun",
+  "nameEn": "Ovanåker Municipality",
+  "county": "X",
+  "osm": 368254
+ },
+ {
+  "code": "2132",
+  "short": "Nordanstig",
+  "name": "Nordanstigs kommun",
+  "nameEn": "Nordanstig Municipality",
+  "county": "X",
+  "osm": 935645
+ },
+ {
+  "code": "2161",
+  "short": "Ljusdal",
+  "name": "Ljusdals kommun",
+  "nameEn": "Ljusdal Municipality",
+  "county": "X",
+  "osm": 935592
+ },
+ {
+  "code": "2180",
+  "short": "Gävle",
+  "name": "Gävle kommun",
+  "nameEn": "Gävle Municipality",
+  "county": "X",
+  "osm": 278620
+ },
+ {
+  "code": "2181",
+  "short": "Sandviken",
+  "name": "Sandvikens kommun",
+  "nameEn": "Sandviken Municipality",
+  "county": "X",
+  "osm": 278633
+ },
+ {
+  "code": "2182",
+  "short": "Söderhamn",
+  "name": "Söderhamns kommun",
+  "nameEn": "Söderhamn Municipality",
+  "county": "X",
+  "osm": 296292
+ },
+ {
+  "code": "2183",
+  "short": "Bollnäs",
+  "name": "Bollnäs kommun",
+  "nameEn": "Bollnäs Municipality",
+  "county": "X",
+  "osm": 296291
+ },
+ {
+  "code": "2184",
+  "short": "Hudiksvall",
+  "name": "Hudiksvalls kommun",
+  "nameEn": "Hudiksvall Municipality",
+  "county": "X",
+  "osm": 935648
+ },
+ {
+  "code": "2260",
+  "short": "Ånge",
+  "name": "Ånge kommun",
+  "nameEn": "Ånge Municipality",
+  "county": "Y",
+  "osm": 935477
+ },
+ {
+  "code": "2262",
+  "short": "Timrå",
+  "name": "Timrå kommun",
+  "nameEn": "Timrå Municipality",
+  "county": "Y",
+  "osm": 935568
+ },
+ {
+  "code": "2280",
+  "short": "Härnösand",
+  "name": "Härnösands kommun",
+  "nameEn": "Härnösand Municipality",
+  "county": "Y",
+  "osm": 935418
+ },
+ {
+  "code": "2281",
+  "short": "Sundsvall",
+  "name": "Sundsvalls kommun",
+  "nameEn": "Sundsvall Municipality",
+  "county": "Y",
+  "osm": 935497
+ },
+ {
+  "code": "2282",
+  "short": "Kramfors",
+  "name": "Kramfors kommun",
+  "nameEn": "Kramfors Municipality",
+  "county": "Y",
+  "osm": 935445
+ },
+ {
+  "code": "2283",
+  "short": "Sollefteå",
+  "name": "Sollefteå kommun",
+  "nameEn": "Sollefteå Municipality",
+  "county": "Y",
+  "osm": 935624
+ },
+ {
+  "code": "2284",
+  "short": "Örnsköldsvik",
+  "name": "Örnsköldsviks kommun",
+  "nameEn": "Örnsköldsvik Municipality",
+  "county": "Y",
+  "osm": 935455
+ },
+ {
+  "code": "2303",
+  "short": "Ragunda",
+  "name": "Ragunda kommun",
+  "nameEn": "Ragunda Municipality",
+  "county": "Z",
+  "osm": 935558
+ },
+ {
+  "code": "2305",
+  "short": "Bräcke",
+  "name": "Bräcke kommun",
+  "nameEn": "Bräcke Municipality",
+  "county": "Z",
+  "osm": 935457
+ },
+ {
+  "code": "2309",
+  "short": "Krokom",
+  "name": "Krokoms kommun",
+  "nameEn": "Krokom Municipality",
+  "county": "Z",
+  "osm": 935615
+ },
+ {
+  "code": "2313",
+  "short": "Strömsund",
+  "name": "Strömsunds kommun",
+  "nameEn": "Strömsund Municipality",
+  "county": "Z",
+  "osm": 935413
+ },
+ {
+  "code": "2321",
+  "short": "Åre",
+  "name": "Åre kommun",
+  "nameEn": "Åre Municipality",
+  "county": "Z",
+  "osm": 935429
+ },
+ {
+  "code": "2326",
+  "short": "Berg",
+  "name": "Bergs kommun",
+  "nameEn": "Berg Municipality",
+  "county": "Z",
+  "osm": 935633
+ },
+ {
+  "code": "2361",
+  "short": "Härjedalen",
+  "name": "Härjedalens kommun",
+  "nameEn": "Härjedalen Municipality",
+  "county": "Z",
+  "osm": 935534
+ },
+ {
+  "code": "2380",
+  "short": "Östersund",
+  "name": "Östersunds kommun",
+  "nameEn": "Östersund Municipality",
+  "county": "Z",
+  "osm": 935577
+ },
+ {
+  "code": "2401",
+  "short": "Nordmaling",
+  "name": "Nordmalings kommun",
+  "nameEn": "Nordmaling Municipality",
+  "county": "AC",
+  "osm": 935647
+ },
+ {
+  "code": "2403",
+  "short": "Bjurholm",
+  "name": "Bjurholms kommun",
+  "nameEn": "Bjurholm Municipality",
+  "county": "AC",
+  "osm": 935607
+ },
+ {
+  "code": "2404",
+  "short": "Vindeln",
+  "name": "Vindelns kommun",
+  "nameEn": "Vindeln Municipality",
+  "county": "AC",
+  "osm": 935402
+ },
+ {
+  "code": "2409",
+  "short": "Robertsfors",
+  "name": "Robertsfors kommun",
+  "nameEn": "Robertsfors Municipality",
+  "county": "AC",
+  "osm": 935681
+ },
+ {
+  "code": "2417",
+  "short": "Norsjö",
+  "name": "Norsjö kommun",
+  "nameEn": "Norsjö Municipality",
+  "county": "AC",
+  "osm": 935593
+ },
+ {
+  "code": "2418",
+  "short": "Malå",
+  "name": "Malå kommun",
+  "nameEn": "Malå Municipality",
+  "county": "AC",
+  "osm": 935500
+ },
+ {
+  "code": "2421",
+  "short": "Storuman",
+  "name": "Storumans kommun",
+  "nameEn": "Storuman Municipality",
+  "county": "AC",
+  "osm": 935479
+ },
+ {
+  "code": "2422",
+  "short": "Sorsele",
+  "name": "Sorsele kommun",
+  "nameEn": "Sorsele Municipality",
+  "county": "AC",
+  "osm": 935655
+ },
+ {
+  "code": "2425",
+  "short": "Dorotea",
+  "name": "Dorotea kommun",
+  "nameEn": "Dorotea Municipality",
+  "county": "AC",
+  "osm": 935438
+ },
+ {
+  "code": "2460",
+  "short": "Vännäs",
+  "name": "Vännäs kommun",
+  "nameEn": "Vännäs Municipality",
+  "county": "AC",
+  "osm": 935564
+ },
+ {
+  "code": "2462",
+  "short": "Vilhelmina",
+  "name": "Vilhelmina kommun",
+  "nameEn": "Vilhelmina Municipality",
+  "county": "AC",
+  "osm": 935528
+ },
+ {
+  "code": "2463",
+  "short": "Åsele",
+  "name": "Åsele kommun",
+  "nameEn": "Åsele Municipality",
+  "county": "AC",
+  "osm": 935432
+ },
+ {
+  "code": "2480",
+  "short": "Umeå",
+  "name": "Umeå kommun",
+  "nameEn": "Umeå Municipality",
+  "county": "AC",
+  "osm": 935646
+ },
+ {
+  "code": "2481",
+  "short": "Lycksele",
+  "name": "Lycksele kommun",
+  "nameEn": "Lycksele Municipality",
+  "county": "AC",
+  "osm": 935428
+ },
+ {
+  "code": "2482",
+  "short": "Skellefteå",
+  "name": "Skellefteå kommun",
+  "nameEn": "Skellefteå Municipality",
+  "county": "AC",
+  "osm": 935576
+ },
+ {
+  "code": "2505",
+  "short": "Arvidsjaur",
+  "name": "Arvidsjaurs kommun",
+  "nameEn": "Arvidsjaur Municipality",
+  "county": "BD",
+  "osm": 935667
+ },
+ {
+  "code": "2506",
+  "short": "Arjeplog",
+  "name": "Arjeplogs kommun",
+  "nameEn": "Arjeplog Municipality",
+  "county": "BD",
+  "osm": 935425
+ },
+ {
+  "code": "2510",
+  "short": "Jokkmokk",
+  "name": "Jokkmokks kommun",
+  "nameEn": "Jokkmokk Municipality",
+  "county": "BD",
+  "osm": 935630
+ },
+ {
+  "code": "2513",
+  "short": "Överkalix",
+  "name": "Överkalix kommun",
+  "nameEn": "Överkalix Municipality",
+  "county": "BD",
+  "osm": 935629
+ },
+ {
+  "code": "2514",
+  "short": "Kalix",
+  "name": "Kalix kommun",
+  "nameEn": "Kalix Municipality",
+  "county": "BD",
+  "osm": 935474
+ },
+ {
+  "code": "2518",
+  "short": "Övertorneå",
+  "name": "Övertorneå kommun",
+  "nameEn": "Övertorneå Municipality",
+  "county": "BD",
+  "osm": 935620
+ },
+ {
+  "code": "2521",
+  "short": "Pajala",
+  "name": "Pajala kommun",
+  "nameEn": "Pajala Municipality",
+  "county": "BD",
+  "osm": 935573
+ },
+ {
+  "code": "2523",
+  "short": "Gällivare",
+  "name": "Gällivare kommun",
+  "nameEn": "Gällivare Municipality",
+  "county": "BD",
+  "osm": 935446
+ },
+ {
+  "code": "2560",
+  "short": "Älvsbyn",
+  "name": "Älvsbyns kommun",
+  "nameEn": "Älvsbyn Municipality",
+  "county": "BD",
+  "osm": 935574
+ },
+ {
+  "code": "2580",
+  "short": "Luleå",
+  "name": "Luleå kommun",
+  "nameEn": "Luleå Municipality",
+  "county": "BD",
+  "osm": 935482
+ },
+ {
+  "code": "2581",
+  "short": "Piteå",
+  "name": "Piteå kommun",
+  "nameEn": "Piteå Municipality",
+  "county": "BD",
+  "osm": 935490
+ },
+ {
+  "code": "2582",
+  "short": "Boden",
+  "name": "Bodens kommun",
+  "nameEn": "Boden Municipality",
+  "county": "BD",
+  "osm": 935421
+ },
+ {
+  "code": "2583",
+  "short": "Haparanda",
+  "name": "Haparanda kommun",
+  "nameEn": "Haparanda Municipality",
+  "county": "BD",
+  "osm": 935579
+ },
+ {
+  "code": "2584",
+  "short": "Kiruna",
+  "name": "Kiruna kommun",
+  "nameEn": "Kiruna Municipality",
+  "county": "BD",
+  "osm": 935541
+ }
+]

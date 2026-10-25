@@ -6,6 +6,7 @@
 import { COUNTY_NAMES_EN, LANG_COOKIE, PROVINCE_NAMES_EN, isLang, type Lang } from '../shared/i18n';
 import type { County } from '../data/counties';
 import type { Province } from '../data/provinces';
+import type { Municipality } from '../data/municipalities';
 import { en } from './en';
 import { sv, type Messages } from './sv';
 
@@ -66,6 +67,10 @@ export function applyToDocument(): void {
 
 export function countyName(county: County): string {
   return current === 'en' ? (COUNTY_NAMES_EN[county.code] ?? county.name) : county.name;
+}
+
+export function municipalityName(municipality: Municipality): string {
+  return current === 'en' ? municipality.nameEn : municipality.name;
 }
 
 export function provinceName(province: Province): string {

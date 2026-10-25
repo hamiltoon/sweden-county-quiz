@@ -2,11 +2,13 @@ import { COUNTIES, type County } from '../data/counties';
 import { LAKES, type Lake } from '../data/lakes';
 import { OTHER_CITIES, type City } from '../data/cities';
 import { PROVINCES, type Province } from '../data/provinces';
+import { MUNICIPALITIES, type Municipality } from '../data/municipalities';
+import { COUNTY_BY_CODE } from '../data/counties';
 import { CONFIG, defaultScoring, type ScoringFn } from './config';
 import { haversineKm, shuffle } from './geo';
-import { countyName, provinceName, t } from '../i18n';
+import { countyName, municipalityName, provinceName, t } from '../i18n';
 
-export type Mode = 'lan' | 'landskap' | 'stad' | 'ort' | 'sjo' | 'blandat';
+export type Mode = 'lan' | 'landskap' | 'kommun' | 'stad' | 'ort' | 'sjo' | 'blandat';
 
 /** Lägets namn på det valda språket. */
 export function modeLabel(mode: Mode): string {
@@ -16,6 +18,7 @@ export function modeLabel(mode: Mode): string {
 export type Question =
   | { kind: 'lan' | 'stad'; county: County }
   | { kind: 'landskap'; province: Province }
+  | { kind: 'kommun'; municipality: Municipality }
   | { kind: 'ort'; city: City }
   | { kind: 'sjo'; lake: Lake };
 
@@ -97,7 +100,13 @@ export class Game {
   /** Formulerar frågetexten. */
   prompt(): string {
     const q = this.current;
-    return q ? t().game.where(questionLabel(q)) : '';
+    if (!q) return '';
+    if (q.kind === 'kommun') {
+      // Kommunerna är många och ofta små, så frågan säger vilket län kommunen ligger i.
+      const county = COUNTY_BY_CODE.get(q.municipality.county);
+      return t().game.whereIn(questionLabel(q), county ? countyName(county) : q.municipality.county);
+    }
+    return t().game.where(questionLabel(q));
   }
 
   answer(guess: Guess): AnswerOutcome {
@@ -112,6 +121,8 @@ export class Game {
     } else if (q.kind === 'landskap') {
       // Landskapskartan rapporterar landskapets kod på samma sätt som länskartan rapporterar länskoden.
       correct = guess.kind === 'county' && guess.code === q.province.code;
+    } else if (q.kind === 'kommun') {
+      correct = guess.kind === 'county' && guess.code === q.municipality.code;
     } else if (q.kind === 'sjo') {
       correct = guess.kind === 'lake' && guess.id === q.lake.id;
     } else if (q.kind === 'ort' && guess.kind === 'point') {
@@ -172,22 +183,28 @@ export class Game {
 
 /**
  * Frågorna för en omgång i slumpad ordning: alla 21 län, alla 25 landskap, alla sjöar i sjöläget,
- * eller ett slumpat urval av de andra städerna.
+ * eller ett slumpat urval av kommunerna eller de andra städerna.
  */
 export function buildQuestions(mode: Mode): Question[] {
   if (mode === 'landskap') return shuffle(PROVINCES).map((province) => ({ kind: 'landskap', province }));
+  if (mode === 'kommun') {
+    return shuffle(MUNICIPALITIES)
+      .slice(0, CONFIG.municipalitiesPerRound)
+      .map((municipality) => ({ kind: 'kommun', municipality }));
+  }
   if (mode === 'sjo') return shuffle(LAKES).map((lake) => ({ kind: 'sjo', lake }));
   if (mode === 'ort') return shuffle(OTHER_CITIES).slice(0, CONFIG.otherCitiesPerRound).map((city) => ({ kind: 'ort', city }));
   return shuffle(COUNTIES).map((county) => ({ kind: pickCountyKind(mode), county }));
 }
 
-function pickCountyKind(mode: Exclude<Mode, 'sjo' | 'ort' | 'landskap'>): 'lan' | 'stad' {
+function pickCountyKind(mode: Exclude<Mode, 'sjo' | 'ort' | 'landskap' | 'kommun'>): 'lan' | 'stad' {
   if (mode === 'blandat') return Math.random() < 0.5 ? 'lan' : 'stad';
   return mode;
 }
 
-/** Det frågan gäller: länets, landskapets, stadens eller sjöns namn. */
+/** Det frågan gäller: länets, landskapets, kommunens, stadens eller sjöns namn. */
 export function questionLabel(q: Question): string {
+  if (q.kind === 'kommun') return municipalityName(q.municipality);
   if (q.kind === 'landskap') return provinceName(q.province);
   if (q.kind === 'sjo') return q.lake.name;
   if (q.kind === 'ort') return q.city.name;

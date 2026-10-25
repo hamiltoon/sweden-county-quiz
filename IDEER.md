@@ -1,7 +1,7 @@
 # Idéer för Sverigespelet
 
 Saker vi har pratat om men inte byggt än, ungefär i den ordning vi tänkt ta dem.
-Klart: Landskap och Live-läget med Län (oktober 2026).
+Klart: Landskap, Live-läget med Län, engelska och Kommuner (oktober 2026).
 
 ## Nästa steg för live
 
