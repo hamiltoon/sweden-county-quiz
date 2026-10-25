@@ -4,6 +4,7 @@
  * Resultat läggs först i en kö i localStorage och skickas sedan, så att inget går förlorat om
  * telefonen är offline. Varje resultat har ett eget id, så ett omförsök sparar aldrig dubbelt.
  */
+import { t } from '../i18n';
 import {
   MAX_RESULTS_PER_SUBMIT,
   isLeaderboardMode,
@@ -48,10 +49,10 @@ async function request<T>(input: string, init?: RequestInit): Promise<T> {
   try {
     res = await fetch(input, { ...init, signal: AbortSignal.timeout(TIMEOUT_MS) });
   } catch {
-    throw new LeaderboardError('Topplistan går inte att nå just nu.', 0);
+    throw new LeaderboardError(t().leaderboard.unreachable, 0);
   }
   const body = (await res.json().catch(() => null)) as (T & { error?: string }) | null;
-  if (!res.ok || !body) throw new LeaderboardError(body?.error ?? `Fel från servern (${res.status}).`, res.status);
+  if (!res.ok || !body) throw new LeaderboardError(body?.error ?? t().common.serverError(res.status), res.status);
   return body;
 }
 

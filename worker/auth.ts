@@ -2,7 +2,8 @@
  * Frivilliga konton med passkeys (WebAuthn). En spelare kan skydda sitt namn med Face ID,
  * Touch ID eller liknande; därefter kan bara den som är inloggad spara resultat under namnet.
  *
- *   GET  /api/me                          → { name } för inloggad spelare, annars { name: null }
+ *   GET  /api/me                          → { name, language } för inloggad spelare, annars null-värden
+ *   POST /api/me/language                 → { language } → sparar språket på kontot (om inloggad)
  *   POST /api/logout                      → loggar ut den här enheten
  *   POST /api/passkey/register/options    → { name } → utmaning för att skapa en passkey
  *   POST /api/passkey/register/verify     → { challenge, response } → skyddar namnet och loggar in
@@ -25,7 +26,9 @@ import {
 import { isoBase64URL } from '@simplewebauthn/server/helpers';
 import { normalizeName } from '../src/shared/leaderboard';
 import { SESSION_DAYS, type MeResponse, type PasskeyDoneResponse } from '../src/shared/account';
-import { clientIp, json, readJson } from './http';
+import { isLang } from '../src/shared/i18n';
+import { clientIp, json, readCookie, readJson } from './http';
+import { msg, type ServerMessages } from './messages';
 
 const RP_NAME = 'Sverigespelet';
 const COOKIE = '__Host-session';
@@ -36,6 +39,7 @@ export interface Player {
   id: string;
   name: string;
   name_key: string;
+  language: string | null;
 }
 
 export const nameKeyOf = (name: string) => name.toLocaleLowerCase('sv');
@@ -43,17 +47,19 @@ export const nameKeyOf = (name: string) => name.toLocaleLowerCase('sv');
 /** Hanterar /api/me, /api/logout och /api/passkey/*. Returnerar null för andra sökvägar. */
 export async function handleAuth(request: Request, env: Env, url: URL): Promise<Response | null> {
   const path = url.pathname;
+  const m = msg(request);
   if (path === '/api/me' && request.method === 'GET') {
     const player = await sessionPlayer(request, env);
-    const body: MeResponse = { name: player?.name ?? null };
+    const body: MeResponse = { name: player?.name ?? null, language: isLang(player?.language) ? player.language : null };
     return json(body);
   }
+  if (path === '/api/me/language' && request.method === 'POST') return saveLanguage(request, env, m);
   if (path === '/api/logout' && request.method === 'POST') return logout(request, env);
   if (!path.startsWith('/api/passkey/')) return null;
-  if (request.method !== 'POST') return json({ error: 'Metoden stöds inte.' }, 405, { Allow: 'POST' });
+  if (request.method !== 'POST') return json({ error: m.method }, 405, { Allow: 'POST' });
 
   const { success } = await env.SUBMIT_LIMITER.limit({ key: `auth:${clientIp(request)}` });
-  if (!success) return json({ error: 'För många försök. Vänta en minut och försök igen.' }, 429);
+  if (!success) return json({ error: m.tooMany }, 429);
 
   const read = await readJson(request, MAX_AUTH_BODY_BYTES);
   if ('error' in read) return read.error;
@@ -61,15 +67,15 @@ export async function handleAuth(request: Request, env: Env, url: URL): Promise<
 
   switch (path) {
     case '/api/passkey/register/options':
-      return registerOptions(request, env, url, body);
+      return registerOptions(request, env, url, body, m);
     case '/api/passkey/register/verify':
-      return registerVerify(env, url, body);
+      return registerVerify(env, url, body, m);
     case '/api/passkey/login/options':
       return loginOptions(env, url);
     case '/api/passkey/login/verify':
-      return loginVerify(env, url, body);
+      return loginVerify(env, url, body, m);
     default:
-      return json({ error: 'Hittades inte.' }, 404);
+      return json({ error: m.notFound }, 404);
   }
 }
 
@@ -78,7 +84,7 @@ export async function sessionPlayer(request: Request, env: Env): Promise<Player 
   const token = readCookie(request, COOKIE);
   if (!token) return null;
   return env.DB.prepare(
-    `SELECT players.id, players.name, players.name_key
+    `SELECT players.id, players.name, players.name_key, players.language
      FROM sessions JOIN players ON players.id = sessions.player_id
      WHERE sessions.token_hash = ?1 AND sessions.expires_at > ?2`,
   )
@@ -88,10 +94,10 @@ export async function sessionPlayer(request: Request, env: Env): Promise<Player 
 
 /** Spelaren som skyddat ett namn, om någon har gjort det. */
 export function protectedPlayer(env: Env, nameKey: string): Promise<Player | null> {
-  return env.DB.prepare('SELECT id, name, name_key FROM players WHERE name_key = ?1').bind(nameKey).first<Player>();
+  return env.DB.prepare('SELECT id, name, name_key, language FROM players WHERE name_key = ?1').bind(nameKey).first<Player>();
 }
 
-async function registerOptions(request: Request, env: Env, url: URL, body: Record<string, unknown>): Promise<Response> {
+async function registerOptions(request: Request, env: Env, url: URL, body: Record<string, unknown>, m: ServerMessages): Promise<Response> {
   await cleanupChallenges(env);
   const session = await sessionPlayer(request, env);
   // Inloggad: lägg till ytterligare en passkey för det egna kontot (t.ex. för en annan enhet).
@@ -102,11 +108,11 @@ async function registerOptions(request: Request, env: Env, url: URL, body: Recor
     name = session.name;
   } else {
     const normalized = normalizeName(body.name);
-    if (!normalized) return json({ error: 'Skriv ett namn först.' }, 400);
+    if (!normalized) return json({ error: m.writeName }, 400);
     name = normalized;
     player = await protectedPlayer(env, nameKeyOf(name));
     if (player) {
-      return json({ error: `Namnet ${player.name} är redan skyddat. Logga in med din passkey eller välj ett annat namn.` }, 409);
+      return json({ error: m.alreadyProtected(player.name) }, 409);
     }
   }
 
@@ -135,9 +141,9 @@ async function registerOptions(request: Request, env: Env, url: URL, body: Recor
   return json({ challenge: options.challenge, options });
 }
 
-async function registerVerify(env: Env, url: URL, body: Record<string, unknown>): Promise<Response> {
+async function registerVerify(env: Env, url: URL, body: Record<string, unknown>, m: ServerMessages): Promise<Response> {
   const row = await takeChallenge(env, body.challenge, 'register');
-  if (!row || !row.name || !row.user_id) return json({ error: 'Utmaningen har gått ut. Försök igen.' }, 400);
+  if (!row || !row.name || !row.user_id) return json({ error: m.challengeExpired }, 400);
 
   let verification;
   try {
@@ -150,9 +156,9 @@ async function registerVerify(env: Env, url: URL, body: Record<string, unknown>)
     });
   } catch (err) {
     console.warn('Passkey-registrering avvisad', err);
-    return json({ error: 'Passkeyn kunde inte verifieras.' }, 400);
+    return json({ error: m.passkeyNotVerified }, 400);
   }
-  if (!verification.verified || !verification.registrationInfo) return json({ error: 'Passkeyn kunde inte verifieras.' }, 400);
+  if (!verification.verified || !verification.registrationInfo) return json({ error: m.passkeyNotVerified }, 400);
   const { credential } = verification.registrationInfo;
 
   let playerId = row.player_id;
@@ -164,11 +170,11 @@ async function registerVerify(env: Env, url: URL, body: Record<string, unknown>)
     )
       .bind(row.user_id, row.name, nameKeyOf(row.name))
       .run();
-    if (!inserted.meta.changes) return json({ error: `Namnet ${row.name} skyddades precis av någon annan.` }, 409);
+    if (!inserted.meta.changes) return json({ error: m.justProtected(row.name) }, 409);
     playerId = row.user_id;
   } else {
     const player = await env.DB.prepare('SELECT name FROM players WHERE id = ?1').bind(playerId).first<{ name: string }>();
-    if (!player) return json({ error: 'Kontot finns inte längre.' }, 400);
+    if (!player) return json({ error: m.accountGone }, 400);
     name = player.name;
   }
 
@@ -190,11 +196,11 @@ async function loginOptions(env: Env, url: URL): Promise<Response> {
   return json({ challenge: options.challenge, options });
 }
 
-async function loginVerify(env: Env, url: URL, body: Record<string, unknown>): Promise<Response> {
+async function loginVerify(env: Env, url: URL, body: Record<string, unknown>, m: ServerMessages): Promise<Response> {
   const row = await takeChallenge(env, body.challenge, 'login');
-  if (!row) return json({ error: 'Utmaningen har gått ut. Försök igen.' }, 400);
+  if (!row) return json({ error: m.challengeExpired }, 400);
   const response = body.response as AuthenticationResponseJSON | undefined;
-  if (!response || typeof response.id !== 'string') return json({ error: 'Ogiltigt svar.' }, 400);
+  if (!response || typeof response.id !== 'string') return json({ error: m.badResponse }, 400);
 
   const passkey = await env.DB.prepare(
     `SELECT passkeys.id, passkeys.public_key, passkeys.counter, passkeys.transports, players.id AS player_id, players.name
@@ -202,7 +208,7 @@ async function loginVerify(env: Env, url: URL, body: Record<string, unknown>): P
   )
     .bind(response.id)
     .first<{ id: string; public_key: string; counter: number; transports: string | null; player_id: string; name: string }>();
-  if (!passkey) return json({ error: 'Den här passkeyn känns inte igen. Den kan ha tagits bort.' }, 401);
+  if (!passkey) return json({ error: m.unknownPasskey }, 401);
 
   let verification;
   try {
@@ -221,15 +227,30 @@ async function loginVerify(env: Env, url: URL, body: Record<string, unknown>): P
     });
   } catch (err) {
     console.warn('Passkey-inloggning avvisad', err);
-    return json({ error: 'Inloggningen kunde inte verifieras.' }, 401);
+    return json({ error: m.loginNotVerified }, 401);
   }
-  if (!verification.verified) return json({ error: 'Inloggningen kunde inte verifieras.' }, 401);
+  if (!verification.verified) return json({ error: m.loginNotVerified }, 401);
 
   await env.DB.prepare('UPDATE passkeys SET counter = ?1, last_used_at = ?2 WHERE id = ?3')
     .bind(verification.authenticationInfo.newCounter, new Date().toISOString(), passkey.id)
     .run();
   const done: PasskeyDoneResponse = { name: passkey.name };
   return json(done, 200, { 'Set-Cookie': await createSession(env, passkey.player_id) });
+}
+
+/**
+ * Sparar spelarens språk på kontot, så att det följer med till andra enheter. Utan inloggning
+ * finns inget konto att spara på; då gäller valet bara på enheten och svaret säger det.
+ */
+async function saveLanguage(request: Request, env: Env, m: ServerMessages): Promise<Response> {
+  const read = await readJson(request, 256);
+  if ('error' in read) return read.error;
+  const language = (read.body as { language?: unknown } | null)?.language;
+  if (!isLang(language)) return json({ error: m.badLanguage }, 400);
+  const player = await sessionPlayer(request, env);
+  if (!player) return json({ saved: false });
+  await env.DB.prepare('UPDATE players SET language = ?1 WHERE id = ?2').bind(language, player.id).run();
+  return json({ saved: true });
 }
 
 async function logout(request: Request, env: Env): Promise<Response> {
@@ -277,16 +298,6 @@ function parseTransports(raw: string | null): AuthenticatorTransportFuture[] | u
   } catch {
     return undefined;
   }
-}
-
-function readCookie(request: Request, name: string): string | null {
-  const header = request.headers.get('Cookie');
-  if (!header) return null;
-  for (const part of header.split(';')) {
-    const [key, ...rest] = part.trim().split('=');
-    if (key === name) return rest.join('=') || null;
-  }
-  return null;
 }
 
 async function sha256(value: string): Promise<string> {

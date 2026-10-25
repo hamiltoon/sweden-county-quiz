@@ -12,6 +12,12 @@ Källkod: [github.com/hamiltoon/sweden-county-quiz](https://github.com/hamiltoon
 
 Det är en PWA, så det går att lägga till på hemskärmen och spela offline.
 
+## Språk
+
+Spelet finns på svenska och engelska; byt med knapparna överst på startskärmen. Första gången väljs svenska om webbläsaren är inställd på svenska, annars engelska. Valet sparas på enheten, och för den som loggat in med passkey också på kontot, så att det följer med till andra enheter (efter inloggning gäller kontots språk). Ortnamnen är desamma på båda språken; länen heter t.ex. "Stockholm County" på engelska och Lappland "Lapland".
+
+Alla texter finns i `src/i18n/sv.ts` och `src/i18n/en.ts` (samma nycklar, kontrolleras av TypeScript). Spelet sätter en cookie `lang` som API:t läser, så att även felmeddelandena från servern kommer på rätt språk (`worker/messages.ts`).
+
 ## Spellägen och poäng
 
 - **Län** – klicka på rätt län.
@@ -90,10 +96,11 @@ API:
 
 - `GET /api/scores?mode=lan&limit=10` – bästa resultat per spelare i ett läge (`lan`, `stad`, `sjo`, `blandat`), eller `mode=total` för summan av varje spelares bästa resultat i alla lägen.
 - `POST /api/scores` med `{ "name": "...", "results": [{ "id", "mode", "score", "percent", "playedAt" }] }` – sparar upp till tio resultat och svarar med spelarens placering per läge och totalt. Inloggad spelare sparar alltid under kontots namn.
-- `GET /api/me` – inloggad spelare (`{ "name": null }` om ingen).
+- `GET /api/me` – inloggad spelare och kontots språk (`{ "name": null, "language": null }` om ingen).
 - `POST /api/passkey/register/options` och `.../register/verify` – skydda ett namn med en ny passkey (eller lägg till en passkey till det egna kontot).
 - `POST /api/passkey/login/options` och `.../login/verify` – logga in med en befintlig passkey.
 - `POST /api/logout` – logga ut den här enheten.
+- `POST /api/me/language` – spara språket (`sv` eller `en`) på kontot, om enheten är inloggad.
 
 ## Kartdata
 
@@ -129,6 +136,7 @@ Vite + TypeScript utan ramverk (vanilla DOM). Kartan ritas som SVG med [d3-geo](
 - `src/shared/` – topplistans och live-lägets regler och typer, delade av spelet och Worker-scriptet.
 - `src/api/` – klienten för topplistans API, med kö för osända resultat, och för kontona (passkeys).
 - `src/map/` – SVG-kartan: projektion, zoom, klick, markeringar, sjöar, grannländer och minikartor.
+- `src/i18n/` – språken: alla texter på svenska och engelska, och valet av språk.
 - `src/live/` – live-läget: anslutningen till rummet och skärmarna (lobby, frågor, ställning, pall).
 - `src/ui/` – start- och resultatskärm, topplista, DOM-hjälpare, toast.
 - `src/pwa.ts` – registrerar service workern i produktion.

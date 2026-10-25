@@ -32,9 +32,3 @@ export const LAKES: readonly Lake[] = [
 
 export const LAKE_BY_ID: ReadonlyMap<string, Lake> = new Map(LAKES.map((l) => [l.id, l]));
 
-/** "Sveriges största sjö", "Sveriges 4:e största sjö" osv. */
-export function lakeRankText(lake: Lake): string {
-  if (lake.rank === 1) return 'Sveriges största sjö';
-  const suffix = lake.rank === 2 ? ':a' : ':e';
-  return `Sveriges ${lake.rank}${suffix} största sjö`;
-}

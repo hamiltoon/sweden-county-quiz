@@ -32,6 +32,7 @@ import { CONFIG } from '../src/game/config';
 import { handleAuth, nameKeyOf, protectedPlayer, sessionPlayer } from './auth';
 import { clientIp, isCrossOrigin, json, readJson } from './http';
 import { handleLive } from './live';
+import { msg, type ServerMessages } from './messages';
 
 export { LiveRoom } from './live';
 
@@ -46,29 +47,29 @@ export default {
     const url = new URL(request.url);
     try {
       if (request.method === 'POST' && isCrossOrigin(request, url)) {
-        return json({ error: 'Anrop från andra webbplatser godtas inte.' }, 403);
+        return json({ error: msg(request).crossOrigin }, 403);
       }
       const auth = await handleAuth(request, env, url);
       if (auth) return auth;
       const live = await handleLive(request, env, url);
       if (live) return live;
       if (url.pathname === '/api/scores') {
-        if (request.method === 'GET') return await getTop(url, env);
+        if (request.method === 'GET') return await getTop(request, url, env);
         if (request.method === 'POST') return await submit(request, env);
-        return json({ error: 'Metoden stöds inte.' }, 405, { Allow: 'GET, POST' });
+        return json({ error: msg(request).method }, 405, { Allow: 'GET, POST' });
       }
-      if (url.pathname.startsWith('/api/')) return json({ error: 'Hittades inte.' }, 404);
+      if (url.pathname.startsWith('/api/')) return json({ error: msg(request).notFound }, 404);
       return env.ASSETS.fetch(request);
     } catch (err) {
       console.error('API-fel', err);
-      return json({ error: 'Något gick fel på servern.' }, 500);
+      return json({ error: msg(request).serverError }, 500);
     }
   },
 } satisfies ExportedHandler<Env>;
 
-async function getTop(url: URL, env: Env): Promise<Response> {
+async function getTop(request: Request, url: URL, env: Env): Promise<Response> {
   const mode = url.searchParams.get('mode');
-  if (!isLeaderboardView(mode)) return json({ error: 'Okänt läge.' }, 400);
+  if (!isLeaderboardView(mode)) return json({ error: msg(request).unknownMode }, 400);
   const limitParam = Number.parseInt(url.searchParams.get('limit') ?? '', 10);
   const limit = Number.isFinite(limitParam) ? Math.min(Math.max(limitParam, 1), TOP_LIMIT_MAX) : TOP_LIMIT_DEFAULT;
 
@@ -119,11 +120,12 @@ async function getTop(url: URL, env: Env): Promise<Response> {
 
 async function submit(request: Request, env: Env): Promise<Response> {
   const { success } = await env.SUBMIT_LIMITER.limit({ key: clientIp(request) });
-  if (!success) return json({ error: 'För många försök. Vänta en minut och försök igen.' }, 429);
+  const m = msg(request);
+  if (!success) return json({ error: m.tooMany }, 429);
 
   const read = await readJson(request, MAX_BODY_BYTES);
   if ('error' in read) return read.error;
-  const parsed = parseSubmit(read.body);
+  const parsed = parseSubmit(read.body, m);
   if ('error' in parsed) return json({ error: parsed.error }, 400);
   const { results } = parsed;
 
@@ -136,7 +138,7 @@ async function submit(request: Request, env: Env): Promise<Response> {
   } else {
     const owner = await protectedPlayer(env, nameKeyOf(name));
     if (owner) {
-      return json({ error: `Namnet ${owner.name} är skyddat. Logga in med din passkey eller välj ett annat namn.` }, 403);
+      return json({ error: m.nameProtected(owner.name) }, 403);
     }
   }
   const nameKey = nameKeyOf(name);
@@ -185,37 +187,37 @@ async function submit(request: Request, env: Env): Promise<Response> {
 
 type Parsed = { name: string; results: ScoreSubmission[] } | { error: string };
 
-function parseSubmit(body: unknown): Parsed {
-  if (typeof body !== 'object' || body === null) return { error: 'Förväntade ett objekt.' };
+function parseSubmit(body: unknown, m: ServerMessages): Parsed {
+  if (typeof body !== 'object' || body === null) return { error: m.expectedObject };
   const { name: rawName, results: rawResults } = body as { name?: unknown; results?: unknown };
   const name = normalizeName(rawName);
-  if (!name) return { error: 'Namn saknas.' };
-  if (!Array.isArray(rawResults) || rawResults.length === 0) return { error: 'Inga resultat.' };
-  if (rawResults.length > MAX_RESULTS_PER_SUBMIT) return { error: 'För många resultat på en gång.' };
+  if (!name) return { error: m.noName };
+  if (!Array.isArray(rawResults) || rawResults.length === 0) return { error: m.noResults };
+  if (rawResults.length > MAX_RESULTS_PER_SUBMIT) return { error: m.tooManyResults };
 
   const results: ScoreSubmission[] = [];
   for (const raw of rawResults) {
-    const result = parseResult(raw);
+    const result = parseResult(raw, m);
     if (typeof result === 'string') return { error: result };
     results.push(result);
   }
   return { name, results };
 }
 
-function parseResult(raw: unknown): ScoreSubmission | string {
-  if (typeof raw !== 'object' || raw === null) return 'Ogiltigt resultat.';
+function parseResult(raw: unknown, m: ServerMessages): ScoreSubmission | string {
+  if (typeof raw !== 'object' || raw === null) return m.badResult;
   const { id, mode, score, percent, playedAt } = raw as Record<string, unknown>;
-  if (typeof id !== 'string' || !ID_PATTERN.test(id)) return 'Ogiltigt id.';
-  if (!isLeaderboardMode(mode)) return 'Okänt läge.';
-  if (!Number.isInteger(score) || !Number.isInteger(percent)) return 'Poäng och procent måste vara heltal.';
+  if (typeof id !== 'string' || !ID_PATTERN.test(id)) return m.badId;
+  if (!isLeaderboardMode(mode)) return m.unknownMode;
+  if (!Number.isInteger(score) || !Number.isInteger(percent)) return m.notIntegers;
   const s = score as number;
   const p = percent as number;
-  if (s < 0 || s > maxScoreForMode(mode)) return 'Omöjlig poäng.';
-  if (p < 0 || p > 100) return 'Omöjlig procent.';
-  if (!isConsistent(mode, s, p)) return 'Poäng och procent stämmer inte överens.';
-  if (typeof playedAt !== 'string') return 'Datum saknas.';
+  if (s < 0 || s > maxScoreForMode(mode)) return m.impossibleScore;
+  if (p < 0 || p > 100) return m.impossiblePercent;
+  if (!isConsistent(mode, s, p)) return m.inconsistent;
+  if (typeof playedAt !== 'string') return m.noDate;
   const t = Date.parse(playedAt);
-  if (!Number.isFinite(t) || t < EARLIEST_PLAYED_AT || t > Date.now() + CLOCK_SKEW_MS) return 'Ogiltigt datum.';
+  if (!Number.isFinite(t) || t < EARLIEST_PLAYED_AT || t > Date.now() + CLOCK_SKEW_MS) return m.badDate;
   return { id, mode, score: s, percent: p, playedAt: new Date(t).toISOString() };
 }
 

@@ -3,6 +3,7 @@
  * anslutningen försöker vi igen med växande paus, och spelaren kommer tillbaka som samma spelare.
  */
 import type { LiveClientMessage, LiveCreateResponse, LiveServerMessage, LiveState } from '../shared/live';
+import { t } from '../i18n';
 
 const RETRY_MS = [1000, 2000, 4000, 8000];
 
@@ -19,10 +20,10 @@ export async function createRoom(): Promise<string> {
   try {
     res = await fetch('/api/live', { method: 'POST', signal: AbortSignal.timeout(10000) });
   } catch {
-    throw new Error('Servern går inte att nå just nu.');
+    throw new Error(t().common.serverUnreachable);
   }
   const data = (await res.json().catch(() => null)) as (LiveCreateResponse & { error?: string }) | null;
-  if (!res.ok || !data?.code) throw new Error(data?.error ?? `Kunde inte skapa ett rum (${res.status}).`);
+  if (!res.ok || !data?.code) throw new Error(data?.error ?? t().live.createFailedStatus(res.status));
   return data.code;
 }
 
@@ -85,7 +86,7 @@ export class LiveConnection {
       // 4001: samma spelare anslöt från en annan flik; den här ska inte ta tillbaka platsen.
       if (event.code === 4001 || event.code === 4002) {
         this.closed = true;
-        this.handlers.onError(event.code === 4001 ? 'Du anslöt till rummet från en annan flik.' : 'Rummet har stängts.', true);
+        this.handlers.onError(event.code === 4001 ? t().live.otherTab : t().live.closed, true);
         return;
       }
       this.handlers.onReconnecting(true);

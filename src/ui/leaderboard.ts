@@ -1,5 +1,5 @@
 import { el, clear } from './dom';
-import { MODE_LABELS, type Mode } from '../game/game';
+import { modeLabel, type Mode } from '../game/game';
 import {
   LEADERBOARD_MODES,
   NAME_MAX_LENGTH,
@@ -12,10 +12,11 @@ import {
 import { fetchTop, flushPending, queueResult, setPlayerName } from '../api/leaderboard';
 import { fetchMe, loginWithPasskey, logout, protectName, supportsPasskeys } from '../api/account';
 import { getPlayerName } from '../game/storage';
+import { t } from '../i18n';
 
 const sameName = (a: string, b: string | null) => b !== null && a.toLocaleLowerCase('sv') === b.toLocaleLowerCase('sv');
 
-const VIEW_LABELS: Record<LeaderboardView, string> = { ...MODE_LABELS, [TOTAL]: 'Totalt' };
+const viewLabel = (view: LeaderboardView): string => (view === TOTAL ? t().modes.total : modeLabel(view));
 
 /** Topp 10 för ett läge eller totalen. Spelarens egen rad markeras. */
 function renderTopList(): { node: HTMLElement; load: (mode: LeaderboardView) => Promise<void> } {
@@ -24,13 +25,13 @@ function renderTopList(): { node: HTMLElement; load: (mode: LeaderboardView) => 
   const load = async (mode: LeaderboardView) => {
     const ticket = ++current;
     clear(node);
-    node.append(el('p', { class: 'top-status' }, 'Laddar topplistan…'));
+    node.append(el('p', { class: 'top-status' }, t().leaderboard.loading));
     try {
       const { top } = await fetchTop(mode);
       if (ticket !== current) return;
       clear(node);
       if (!top.length) {
-        node.append(el('p', { class: 'top-status' }, 'Ingen har kommit med på topplistan i det här läget än.'));
+        node.append(el('p', { class: 'top-status' }, t().leaderboard.empty));
         return;
       }
       const me = getPlayerName();
@@ -45,15 +46,15 @@ function renderTopList(): { node: HTMLElement; load: (mode: LeaderboardView) => 
               'li',
               { class: sameName(entry.name, me) ? 'top-row is-me' : 'top-row' },
               // Guld, silver och brons för de tre bästa placeringarna.
-              el('span', { class: rank <= 3 ? `top-rank medal medal-${rank}` : 'top-rank', 'aria-label': `Plats ${rank}` }, `${rank}`),
+              el('span', { class: rank <= 3 ? `top-rank medal medal-${rank}` : 'top-rank', 'aria-label': t().leaderboard.place(rank) }, `${rank}`),
               el(
                 'span',
                 { class: 'top-name' },
                 entry.name,
                 // I totalen syns hur många av lägena summan bygger på.
-                entry.modes !== undefined ? el('span', { class: 'top-modes' }, ` · ${entry.modes} av ${LEADERBOARD_MODES.length} lägen`) : null,
+                entry.modes !== undefined ? el('span', { class: 'top-modes' }, t().leaderboard.modesCount(entry.modes, LEADERBOARD_MODES.length)) : null,
               ),
-              el('span', { class: 'top-score' }, `${entry.score} p`),
+              el('span', { class: 'top-score' }, t().common.points(entry.score)),
             );
           }),
         ),
@@ -61,7 +62,7 @@ function renderTopList(): { node: HTMLElement; load: (mode: LeaderboardView) => 
     } catch (err) {
       if (ticket !== current) return;
       clear(node);
-      node.append(el('p', { class: 'top-status' }, err instanceof Error ? err.message : 'Topplistan kunde inte hämtas.'));
+      node.append(el('p', { class: 'top-status' }, err instanceof Error ? err.message : t().leaderboard.failed));
     }
   };
   return { node, load };
@@ -76,8 +77,8 @@ function renderNameForm(label: string, buttonText: string, onSaved: (name: strin
     maxlength: String(NAME_MAX_LENGTH),
     autocomplete: 'nickname',
     enterkeyhint: 'done',
-    placeholder: 'Ditt namn',
-    'aria-label': 'Ditt namn',
+    placeholder: t().common.yourName,
+    'aria-label': t().common.yourName,
     required: true,
   });
   input.value = getPlayerName() ?? '';
@@ -93,7 +94,7 @@ function renderNameForm(label: string, buttonText: string, onSaved: (name: strin
     event.preventDefault();
     const name = setPlayerName(input.value);
     if (!name) {
-      error.textContent = 'Skriv ett namn först.';
+      error.textContent = t().common.writeName;
       return;
     }
     error.textContent = '';
@@ -105,10 +106,10 @@ function renderNameForm(label: string, buttonText: string, onSaved: (name: strin
 
 function rankText(ranks: SubmitResponse['ranks'], mode: LeaderboardMode): string {
   const parts = [
-    ranks[mode] ? `plats ${ranks[mode]} i ${MODE_LABELS[mode]}` : null,
-    ranks[TOTAL] ? `plats ${ranks[TOTAL]} totalt` : null,
-  ].filter(Boolean);
-  return parts.length ? ` Du ligger på ${parts.join(' och ')}.` : '';
+    ranks[mode] ? t().leaderboard.rankInMode(ranks[mode], modeLabel(mode)) : null,
+    ranks[TOTAL] ? t().leaderboard.rankTotal(ranks[TOTAL]) : null,
+  ].filter((part): part is string => part !== null);
+  return t().leaderboard.ranks(parts);
 }
 
 /** Topplistan på startskärmen: namn, flikar per läge och listan. */
@@ -124,7 +125,7 @@ export function renderStartLeaderboard(): HTMLElement {
     const tab = el(
       'button',
       { class: 'top-tab', type: 'button', role: 'tab', 'data-mode': mode, 'aria-selected': String(mode === selected) },
-      VIEW_LABELS[mode],
+      viewLabel(mode),
     );
     tab.addEventListener('click', () => {
       selected = mode;
@@ -154,7 +155,7 @@ export function renderStartLeaderboard(): HTMLElement {
       note(done(name));
       await sync(true);
     } catch (err) {
-      note(err instanceof Error ? err.message : 'Något gick fel.', true);
+      note(err instanceof Error ? err.message : t().common.somethingWrong, true);
       button.disabled = false;
     }
   };
@@ -162,7 +163,7 @@ export function renderStartLeaderboard(): HTMLElement {
   const loginLink = (text: string) => {
     const btn = el('button', { class: 'link-btn', type: 'button' }, text);
     btn.addEventListener('click', () =>
-      void runAccountAction(btn, loginWithPasskey, (name) => `Inloggad som ${name}.`),
+      void runAccountAction(btn, loginWithPasskey, (name) => t().account.loginDone(name)),
     );
     return btn;
   };
@@ -172,40 +173,40 @@ export function renderStartLeaderboard(): HTMLElement {
     const name = getPlayerName();
 
     if (account) {
-      const out = el('button', { class: 'link-btn', type: 'button' }, 'Logga ut');
+      const out = el('button', { class: 'link-btn', type: 'button' }, t().account.logout);
       out.addEventListener('click', async () => {
         out.disabled = true;
         await logout();
         account = null;
         showPlayer();
-        note('Utloggad på den här enheten.');
+        note(t().account.loggedOut);
         await list.load(selected);
       });
-      playerRow.append(el('p', { class: 'player-name' }, '🔒 Inloggad som ', el('strong', {}, account), ' · ', out));
+      playerRow.append(el('p', { class: 'player-name' }, t().account.loggedInAs, el('strong', {}, account), ' · ', out));
       return;
     }
 
     if (!name) {
-      playerRow.append(renderNameForm('Skriv ditt namn för att komma med på topplistan.', 'Spara', onNameSaved));
-      if (passkeys) playerRow.append(el('p', { class: 'account-hint' }, 'Har du skyddat ditt namn med en passkey? ', loginLink('Logga in')));
+      playerRow.append(renderNameForm(t().leaderboard.joinPrompt, t().common.save, onNameSaved));
+      if (passkeys) playerRow.append(el('p', { class: 'account-hint' }, t().account.haveProtected, loginLink(t().account.login)));
       return;
     }
 
-    const change = el('button', { class: 'link-btn', type: 'button' }, 'Byt namn');
+    const change = el('button', { class: 'link-btn', type: 'button' }, t().leaderboard.rename);
     change.addEventListener('click', () => {
       clear(playerRow);
-      playerRow.append(renderNameForm('Nytt namn för kommande omgångar:', 'Spara', onNameSaved));
+      playerRow.append(renderNameForm(t().leaderboard.renamePrompt, t().common.save, onNameSaved));
       playerRow.querySelector('input')?.focus();
     });
-    playerRow.append(el('p', { class: 'player-name' }, 'Du spelar som ', el('strong', {}, name), ' · ', change));
+    playerRow.append(el('p', { class: 'player-name' }, t().leaderboard.playingAs, el('strong', {}, name), ' · ', change));
 
     if (passkeys) {
-      const protect = el('button', { class: 'btn passkey-btn', type: 'button' }, '🔒 Skydda namnet med passkey');
+      const protect = el('button', { class: 'btn passkey-btn', type: 'button' }, t().account.protect);
       protect.addEventListener('click', () =>
         void runAccountAction(
           protect,
           () => protectName(name),
-          (n) => `Namnet ${n} är skyddat. Logga in med samma passkey på dina andra enheter.`,
+          (n) => t().account.protectDone(n),
         ),
       );
       playerRow.append(
@@ -213,8 +214,8 @@ export function renderStartLeaderboard(): HTMLElement {
         el(
           'p',
           { class: 'account-hint' },
-          `Med Face ID, Touch ID eller skärmlåset. Då kan ingen annan spara som ${name}, och du kan logga in på andra enheter. Inget lösenord, ingen e-post. Redan skyddat? `,
-          loginLink('Logga in'),
+          t().account.protectHint(name),
+          loginLink(t().account.login),
         ),
       );
     }
@@ -224,10 +225,10 @@ export function renderStartLeaderboard(): HTMLElement {
     try {
       const res = await flushPending();
       if (announce && res && res.saved > 0) {
-        note(res.saved === 1 ? 'Ditt tidigare resultat har lagts till på topplistan.' : `Dina ${res.saved} tidigare resultat har lagts till på topplistan.`);
+        note(t().leaderboard.migrated(res.saved));
       }
     } catch (err) {
-      if (announce) note(`${err instanceof Error ? err.message : 'Kunde inte spara.'} Resultaten skickas nästa gång.`, true);
+      if (announce) note(t().leaderboard.retryMany(err instanceof Error ? err.message : t().leaderboard.saveFailed), true);
     }
     await list.load(selected);
   };
@@ -252,10 +253,10 @@ export function renderStartLeaderboard(): HTMLElement {
   return el(
     'section',
     { class: 'leaderboard', 'aria-labelledby': 'top-heading' },
-    el('h2', { id: 'top-heading' }, 'Topplista'),
+    el('h2', { id: 'top-heading' }, t().leaderboard.title),
     playerRow,
     status,
-    el('div', { class: 'top-tabs', role: 'tablist', 'aria-label': 'Läge' }, ...tabs),
+    el('div', { class: 'top-tabs', role: 'tablist', 'aria-label': t().leaderboard.tabs }, ...tabs),
     list.node,
   );
 }
@@ -270,13 +271,13 @@ export function renderEndLeaderboard(mode: Mode, result: ScoreSubmission): HTMLE
   const formSlot = el('div', {});
 
   const save = async () => {
-    status.textContent = 'Sparar på topplistan…';
+    status.textContent = t().leaderboard.saving;
     try {
       const res = await flushPending();
       const name = getPlayerName() ?? '';
-      status.textContent = `Sparat som ${name}.${res ? rankText(res.ranks, mode) : ''}`;
+      status.textContent = t().leaderboard.saved(name, res ? rankText(res.ranks, mode) : '');
     } catch (err) {
-      status.textContent = `${err instanceof Error ? err.message : 'Kunde inte spara.'} Resultatet skickas nästa gång.`;
+      status.textContent = t().leaderboard.retryOne(err instanceof Error ? err.message : t().leaderboard.saveFailed);
       status.classList.add('is-error');
     }
     await list.load(mode);
@@ -286,7 +287,7 @@ export function renderEndLeaderboard(mode: Mode, result: ScoreSubmission): HTMLE
     void save();
   } else {
     formSlot.append(
-      renderNameForm('Vill du komma med på topplistan? Skriv ditt namn.', 'Spara', () => {
+      renderNameForm(t().leaderboard.endPrompt, t().common.save, () => {
         clear(formSlot);
         queueResult(result);
         void save();
@@ -298,7 +299,7 @@ export function renderEndLeaderboard(mode: Mode, result: ScoreSubmission): HTMLE
   return el(
     'section',
     { class: 'leaderboard', 'aria-labelledby': 'end-top-heading' },
-    el('h3', { id: 'end-top-heading' }, `Topplista · ${MODE_LABELS[mode]}`),
+    el('h3', { id: 'end-top-heading' }, t().leaderboard.titleMode(modeLabel(mode))),
     formSlot,
     status,
     list.node,

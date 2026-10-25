@@ -2,6 +2,7 @@
 import { normalizeName } from '../shared/leaderboard';
 import { LIVE_CODE_LENGTH, LIVE_CODE_PATTERN } from '../shared/live';
 import { el } from '../ui/dom';
+import { t } from '../i18n';
 
 export interface LiveEntryOptions {
   /** Koden från en delad länk; då visas bara "Gå med". */
@@ -19,8 +20,8 @@ export function renderLiveEntry(opts: LiveEntryOptions): HTMLElement {
     name: 'live-name',
     autocomplete: 'nickname',
     maxlength: '20',
-    placeholder: 'Ditt namn',
-    'aria-label': 'Ditt namn',
+    placeholder: t().common.yourName,
+    'aria-label': t().common.yourName,
   });
   nameInput.value = opts.name ?? '';
   const error = el('p', { class: 'name-error', role: 'alert' });
@@ -28,7 +29,7 @@ export function renderLiveEntry(opts: LiveEntryOptions): HTMLElement {
   const readName = (): string | null => {
     const name = normalizeName(nameInput.value);
     if (!name) {
-      error.textContent = 'Skriv ett namn först.';
+      error.textContent = t().common.writeName;
       nameInput.focus();
     }
     return name;
@@ -42,18 +43,18 @@ export function renderLiveEntry(opts: LiveEntryOptions): HTMLElement {
     autocapitalize: 'characters',
     spellcheck: 'false',
     maxlength: String(LIVE_CODE_LENGTH),
-    placeholder: 'KOD',
-    'aria-label': 'Rumskod',
+    placeholder: t().live.codePlaceholder,
+    'aria-label': t().live.codeLabel,
   });
   if (opts.code) codeInput.value = opts.code;
-  const join = el('button', { class: 'btn btn-primary', type: 'submit' }, opts.code ? `Gå med i ${opts.code}` : 'Gå med');
+  const join = el('button', { class: 'btn btn-primary', type: 'submit' }, opts.code ? t().live.joinCode(opts.code) : t().live.join);
   const joinForm = el('form', { class: 'live-join' }, opts.code ? null : el('div', { class: 'name-row' }, codeInput, join), opts.code ? join : null);
   joinForm.addEventListener('submit', (event) => {
     event.preventDefault();
     error.textContent = '';
     const code = codeInput.value.trim().toUpperCase();
     if (!LIVE_CODE_PATTERN.test(code)) {
-      error.textContent = `Rumskoden är ${LIVE_CODE_LENGTH} tecken, t.ex. KXR4.`;
+      error.textContent = t().live.codeInvalid(LIVE_CODE_LENGTH);
       codeInput.focus();
       return;
     }
@@ -61,39 +62,37 @@ export function renderLiveEntry(opts: LiveEntryOptions): HTMLElement {
     if (name) opts.onJoin(code, name);
   });
 
-  const create = el('button', { class: 'btn btn-primary', type: 'button' }, 'Skapa ett rum');
+  const create = el('button', { class: 'btn btn-primary', type: 'button' }, t().live.create);
   create.addEventListener('click', () => {
     error.textContent = '';
     const name = readName();
     if (!name) return;
     create.disabled = true;
-    create.textContent = 'Skapar rum …';
+    create.textContent = t().live.creating;
     opts.onCreate(name).catch((err: unknown) => {
-      error.textContent = err instanceof Error ? err.message : 'Kunde inte skapa ett rum.';
+      error.textContent = err instanceof Error ? err.message : t().live.createFailed;
       create.disabled = false;
-      create.textContent = 'Skapa ett rum';
+      create.textContent = t().live.create;
     });
   });
 
-  const back = el('button', { class: 'btn', type: 'button' }, 'Tillbaka');
+  const back = el('button', { class: 'btn', type: 'button' }, t().common.back);
   back.addEventListener('click', opts.onBack);
 
   return el(
     'section',
     { class: 'end live-entry' },
-    el('h2', {}, 'Spela live'),
+    el('h2', {}, t().live.title),
     el(
       'p',
       { class: 'lead' },
-      opts.code
-        ? `Du är inbjuden till rum ${opts.code}. Skriv ditt namn och gå med.`
-        : 'Tävla mot kompisar i realtid: alla får samma län samtidigt, och snabbast rätt svar ger mest poäng.',
+      opts.code ? t().live.invited(opts.code) : t().live.intro,
     ),
-    el('label', { class: 'name-label', for: 'live-name' }, 'Namn'),
+    el('label', { class: 'name-label', for: 'live-name' }, t().live.name),
     nameInput,
     error,
     opts.code ? null : el('div', { class: 'btn-row' }, create),
-    opts.code ? null : el('p', { class: 'live-or' }, 'eller gå med i ett rum'),
+    opts.code ? null : el('p', { class: 'live-or' }, t().live.or),
     joinForm,
     el('div', { class: 'btn-row' }, back),
   );
