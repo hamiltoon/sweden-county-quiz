@@ -2,15 +2,19 @@
  * Sverigespelets API: topplistan. Allt utom /api/* serveras direkt som statiska filer
  * (se run_worker_first i wrangler.jsonc), så den här koden körs bara för API-anropen.
  *
- *   GET  /api/scores?mode=lan&limit=10  → bästa resultat per spelare i ett läge
- *   POST /api/scores                     → spara ett eller flera avslutade resultat
+ *   GET  /api/scores?mode=lan&limit=10    → bästa resultat per spelare i ett läge
+ *   GET  /api/scores?mode=total&limit=10  → summan av varje spelares bästa resultat i alla lägen
+ *   POST /api/scores                       → spara ett eller flera avslutade resultat
  */
 import {
   MAX_RESULTS_PER_SUBMIT,
   TOP_LIMIT_DEFAULT,
   TOP_LIMIT_MAX,
+  TOTAL,
   isLeaderboardMode,
+  isLeaderboardView,
   maxScoreForMode,
+  maxScoreForView,
   normalizeName,
   type LeaderboardMode,
   type ScoreSubmission,
@@ -48,9 +52,36 @@ export default {
 
 async function getTop(url: URL, env: Env): Promise<Response> {
   const mode = url.searchParams.get('mode');
-  if (!isLeaderboardMode(mode)) return json({ error: 'Okänt läge.' }, 400);
+  if (!isLeaderboardView(mode)) return json({ error: 'Okänt läge.' }, 400);
   const limitParam = Number.parseInt(url.searchParams.get('limit') ?? '', 10);
   const limit = Number.isFinite(limitParam) ? Math.min(Math.max(limitParam, 1), TOP_LIMIT_MAX) : TOP_LIMIT_DEFAULT;
+
+  if (mode === TOTAL) {
+    // Summan av varje spelares bästa resultat per läge. Namnet visas som spelaren senast skrev det.
+    // Vid lika summa står den som nådde summan först överst.
+    const { results } = await env.DB.prepare(
+      `WITH best AS (
+         SELECT name_key, score, played_at,
+                ROW_NUMBER() OVER (PARTITION BY name_key, mode ORDER BY score DESC, played_at ASC, id) AS rn
+         FROM scores
+       ),
+       latest AS (
+         SELECT name_key, name,
+                ROW_NUMBER() OVER (PARTITION BY name_key ORDER BY created_at DESC, id) AS rn
+         FROM scores
+       )
+       SELECT latest.name AS name, SUM(best.score) AS score, COUNT(*) AS modes, MAX(best.played_at) AS playedAt
+       FROM best JOIN latest ON latest.name_key = best.name_key AND latest.rn = 1
+       WHERE best.rn = 1
+       GROUP BY best.name_key
+       ORDER BY score DESC, playedAt ASC
+       LIMIT ?1`,
+    )
+      .bind(limit)
+      .all<TopEntry>();
+    const body: TopResponse = { mode, maxScore: maxScoreForView(mode), top: results };
+    return json(body);
+  }
 
   // Bästa resultat per spelare: vid lika poäng räknas det resultat som spelades först.
   const { results } = await env.DB.prepare(
@@ -115,6 +146,19 @@ async function submit(request: Request, env: Env): Promise<Response> {
       .first<{ rank: number }>();
     if (row) ranks[mode] = row.rank;
   }
+
+  // Placering i totalen: antal spelare vars summa av bästa resultat per läge är högre.
+  const totalRow = await env.DB.prepare(
+    `WITH totals AS (
+       SELECT name_key, SUM(best) AS total FROM (
+         SELECT name_key, MAX(score) AS best FROM scores GROUP BY name_key, mode
+       ) GROUP BY name_key
+     )
+     SELECT 1 + (SELECT COUNT(*) FROM totals WHERE total > (SELECT total FROM totals WHERE name_key = ?1)) AS rank`,
+  )
+    .bind(nameKey)
+    .first<{ rank: number }>();
+  if (totalRow) ranks[TOTAL] = totalRow.rank;
 
   const response: SubmitResponse = { saved, ranks };
   return json(response, 201);

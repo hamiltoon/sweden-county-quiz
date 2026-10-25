@@ -1,16 +1,26 @@
 import { el, clear } from './dom';
 import { MODE_LABELS, type Mode } from '../game/game';
-import { NAME_MAX_LENGTH, type LeaderboardMode, type ScoreSubmission, type SubmitResponse } from '../shared/leaderboard';
+import {
+  LEADERBOARD_MODES,
+  NAME_MAX_LENGTH,
+  TOTAL,
+  type LeaderboardMode,
+  type LeaderboardView,
+  type ScoreSubmission,
+  type SubmitResponse,
+} from '../shared/leaderboard';
 import { fetchTop, flushPending, queueResult, setPlayerName } from '../api/leaderboard';
 import { getPlayerName } from '../game/storage';
 
 const sameName = (a: string, b: string | null) => b !== null && a.toLocaleLowerCase('sv') === b.toLocaleLowerCase('sv');
 
-/** Topp 10 för ett läge. Spelarens egen rad markeras. */
-function renderTopList(): { node: HTMLElement; load: (mode: LeaderboardMode) => Promise<void> } {
+const VIEW_LABELS: Record<LeaderboardView, string> = { ...MODE_LABELS, [TOTAL]: 'Totalt' };
+
+/** Topp 10 för ett läge eller totalen. Spelarens egen rad markeras. */
+function renderTopList(): { node: HTMLElement; load: (mode: LeaderboardView) => Promise<void> } {
   const node = el('div', { class: 'top-list', 'aria-live': 'polite' });
   let current = 0;
-  const load = async (mode: LeaderboardMode) => {
+  const load = async (mode: LeaderboardView) => {
     const ticket = ++current;
     clear(node);
     node.append(el('p', { class: 'top-status' }, 'Laddar topplistan…'));
@@ -34,7 +44,13 @@ function renderTopList(): { node: HTMLElement; load: (mode: LeaderboardMode) => 
               'li',
               { class: sameName(entry.name, me) ? 'top-row is-me' : 'top-row' },
               el('span', { class: 'top-rank' }, `${rank}`),
-              el('span', { class: 'top-name' }, entry.name),
+              el(
+                'span',
+                { class: 'top-name' },
+                entry.name,
+                // I totalen syns hur många av lägena summan bygger på.
+                entry.modes !== undefined ? el('span', { class: 'top-modes' }, ` · ${entry.modes} av ${LEADERBOARD_MODES.length} lägen`) : null,
+              ),
               el('span', { class: 'top-score' }, `${entry.score} p`),
             );
           }),
@@ -86,23 +102,27 @@ function renderNameForm(label: string, buttonText: string, onSaved: (name: strin
 }
 
 function rankText(ranks: SubmitResponse['ranks'], mode: LeaderboardMode): string {
-  const rank = ranks[mode];
-  return rank ? ` Du ligger på plats ${rank} i ${MODE_LABELS[mode]}.` : '';
+  const parts = [
+    ranks[mode] ? `plats ${ranks[mode]} i ${MODE_LABELS[mode]}` : null,
+    ranks[TOTAL] ? `plats ${ranks[TOTAL]} totalt` : null,
+  ].filter(Boolean);
+  return parts.length ? ` Du ligger på ${parts.join(' och ')}.` : '';
 }
 
 /** Topplistan på startskärmen: namn, flikar per läge och listan. */
 export function renderStartLeaderboard(): HTMLElement {
-  const modes: LeaderboardMode[] = ['lan', 'stad', 'sjo', 'blandat'];
-  let selected: LeaderboardMode = 'lan';
+  // Totalen först: summan av spelarens bästa resultat i varje läge.
+  const views: LeaderboardView[] = [TOTAL, ...LEADERBOARD_MODES];
+  let selected: LeaderboardView = TOTAL;
   const list = renderTopList();
   const playerRow = el('div', { class: 'player-row' });
   const status = el('p', { class: 'top-note', 'aria-live': 'polite' });
 
-  const tabs = modes.map((mode) => {
+  const tabs = views.map((mode) => {
     const tab = el(
       'button',
       { class: 'top-tab', type: 'button', role: 'tab', 'data-mode': mode, 'aria-selected': String(mode === selected) },
-      MODE_LABELS[mode],
+      VIEW_LABELS[mode],
     );
     tab.addEventListener('click', () => {
       selected = mode;

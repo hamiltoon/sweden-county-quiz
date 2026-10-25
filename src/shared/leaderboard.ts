@@ -15,14 +15,27 @@ export const MAX_RESULTS_PER_SUBMIT = 10;
 export const TOP_LIMIT_DEFAULT = 10;
 export const TOP_LIMIT_MAX = 50;
 
+/** En flik på topplistan: ett läge, eller totalen (summan av spelarens bästa resultat i varje läge). */
+export const TOTAL = 'total';
+export type LeaderboardView = LeaderboardMode | typeof TOTAL;
+
 export function isLeaderboardMode(value: unknown): value is LeaderboardMode {
   return typeof value === 'string' && (LEADERBOARD_MODES as readonly string[]).includes(value);
+}
+
+export function isLeaderboardView(value: unknown): value is LeaderboardView {
+  return value === TOTAL || isLeaderboardMode(value);
 }
 
 /** Högsta möjliga poäng i en omgång: antal frågor gånger bästa poäng per fråga. */
 export function maxScoreForMode(mode: LeaderboardMode): number {
   const questions = mode === 'sjo' ? LAKES.length : COUNTIES.length;
   return questions * Math.max(...CONFIG.pointsByAttempt);
+}
+
+/** Högsta möjliga poäng för en flik; totalen är summan av alla lägens max. */
+export function maxScoreForView(view: LeaderboardView): number {
+  return view === TOTAL ? LEADERBOARD_MODES.reduce((sum, m) => sum + maxScoreForMode(m), 0) : maxScoreForMode(view);
 }
 
 /**
@@ -59,19 +72,22 @@ export interface SubmitRequest {
 
 export interface SubmitResponse {
   saved: number;
-  /** Spelarens placering per läge efter sparandet (1 = bäst). */
-  ranks: Partial<Record<LeaderboardMode, number>>;
+  /** Spelarens placering per läge, och totalt, efter sparandet (1 = bäst). */
+  ranks: Partial<Record<LeaderboardView, number>>;
 }
 
 export interface TopEntry {
   name: string;
   score: number;
-  percent: number;
+  /** Andel rätt i det bästa resultatet. Saknas i totalen. */
+  percent?: number;
+  /** Antal lägen som räknas in. Bara i totalen. */
+  modes?: number;
   playedAt: string;
 }
 
 export interface TopResponse {
-  mode: LeaderboardMode;
+  mode: LeaderboardView;
   maxScore: number;
   top: TopEntry[];
 }

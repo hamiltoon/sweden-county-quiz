@@ -25,7 +25,7 @@ I de andra lägena finns sjöarna kvar på kartan som riktmärken, utan namn. Kl
 
 ## Topplista
 
-Skriv ett namn (på startskärmen eller efter en omgång) så sparas varje avslutad omgång på topplistan. Topplistan visar varje spelares bästa resultat per läge, topp 10. Lika poäng ger delad placering, och den som kom dit först står överst.
+Skriv ett namn (på startskärmen eller efter en omgång) så sparas varje avslutad omgång på topplistan. Topplistan visar varje spelares bästa resultat per läge, topp 10. Fliken **Totalt** summerar varje spelares bästa resultat i alla fyra lägena (max 219 poäng). Lika poäng ger delad placering, och den som kom dit först står överst.
 
 - **Tidigare resultat:** första gången man väljer namn laddas webbläsarens sparade rekord upp, ett per läge.
 - **Offline:** resultat som inte går att skicka läggs i en kö i `localStorage` och skickas nästa gång startskärmen visas. Varje resultat har ett eget id, så ett omförsök sparar aldrig dubbelt.
@@ -59,8 +59,8 @@ Topplistan ligger i D1-databasen `sverigespelet` (tabellen `scores`, se `migrati
 
 API:
 
-- `GET /api/scores?mode=lan&limit=10` – bästa resultat per spelare i ett läge (`lan`, `stad`, `sjo`, `blandat`).
-- `POST /api/scores` med `{ "name": "...", "results": [{ "id", "mode", "score", "percent", "playedAt" }] }` – sparar upp till tio resultat och svarar med spelarens placering per läge.
+- `GET /api/scores?mode=lan&limit=10` – bästa resultat per spelare i ett läge (`lan`, `stad`, `sjo`, `blandat`), eller `mode=total` för summan av varje spelares bästa resultat i alla lägen.
+- `POST /api/scores` med `{ "name": "...", "results": [{ "id", "mode", "score", "percent", "playedAt" }] }` – sparar upp till tio resultat och svarar med spelarens placering per läge och totalt.
 
 ## Kartdata
 
