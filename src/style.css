@@ -13,8 +13,23 @@
   --lake: #a8cbec;
   --lake-border: #5d8fbf;
   --lake-hover: #7fb2e3;
-  --ok: #1e9e5a;
-  --bad: #d64545;
+  /* Rätt och fel som text och ikoner: minst 4,5:1 mot ljus bakgrund. */
+  --ok: #13703f;
+  --bad: #b42323;
+  /* Bakgrund bakom vit text och vita ikoner (rätt/fel-rutan, prickarna i live), i båda lägena. */
+  --ok-strong: #13703f;
+  --bad-strong: #b42323;
+  /*
+   * Hur det gick för en fråga på kartan och minikartan: rätt direkt, efter fler försök, missad.
+   * Valda så att de skiljer sig också med rödgrön färgblindhet; missade får dessutom streck.
+   */
+  --res-first: #0f7b6c;
+  --res-later: #e8b13a;
+  --res-missed: #c0392b;
+  --res-first-fill: color-mix(in srgb, var(--res-first) 35%, var(--land));
+  --res-later-fill: color-mix(in srgb, var(--res-later) 45%, var(--land));
+  --res-missed-fill: color-mix(in srgb, var(--res-missed) 65%, var(--land));
+  --res-missed-line: color-mix(in srgb, var(--res-missed) 55%, #000);
   --reveal: #2b7fd6;
   --warn: #d99a1e;
   --neighbor: #e4e0d6;
@@ -44,6 +59,13 @@
     --lake-hover: #2c5a8f;
     --ok: #2fc271;
     --bad: #ef5e5e;
+    --res-first: #33b5c0;
+    --res-later: #f0c050;
+    --res-missed: #ff9e8a;
+    --res-first-fill: color-mix(in srgb, var(--res-first) 40%, var(--land));
+    --res-later-fill: color-mix(in srgb, var(--res-later) 75%, var(--land));
+    --res-missed-fill: color-mix(in srgb, var(--res-missed) 90%, var(--land));
+    --res-missed-line: color-mix(in srgb, var(--res-missed) 50%, #000);
     --reveal: #62a5ff;
     --warn: #e5b04a;
     --neighbor: #1d2535;
@@ -72,6 +94,18 @@ body {
   height: 100dvh;
   display: flex;
   flex-direction: column;
+}
+
+/* Bara på staging (se environment.ts): en randig banderoll som inte går att missa. */
+.staging-banner {
+  flex: none;
+  padding: calc(4px + var(--safe-top)) 12px 4px;
+  background: repeating-linear-gradient(-45deg, #ffd400 0 14px, #ffbf00 14px 28px);
+  color: #1a1a1a;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-align: center;
 }
 
 .screen {
@@ -347,17 +381,30 @@ a {
 
 .mini-county[data-result='first'],
 .mini-lake[data-result='first'] {
-  fill: var(--ok);
+  fill: var(--res-first);
 }
 
 .mini-county[data-result='later'],
 .mini-lake[data-result='later'] {
-  fill: var(--warn);
+  fill: var(--res-later);
 }
 
 .mini-county[data-result='missed'],
 .mini-lake[data-result='missed'] {
-  fill: var(--bad);
+  fill: url(#hatch-missed-mini) var(--res-missed);
+}
+
+/* Streckmönstret för missade (se map/patterns.ts). */
+.hatch-bg {
+  fill: var(--res-missed-fill);
+}
+
+.hatch-line {
+  fill: var(--res-missed-line);
+}
+
+#hatch-missed-mini .hatch-bg {
+  fill: var(--res-missed);
 }
 
 /* Sjöarna är små på minikartan; en tjock kontur i samma färg gör resultatet synligt. */
@@ -367,15 +414,15 @@ a {
 }
 
 .recap-map .mini-lake[data-result='first'] {
-  stroke: var(--ok);
+  stroke: var(--res-first);
 }
 
 .recap-map .mini-lake[data-result='later'] {
-  stroke: var(--warn);
+  stroke: var(--res-later);
 }
 
 .recap-map .mini-lake[data-result='missed'] {
-  stroke: var(--bad);
+  stroke: var(--res-missed-line);
 }
 
 .mini-point {
@@ -384,15 +431,18 @@ a {
 }
 
 .mini-point[data-result='first'] {
-  fill: var(--ok);
+  fill: var(--res-first);
 }
 
 .mini-point[data-result='later'] {
-  fill: var(--warn);
+  fill: var(--res-later);
 }
 
+/* Missade prickar får en mörk kant, så att de skiljer sig också utan färg. */
 .mini-point[data-result='missed'] {
-  fill: var(--bad);
+  fill: var(--res-missed);
+  stroke: var(--text);
+  stroke-width: 1.4;
 }
 
 /* Besvarade städer under omgången i läget "Fler städer". */
@@ -404,15 +454,17 @@ a {
 }
 
 .result-dot[data-result='first'] {
-  fill: var(--ok);
+  fill: var(--res-first);
 }
 
 .result-dot[data-result='later'] {
-  fill: var(--warn);
+  fill: var(--res-later);
 }
 
 .result-dot[data-result='missed'] {
-  fill: var(--bad);
+  fill: var(--res-missed);
+  stroke: var(--text);
+  stroke-width: 2.5px;
 }
 
 .recap-legend {
@@ -442,15 +494,15 @@ a {
 }
 
 .swatch-first {
-  background: var(--ok);
+  background: var(--res-first);
 }
 
 .swatch-later {
-  background: var(--warn);
+  background: var(--res-later);
 }
 
 .swatch-missed {
-  background: var(--bad);
+  background: repeating-linear-gradient(45deg, var(--res-missed-line) 0 1.5px, var(--res-missed) 1.5px 3.5px);
 }
 
 .score-sub {
@@ -839,15 +891,15 @@ a {
 
 /* Kartan fylls under omgången: hur det gick för varje län (se CONFIG.fillMapDuringRound). */
 .county[data-result='first'] {
-  fill: color-mix(in srgb, var(--ok) 38%, var(--land));
+  fill: var(--res-first-fill);
 }
 
 .county[data-result='later'] {
-  fill: color-mix(in srgb, var(--warn) 42%, var(--land));
+  fill: var(--res-later-fill);
 }
 
 .county[data-result='missed'] {
-  fill: color-mix(in srgb, var(--bad) 36%, var(--land));
+  fill: url(#hatch-missed) var(--res-missed-fill);
 }
 
 /* Grannländerna och en ljus glöd längs kusterna, som bakgrund. De tar inte emot klick. */
@@ -890,21 +942,6 @@ a {
   }
 }
 
-/* Mot det mörka landet behöver färgerna mer kraft för att inte bli grumliga. */
-@media (prefers-color-scheme: dark) {
-  .county[data-result='first'] {
-    fill: color-mix(in srgb, var(--ok) 55%, var(--land));
-  }
-
-  .county[data-result='later'] {
-    fill: color-mix(in srgb, var(--warn) 62%, var(--land));
-  }
-
-  .county[data-result='missed'] {
-    fill: color-mix(in srgb, var(--bad) 52%, var(--land));
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .county.is-correct,
   .lake.is-correct,
@@ -918,12 +955,13 @@ a {
   }
 }
 
+/* Det klickade länet: samma färger som resultatet, så att rätt och fel syns även utan färgseende. */
 .county.is-correct {
-  fill: var(--ok);
+  fill: var(--res-first);
 }
 
 .county.is-wrong {
-  fill: var(--bad);
+  fill: url(#hatch-missed) var(--res-missed);
 }
 
 .county.is-reveal {
@@ -981,23 +1019,23 @@ a {
 }
 
 .lake[data-result='first'] {
-  fill: color-mix(in srgb, var(--ok) 55%, var(--lake));
+  fill: var(--res-first-fill);
 }
 
 .lake[data-result='later'] {
-  fill: color-mix(in srgb, var(--warn) 55%, var(--lake));
+  fill: var(--res-later-fill);
 }
 
 .lake[data-result='missed'] {
-  fill: color-mix(in srgb, var(--bad) 50%, var(--lake));
+  fill: url(#hatch-missed) var(--res-missed-fill);
 }
 
 .lake.is-correct {
-  fill: var(--ok);
+  fill: var(--res-first);
 }
 
 .lake.is-wrong {
-  fill: var(--bad);
+  fill: url(#hatch-missed) var(--res-missed);
 }
 
 .lake.is-reveal {
@@ -1085,11 +1123,11 @@ a {
 }
 
 .pin.is-correct .pin-dot {
-  fill: var(--ok);
+  fill: var(--ok-strong);
 }
 
 .pin.is-wrong .pin-dot {
-  fill: var(--bad);
+  fill: var(--bad-strong);
 }
 
 .pin.is-mine .pin-dot {
@@ -1196,13 +1234,30 @@ a {
 }
 
 .toast-ok {
-  background: var(--ok);
+  background: var(--ok-strong);
   color: #fff;
 }
 
 .toast-bad {
-  background: var(--bad);
+  background: var(--bad-strong);
   color: #fff;
+}
+
+/* Ikonen gör att rätt och fel går att skilja åt utan att se färgen; skärmläsare hoppar över den. */
+.toast-ok::before,
+.toast-bad::before {
+  margin-right: 0.4em;
+  font-weight: 800;
+}
+
+.toast-ok::before {
+  content: '✓';
+  content: '✓' / '';
+}
+
+.toast-bad::before {
+  content: '✗';
+  content: '✗' / '';
 }
 
 /* ---------- Live ---------- */

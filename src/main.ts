@@ -22,6 +22,7 @@ import { createRoom, LiveConnection } from './live/connection';
 import { renderLiveEntry } from './live/entry';
 import { LiveView, type LiveMaps } from './live/view';
 import type { LiveQuestionKind } from './shared/live';
+import { IS_STAGING } from './environment';
 import { applyToDocument, countyName, municipalityName, onLangChange, provinceName, t } from './i18n';
 import { adoptAccountLanguage } from './api/account';
 
@@ -427,6 +428,10 @@ function regionName(code: string): string {
   return municipality ? municipalityName(municipality) : code;
 }
 
+if (IS_STAGING) {
+  // Överst på varje skärm; texten sätts (och byts med språket) av applyToDocument().
+  document.getElementById('app')?.prepend(el('aside', { id: 'staging-banner', class: 'staging-banner', 'aria-label': 'Staging' }));
+}
 applyToDocument();
 // Byter spelaren språk (på startskärmen, eller för att kontot har ett annat språk sparat) ritas
 // startskärmen om på det nya språket.

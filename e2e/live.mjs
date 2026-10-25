@@ -52,6 +52,17 @@ async function checkReveal(t, label, p, players) {
   t.check(r.ownRowVisible && r.standingsShare <= 0.34, `${label}: egna raden syns, ställningen tar ${Math.round(r.standingsShare * 100)} % av höjden`);
 }
 
+/** Värden når Starta matchen utan att scrolla (PO-22). */
+async function checkStartVisible(t, label, p) {
+  const r = await p.evaluate(() => {
+    const btn = document.querySelector('.live-lobby-action .btn-primary');
+    const box = btn.getBoundingClientRect();
+    const hit = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+    return { top: box.top, bottom: box.bottom, vh: innerHeight, onTop: btn === hit || btn.contains(hit), scroll: document.querySelector('.screen-end').scrollTop };
+  });
+  t.check(r.scroll === 0 && r.top >= 0 && r.bottom <= r.vh && r.onTop, `${label}: Starta matchen syns utan scroll i lobbyn (${Math.round(r.top)}–${Math.round(r.bottom)} av ${r.vh} px, scroll ${r.scroll}, överst ${r.onTop})`);
+}
+
 /** Väntar på fråga n (1-baserad) och på att kartan är klar. */
 async function waitQuestion(p, n) {
   await p.waitForFunction((n) => document.querySelector('.hud-progress')?.textContent === `${n}/10` && !document.querySelector('.live-standings') && document.querySelector('.map path'), n, { timeout: 30000 });
@@ -68,6 +79,7 @@ async function twoPlayers(run, t) {
   await g.fill('.live-entry input[name=live-name]', 'Bo');
   await g.click('.live-entry .btn-primary');
   await h.waitForFunction(() => document.querySelectorAll('.live-players li').length === 2);
+  await checkStartVisible(t, 'iPhone', h);
   await t.shot(h, 'lobby-2');
   await h.click('.live-lobby-action .btn-primary');
   for (let n = 1; n <= 10; n++) {
@@ -101,6 +113,8 @@ async function twelvePlayers(run, t) {
   const code = await createRoom(h, run.base, 'John');
   const bots = BOT_NAMES.map((name, i) => bot(run.base, code, name, i));
   await h.waitForFunction(() => document.querySelectorAll('.live-players li').length === 12, null, { timeout: 20000 });
+  // Före valet av läge: Playwright scrollar fram chippen när den klickar på dem.
+  await checkStartVisible(t, 'Android 360, 12 spelare', h);
   // Blandat med alla sorter, så att kartan byts mellan frågorna.
   await h.click('.live-mode-chip[data-mode="blandat"]');
   await h.waitForSelector('.live-mix-chip');

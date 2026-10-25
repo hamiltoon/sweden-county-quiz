@@ -4,6 +4,7 @@ import { feature } from 'topojson-client';
 import type { GeometryCollection, Topology } from 'topojson-specification';
 import type { Feature, FeatureCollection, Geometry } from 'geojson';
 import type { CountyProps, LakeProps, ResultState } from './map';
+import { ensureResultPatterns } from './patterns';
 
 export interface MiniMapOptions {
   /** Topologin med länen (eller landskapen, se objectName). */
@@ -26,6 +27,7 @@ export interface MiniMapOptions {
 
 /** En liten, statisk Sverigekarta (ingen zoom, inga klick), t.ex. som dekoration eller sammanfattning. */
 export function renderMiniMap(opts: MiniMapOptions): SVGSVGElement {
+  ensureResultPatterns();
   const { counties, lakes, width, height } = opts;
   const countyFeatures = (feature(counties, counties.objects[opts.objectName ?? 'lan'] as GeometryCollection<CountyProps>) as FeatureCollection<Geometry, CountyProps>)
     .features;

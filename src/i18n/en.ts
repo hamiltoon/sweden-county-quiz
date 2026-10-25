@@ -11,6 +11,7 @@ export const en: Messages = {
   meta: {
     title: 'Sverigespelet – find Sweden on the map',
     description: "A quick geography game: find Sweden's counties, provinces, cities and largest lakes on the map.",
+    staging: 'STAGING – test environment, not the real leaderboard',
   },
   lang: {
     label: 'Language',

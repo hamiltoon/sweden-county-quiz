@@ -1,14 +1,16 @@
 /**
- * Skyddsräcket: mot produktionen får testerna aldrig skicka resultat till topplistan, skapa
- * passkeys eller ändra ett kontos språk. Här prövas att anropen verkligen stoppas i webbläsaren,
- * innan de lämnar den, och att produktionens adress känns igen.
+ * Skyddsräcket: utom mot staging och localhost får testerna aldrig skicka resultat till
+ * topplistan, skapa passkeys eller ändra ett kontos språk. Här prövas att anropen verkligen stoppas
+ * i webbläsaren, innan de lämnar den, och att skyddet är på för alla andra adresser.
  */
-import { GUARDED, Suite, context, isProduction, page } from './lib.mjs';
+import { GUARDED, Suite, context, isGuarded, page } from './lib.mjs';
 
 export default async function guard(run) {
   const t = new Suite(run, 'guard');
-  t.check(isProduction('https://sverigespelet.hamiltoon.workers.dev/'), 'produktionens adress känns igen');
-  t.check(!isProduction('https://sverigespelet-staging.hamiltoon.workers.dev/'), 'staging räknas inte som produktion');
+  t.check(isGuarded('https://sverigespelet.hamiltoon.workers.dev/'), 'skyddet är på mot produktionen');
+  t.check(isGuarded('https://sverigespelet.se/'), 'skyddet är på mot en okänd adress, t.ex. en framtida egen domän');
+  t.check(!isGuarded('https://sverigespelet-staging.hamiltoon.workers.dev/'), 'skyddet är av mot staging');
+  t.check(!isGuarded('http://localhost:8787/'), 'skyddet är av mot localhost');
   t.check(GUARDED.length === 3, 'topplistan, passkeys och kontots språk skyddas');
   // Samma skydd som mot produktionen, här påslaget oavsett adress.
   const ctx = await context(run, 'desktop', { guard: true });
