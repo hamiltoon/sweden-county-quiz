@@ -4,9 +4,10 @@
  */
 import { COUNTIES } from '../data/counties';
 import { LAKES } from '../data/lakes';
+import { OTHER_CITIES } from '../data/cities';
 import { CONFIG } from '../game/config';
 
-export const LEADERBOARD_MODES = ['lan', 'stad', 'sjo', 'blandat'] as const;
+export const LEADERBOARD_MODES = ['lan', 'stad', 'ort', 'sjo', 'blandat'] as const;
 export type LeaderboardMode = (typeof LEADERBOARD_MODES)[number];
 
 export const NAME_MAX_LENGTH = 20;
@@ -27,10 +28,16 @@ export function isLeaderboardView(value: unknown): value is LeaderboardView {
   return value === TOTAL || isLeaderboardMode(value);
 }
 
+/** Antal frågor i en omgång av ett läge. */
+export function questionsForMode(mode: LeaderboardMode): number {
+  if (mode === 'sjo') return LAKES.length;
+  if (mode === 'ort') return Math.min(CONFIG.otherCitiesPerRound, OTHER_CITIES.length);
+  return COUNTIES.length;
+}
+
 /** Högsta möjliga poäng i en omgång: antal frågor gånger bästa poäng per fråga. */
 export function maxScoreForMode(mode: LeaderboardMode): number {
-  const questions = mode === 'sjo' ? LAKES.length : COUNTIES.length;
-  return questions * Math.max(...CONFIG.pointsByAttempt);
+  return questionsForMode(mode) * Math.max(...CONFIG.pointsByAttempt);
 }
 
 /** Högsta möjliga poäng för en flik; totalen är summan av alla lägens max. */

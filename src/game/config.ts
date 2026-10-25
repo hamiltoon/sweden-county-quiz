@@ -6,6 +6,13 @@ export const CONFIG = {
   pointsByAttempt: [3, 2, 1] as readonly number[],
   /** Hur nära (km) klicket måste vara staden i stadsläget. */
   cityRadiusKm: 40,
+  /**
+   * Läget "Fler städer": hur nära (km) klicket måste vara. Städerna ligger tätare än
+   * residensstäderna, så klicket måste också vara närmare rätt stad än någon annan stad i spelet.
+   */
+  otherCityRadiusKm: 20,
+  /** Antal städer per omgång i läget "Fler städer" (slumpas ur hela listan). */
+  otherCitiesPerRound: 20,
   /** Hur länge (ms) rätt svar visas efter en fråga innan nästa. */
   revealMs: 1500,
   /** Efter en missad fråga zoomar kartan in på rätt svar, så det får visas lite längre. */

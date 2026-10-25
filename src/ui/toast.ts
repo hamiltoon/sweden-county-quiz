@@ -11,7 +11,7 @@ export class Toast {
 
   constructor(
     parent: HTMLElement,
-    private readonly placement: ToastPlacement = 'top',
+    private placement: ToastPlacement = 'top',
   ) {
     this.node = el('div', { class: `toast toast-${placement}`, role: 'status', 'aria-live': 'polite' });
     parent.append(this.node);
@@ -22,6 +22,11 @@ export class Toast {
     this.node.textContent = message;
     this.node.className = `toast toast-${this.placement} toast-${kind} is-visible`;
     if (durationMs > 0) this.timer = window.setTimeout(() => this.hide(), durationMs);
+  }
+
+  /** Flyttar toasten, t.ex. nedåt när svaret ligger långt norrut. Gäller från nästa show(). */
+  setPlacement(placement: ToastPlacement): void {
+    this.placement = placement;
   }
 
   hide(): void {

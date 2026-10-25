@@ -19,6 +19,7 @@ import {
   isLeaderboardView,
   maxScoreForMode,
   maxScoreForView,
+  questionsForMode,
   normalizeName,
   type LeaderboardMode,
   type ScoreSubmission,
@@ -26,8 +27,6 @@ import {
   type TopEntry,
   type TopResponse,
 } from '../src/shared/leaderboard';
-import { COUNTIES } from '../src/data/counties';
-import { LAKES } from '../src/data/lakes';
 import { CONFIG } from '../src/game/config';
 import { handleAuth, nameKeyOf, protectedPlayer, sessionPlayer } from './auth';
 import { clientIp, isCrossOrigin, json, readJson } from './http';
@@ -216,11 +215,11 @@ function parseResult(raw: unknown): ScoreSubmission | string {
 
 /**
  * Procenten avrundas från antal lösta frågor, och varje löst fråga ger mellan lägsta och högsta
- * poängen i CONFIG.pointsByAttempt. Med 21 eller 10 frågor går antalet lösta att räkna fram exakt
- * ur procenten.
+ * poängen i CONFIG.pointsByAttempt. Med 21, 20 eller 10 frågor går antalet lösta att räkna fram
+ * exakt ur procenten.
  */
 function isConsistent(mode: LeaderboardMode, score: number, percent: number): boolean {
-  const total = mode === 'sjo' ? LAKES.length : COUNTIES.length;
+  const total = questionsForMode(mode);
   const solved = Math.round((percent * total) / 100);
   if (Math.round((100 * solved) / total) !== percent) return false;
   const minPoints = Math.min(...CONFIG.pointsByAttempt);

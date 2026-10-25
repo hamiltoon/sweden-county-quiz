@@ -1,6 +1,6 @@
 # Sverigespelet
 
-Ett geografispel i webbläsaren om Sveriges 21 län, residensstäder och tio största sjöar. Klicka rätt på kartan, samla poäng och ta dig in på topplistan – fungerar lika bra på mobilen som på datorn.
+Ett geografispel i webbläsaren om Sveriges 21 län, residensstäder, 75 andra städer och tio största sjöar. Klicka rätt på kartan, samla poäng och ta dig in på topplistan – fungerar lika bra på mobilen som på datorn.
 
 ![Sverigespelet](docs/screenshot.png)
 
@@ -16,10 +16,11 @@ Det är en PWA, så det går att lägga till på hemskärmen och spela offline.
 
 - **Län** – klicka på rätt län.
 - **Residensstad** – klicka där staden ligger (inom 40 km, `cityRadiusKm` i `src/game/config.ts`).
+- **Fler städer** – 20 slumpade av Sveriges 75 största städer som inte är residensstäder. Klicket ska vara inom 20 km och närmare rätt stad än någon annan stad i spelet, så ett klick på Malmö räknas inte som Lund ("Det där är Malmö").
 - **Sjöar** – klicka på rätt sjö bland Sveriges tio största. Vid en miss på land visas hur långt bort klicket var.
 - **Blandat** – slumpar mellan län- och stadsfrågor.
 
-En omgång går igenom alla 21 län (eller alla tio sjöar) i slumpad ordning. Rätt på första, andra eller tredje försöket ger 3, 2 respektive 1 poäng; därefter visas rätt svar och frågan ger 0 poäng (max 63 poäng per omgång, 30 i sjöläget).
+En omgång går igenom alla 21 län (alla tio sjöar, eller 20 av de andra städerna) i slumpad ordning. Rätt på första, andra eller tredje försöket ger 3, 2 respektive 1 poäng; därefter visas rätt svar och frågan ger 0 poäng (max 63 poäng per omgång, 60 för Fler städer, 30 i sjöläget).
 
 Under omgången fylls kartan: grönt för rätt direkt, gult för rätt efter fler försök och rött för missade. Det gör de sista frågorna lättare genom uteslutning; stäng av med `fillMapDuringRound` i `src/game/config.ts`. Vid en missad fråga zoomar kartan mjukt in på rätt svar. Slutskärmen visar poängen i en ring och en minikarta över hur varje fråga gick.
 
@@ -27,7 +28,7 @@ I de andra lägena finns sjöarna kvar på kartan som riktmärken, utan namn. Kl
 
 ## Topplista
 
-Skriv ett namn (på startskärmen eller efter en omgång) så sparas varje avslutad omgång på topplistan. Topplistan visar varje spelares bästa resultat per läge, topp 10. Fliken **Totalt** summerar varje spelares bästa resultat i alla fyra lägena (max 219 poäng). Lika poäng ger delad placering, och den som kom dit först står överst.
+Skriv ett namn (på startskärmen eller efter en omgång) så sparas varje avslutad omgång på topplistan. Topplistan visar varje spelares bästa resultat per läge, topp 10. Fliken **Totalt** summerar varje spelares bästa resultat i alla fem lägena (max 279 poäng). Lika poäng ger delad placering, och den som kom dit först står överst.
 
 - **Tidigare resultat:** första gången man väljer namn laddas webbläsarens sparade rekord upp, ett per läge.
 - **Offline:** resultat som inte går att skicka läggs i en kö i `localStorage` och skickas nästa gång startskärmen visas. Varje resultat har ett eget id, så ett omförsök sparar aldrig dubbelt.
@@ -95,6 +96,8 @@ Bygg om kartdatan (laddar ner källfilerna, ca 60 MB, och kör mapshaper via `np
 ```
 
 Residensstädernas koordinater ligger i `src/data/counties.ts`.
+
+De 75 andra städerna ligger i `src/data/cities.ts`. Urvalet är de största tätorterna enligt SCB 2023 (folkmängd per tätort, tabell MI0810), utom residensstäderna, förorter till Stockholm, Göteborg och Malmö samt bostadsorterna Märsta, Skoghall och Onsala; urvalsregeln står i filen. Koordinaterna kommer från Wikidata och är kontrollerade mot rätt län på kartan.
 
 Ikonerna i `public/icons/` renderas från `icon.svg` med `node scripts/make-icons.mjs` (kräver [Playwright](https://playwright.dev/) med Chromium; sätt `PLAYWRIGHT_PKG` om paketet inte finns lokalt).
 

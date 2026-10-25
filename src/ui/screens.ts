@@ -1,9 +1,11 @@
 import { el } from './dom';
 import { MODE_LABELS, questionLabel, type Mode, type Question, type Summary } from '../game/game';
 import { LAKES } from '../data/lakes';
+import { OTHER_CITIES } from '../data/cities';
 import { getBest } from '../game/storage';
 import { CONFIG } from '../game/config';
 import { modeIcon } from './icons';
+import { COUNTY_BY_CODE } from '../data/counties';
 
 export const ATTRIBUTION_HTML_ID = 'attribution';
 
@@ -15,6 +17,10 @@ export function renderStart(onStart: (mode: Mode) => void, leaderboard?: HTMLEle
   const modes: { mode: Mode; desc: string }[] = [
     { mode: 'lan', desc: 'Klicka på rätt län.' },
     { mode: 'stad', desc: `Klicka där staden ligger (inom ${CONFIG.cityRadiusKm} km).` },
+    {
+      mode: 'ort',
+      desc: `${CONFIG.otherCitiesPerRound} av Sveriges ${OTHER_CITIES.length} största städer som inte är residensstäder. Klicka inom ${CONFIG.otherCityRadiusKm} km.`,
+    },
     { mode: 'sjo', desc: `Klicka på rätt sjö bland Sveriges ${LAKES.length} största.` },
     { mode: 'blandat', desc: 'Slumpar mellan län och städer.' },
   ];
@@ -125,7 +131,9 @@ export function renderEnd(
 
 /** Namnet i resultatlistan; städer får länet inom parentes. */
 function resultLabel(q: Question): string {
-  return q.kind === 'stad' ? `${q.county.city} (${q.county.name})` : questionLabel(q);
+  if (q.kind === 'stad') return `${q.county.city} (${q.county.name})`;
+  if (q.kind === 'ort') return `${q.city.name} (${COUNTY_BY_CODE.get(q.city.county)?.name ?? q.city.county})`;
+  return questionLabel(q);
 }
 
 /** Poängen i en ring som fylls upp till andelen av maxpoängen. */

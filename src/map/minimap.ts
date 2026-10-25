@@ -14,6 +14,8 @@ export interface MiniMapOptions {
   countyResults?: ReadonlyMap<string, ResultState>;
   /** Färg per sjö efter hur frågan gick. */
   lakeResults?: ReadonlyMap<string, ResultState>;
+  /** Städer som prickar, färgade efter hur frågan gick. */
+  points?: readonly { lon: number; lat: number; state: ResultState }[];
   className?: string;
   /** Beskrivning för skärmläsare. Utan den döljs kartan för skärmläsare (ren dekoration). */
   label?: string;
@@ -58,6 +60,17 @@ export function renderMiniMap(opts: MiniMapOptions): SVGSVGElement {
     .attr('class', 'mini-lake')
     .attr('data-result', (d: Feature<Geometry, LakeProps>) => opts.lakeResults?.get(d.properties.id) ?? null)
     .attr('d', (d) => path(d));
+
+  svg
+    .append('g')
+    .selectAll('circle')
+    .data(opts.points ?? [])
+    .join('circle')
+    .attr('class', 'mini-point')
+    .attr('data-result', (d) => d.state)
+    .attr('r', 3.2)
+    .attr('cx', (d) => projection([d.lon, d.lat])?.[0] ?? 0)
+    .attr('cy', (d) => projection([d.lon, d.lat])?.[1] ?? 0);
 
   return svg.node()!;
 }
