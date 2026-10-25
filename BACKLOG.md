@@ -36,16 +36,16 @@ klickade de andra) och att funktioner för daglig vana och bred publik väntar.
 
 | Status | Punkter |
 |---|---|
-| Pågår (utvecklaren) | PO-01, PO-06 |
-| Nästa | PO-14, PO-22, PO-15, PO-16 |
-| Väntar på UX-verifiering | – |
+| Pågår (utvecklaren) | PO-06, sedan PO-01b (kriterium 12–13 i PO-01) |
+| Nästa | PO-22, PO-14, PO-15, PO-16 |
+| Väntar på UX-verifiering | PO-01 (kriterium 1–11, driftsatt i #22) |
 | Väntar på svar från John | – |
 | Klart | – |
 
 ## Backlog i prioritetsordning
 
 ### PO-01 Live: se allas klick och vem som var snabbast när svaret visas
-- **Prioritet:** P1, pågår
+- **Prioritet:** P1. Kriterium 1–11 driftsatta 2026-10-25 ([#22](https://github.com/hamiltoon/sweden-county-quiz/pull/22)), väntar på UX. Kriterium 12–13 görs som PO-01b.
 - **Insats:** M (servern sparar klick och svarstid för alla svar; kartan ritar prickar med namn)
 - **Koppling:** IDEER.md "Göra live mer levande" 4 och 5
 - **Värde:** Det är i avslöjandet som snacket uppstår: "Du klickade ju i Norge!" I dag ser man bara sitt eget
