@@ -6,7 +6,7 @@ import { CONFIG } from '../game/config';
 
 export const ATTRIBUTION_HTML_ID = 'attribution';
 
-export function renderStart(onStart: (mode: Mode) => void): HTMLElement {
+export function renderStart(onStart: (mode: Mode) => void, leaderboard?: HTMLElement): HTMLElement {
   const modes: { mode: Mode; desc: string }[] = [
     { mode: 'lan', desc: 'Klicka på rätt län.' },
     { mode: 'stad', desc: `Klicka där staden ligger (inom ${CONFIG.cityRadiusKm} km).` },
@@ -43,10 +43,17 @@ export function renderStart(onStart: (mode: Mode) => void): HTMLElement {
       { class: 'rules' },
       `${CONFIG.pointsByAttempt.join(' / ')} poäng för rätt på första / andra / tredje försöket. Nypa eller scrolla för att zooma på kartan.`,
     ),
+    leaderboard,
   );
 }
 
-export function renderEnd(summary: Summary, isNewBest: boolean, onAgain: () => void, onMenu: () => void): HTMLElement {
+export function renderEnd(
+  summary: Summary,
+  isNewBest: boolean,
+  onAgain: () => void,
+  onMenu: () => void,
+  leaderboard?: HTMLElement,
+): HTMLElement {
   const missed = summary.results.filter((r) => !r.solved);
   const shaky = summary.results.filter((r) => r.solved && r.attempts > 1);
 
@@ -88,6 +95,7 @@ export function renderEnd(summary: Summary, isNewBest: boolean, onAgain: () => v
       el('div', { class: 'score-sub' }, `${summary.solved} av ${summary.total} rätt (${summary.percentSolved} %) · ${summary.firstTry} på första försöket`),
       isNewBest ? el('div', { class: 'new-best' }, '🎉 Nytt bästa resultat!') : null,
     ),
+    leaderboard,
     list('Missade', missed),
     list('Behövde fler försök', shaky),
     missed.length + shaky.length === 0 ? el('p', { class: 'perfect' }, 'Felfritt – alla rätt på första försöket!') : null,

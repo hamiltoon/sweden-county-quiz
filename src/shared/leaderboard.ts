@@ -1,0 +1,77 @@
+/**
+ * Regler och typer för topplistan, delade mellan spelet (src/) och API:t (worker/).
+ * Håll den här filen fri från DOM- och Worker-specifika API:er.
+ */
+import { COUNTIES } from '../data/counties';
+import { LAKES } from '../data/lakes';
+import { CONFIG } from '../game/config';
+
+export const LEADERBOARD_MODES = ['lan', 'stad', 'sjo', 'blandat'] as const;
+export type LeaderboardMode = (typeof LEADERBOARD_MODES)[number];
+
+export const NAME_MAX_LENGTH = 20;
+/** Max antal resultat i ett och samma POST-anrop (gamla rekord + den senaste omgången). */
+export const MAX_RESULTS_PER_SUBMIT = 10;
+export const TOP_LIMIT_DEFAULT = 10;
+export const TOP_LIMIT_MAX = 50;
+
+export function isLeaderboardMode(value: unknown): value is LeaderboardMode {
+  return typeof value === 'string' && (LEADERBOARD_MODES as readonly string[]).includes(value);
+}
+
+/** Högsta möjliga poäng i en omgång: antal frågor gånger bästa poäng per fråga. */
+export function maxScoreForMode(mode: LeaderboardMode): number {
+  const questions = mode === 'sjo' ? LAKES.length : COUNTIES.length;
+  return questions * Math.max(...CONFIG.pointsByAttempt);
+}
+
+/**
+ * Städar ett spelarnamn: tar bort kontrolltecken, slår ihop blanksteg och kortar till max längd.
+ * Returnerar null om inget namn finns kvar.
+ */
+export function normalizeName(raw: unknown): string | null {
+  if (typeof raw !== 'string') return null;
+  const cleaned = raw
+    .normalize('NFC')
+    .replace(/[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/gu, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const chars = Array.from(cleaned).slice(0, NAME_MAX_LENGTH).join('').trim();
+  return chars.length > 0 ? chars : null;
+}
+
+/** Ett avslutat spelresultat som skickas till topplistan. */
+export interface ScoreSubmission {
+  /** Klientgenererat id (UUID), så att samma resultat aldrig sparas två gånger. */
+  id: string;
+  mode: LeaderboardMode;
+  score: number;
+  /** Andel rätt i procent, 0–100. */
+  percent: number;
+  /** När omgången spelades (ISO 8601). */
+  playedAt: string;
+}
+
+export interface SubmitRequest {
+  name: string;
+  results: ScoreSubmission[];
+}
+
+export interface SubmitResponse {
+  saved: number;
+  /** Spelarens placering per läge efter sparandet (1 = bäst). */
+  ranks: Partial<Record<LeaderboardMode, number>>;
+}
+
+export interface TopEntry {
+  name: string;
+  score: number;
+  percent: number;
+  playedAt: string;
+}
+
+export interface TopResponse {
+  mode: LeaderboardMode;
+  maxScore: number;
+  top: TopEntry[];
+}

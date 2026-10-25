@@ -9,6 +9,8 @@ import { SwedenMap, type MapClick } from './map/map';
 import { el, clear } from './ui/dom';
 import { Toast } from './ui/toast';
 import { renderEnd, renderStart } from './ui/screens';
+import { renderEndLeaderboard, renderStartLeaderboard } from './ui/leaderboard';
+import { newResultId } from './api/leaderboard';
 import { registerServiceWorker } from './pwa';
 
 const screen = document.getElementById('screen') as HTMLElement;
@@ -34,7 +36,7 @@ const LAKES_URL = '/data/sjoar.topo.json';
 function showStart(): void {
   clear(screen);
   screen.className = 'screen screen-start';
-  screen.append(renderStart((mode) => void showGame(mode)));
+  screen.append(renderStart((mode) => void showGame(mode), renderStartLeaderboard()));
   screen.append(renderFooter());
   // Förladda kartan i bakgrunden.
   void loadTopology(COUNTIES_URL).catch(() => undefined);
@@ -113,15 +115,20 @@ async function showGame(mode: Mode): Promise<void> {
   const finishRound = () => {
     map.destroy();
     const summary = game.summary();
-    const isNewBest = saveBest(mode, {
+    // Samma id i rekordet och på topplistan, så att rekordet inte sparas två gånger om det
+    // senare laddas upp som ett tidigare resultat.
+    const result = {
+      id: newResultId(),
+      mode,
       score: summary.score,
       percent: summary.percentSolved,
-      date: new Date().toISOString(),
-    });
+      playedAt: new Date().toISOString(),
+    };
+    const isNewBest = saveBest(mode, { score: result.score, percent: result.percent, date: result.playedAt, id: result.id });
     clear(screen);
     screen.className = 'screen screen-end';
     screen.append(
-      renderEnd(summary, isNewBest, () => void showGame(mode), showStart),
+      renderEnd(summary, isNewBest, () => void showGame(mode), showStart, renderEndLeaderboard(mode, result)),
       renderFooter(),
     );
   };

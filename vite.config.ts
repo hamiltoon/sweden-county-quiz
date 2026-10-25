@@ -45,7 +45,9 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   const req = event.request;
-  if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) return;
+  const url = new URL(req.url);
+  // API:t (topplistan) ska alltid gå till nätet och aldrig cachas.
+  if (req.method !== 'GET' || url.origin !== self.location.origin || url.pathname.startsWith('/api/')) return;
 
   // Navigeringar: nätet först (så nya versioner plockas upp), annars cachad index.html.
   if (req.mode === 'navigate') {
