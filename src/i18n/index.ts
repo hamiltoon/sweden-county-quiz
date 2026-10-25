@@ -7,6 +7,7 @@ import { COUNTY_NAMES_EN, LANG_COOKIE, PROVINCE_NAMES_EN, isLang, type Lang } fr
 import type { County } from '../data/counties';
 import type { Province } from '../data/provinces';
 import type { Municipality } from '../data/municipalities';
+import { IS_STAGING } from '../environment';
 import { en } from './en';
 import { sv, type Messages } from './sv';
 
@@ -59,7 +60,9 @@ export function onLangChange(fn: (lang: Lang) => void): () => void {
 /** Sidans språk, titel och beskrivning, samt cookien som servern läser. */
 export function applyToDocument(): void {
   document.documentElement.lang = current;
-  document.title = t().meta.title;
+  document.title = IS_STAGING ? `[Staging] ${t().meta.title}` : t().meta.title;
+  const banner = document.getElementById('staging-banner');
+  if (banner) banner.textContent = t().meta.staging;
   document.querySelector('meta[name="description"]')?.setAttribute('content', t().meta.description);
   const secure = location.protocol === 'https:' ? '; Secure' : '';
   document.cookie = `${LANG_COOKIE}=${current}; Path=/; Max-Age=31536000; SameSite=Lax${secure}`;

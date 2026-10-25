@@ -6,6 +6,7 @@ export const sv = {
   meta: {
     title: 'Sverigespelet – hitta län och städer',
     description: 'Ett snabbt geografispel: hitta Sveriges län, landskap, städer och största sjöar på kartan.',
+    staging: 'STAGING – testmiljö, inte den riktiga topplistan',
   },
   lang: {
     label: 'Språk',

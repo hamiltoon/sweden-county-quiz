@@ -1,7 +1,8 @@
 /**
  * Rätt och fel syns för alla: rätt/fel-rutan har kontrast minst 4,5:1 och en ikon, och kartan och
  * minikartan skiljer rätt direkt, fler försök och missat åt även med simulerad deuteranopi och
- * protanopi. axe-core får inte hitta några kontrastfel på spel- eller slutskärmen.
+ * protanopi. axe-core (WCAG 2.2 AA och best practice) får inte hitta något av nivån serious eller
+ * critical på start-, spel-, slut- eller lobbyskärmen; fynd på lägre nivå skrivs ut som kända.
  */
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -53,12 +54,21 @@ function checkDistinct(t, label, colors) {
   }
 }
 
+/** Fynd av lägre nivå som backloggen redan har, med punkten som ska rätta dem. */
+const KNOWN = { 'page-has-heading-one': 'PO-25 (UX-30): skärmarna saknar h1' };
+
 async function axe(t, p, label) {
   await p.addScriptTag({ content: AXE });
-  const found = await p.evaluate(async () =>
-    (await window.axe.run(document, { runOnly: ['color-contrast'] })).violations.flatMap((v) => v.nodes.map((n) => n.target.join(' '))),
+  const violations = await p.evaluate(async () =>
+    (await window.axe.run(document, { runOnly: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa', 'best-practice'] })).violations.map((v) => ({
+      id: v.id,
+      impact: v.impact,
+      nodes: v.nodes.slice(0, 3).map((n) => n.target.join(' ')),
+    })),
   );
-  t.check(found.length === 0, `${label}: axe hittar inga kontrastfel ${found.slice(0, 3).join(', ')}`);
+  const severe = violations.filter((v) => v.impact === 'serious' || v.impact === 'critical');
+  t.check(severe.length === 0, `${label}: axe hittar inget allvarligt ${severe.map((v) => `${v.impact} ${v.id}: ${v.nodes.join(', ')}`).join(' | ')}`);
+  for (const v of violations.filter((v) => !severe.includes(v))) t.note(`${v.impact} ${v.id}${KNOWN[v.id] ? ` – ${KNOWN[v.id]}` : ''}`);
 }
 
 async function scheme(run, t, dark) {
@@ -66,6 +76,9 @@ async function scheme(run, t, dark) {
   const ctx = await context(run, 'iphone', { dark });
   const p = await page(ctx);
   await p.goto(run.base);
+  await p.waitForSelector('.mode-btn-live');
+  await p.waitForTimeout(500);
+  await axe(t, p, `${name}, startskärmen`);
   await p.click('.mode-btn[data-mode="lan"]');
   await p.waitForSelector('.screen-game .map path');
   const others = (code) => [...COUNTY_BY_CODE.keys()].filter((c) => c !== code && c !== 'AB').slice(0, 3);
@@ -131,6 +144,13 @@ async function scheme(run, t, dark) {
     missed: await rgbOf(p, '#hatch-missed-mini .hatch-bg', 'fill'),
   });
   await t.shot(p, `${name}-slut`);
+  // Lobbyn i live.
+  await p.goto(run.base);
+  await p.click('.mode-btn-live');
+  await p.fill('.live-entry input[name=live-name]', 'Axe');
+  await p.click('.live-entry button:has-text("Skapa ett rum")');
+  await p.waitForSelector('.live-lobby');
+  await axe(t, p, `${name}, lobbyn`);
   t.check(p.errors.length === 0, `${name}: inga fel i sidan ${p.errors.slice(0, 3).join(' | ')}`);
   await ctx.close();
 }

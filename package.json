@@ -7,7 +7,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "deploy": "npm run build && wrangler deploy",
-    "deploy:staging": "npm run build && wrangler d1 migrations apply sverigespelet-staging --env staging --remote && wrangler deploy --env staging",
+    "deploy:staging": "VITE_ENVIRONMENT=staging npm run build && wrangler d1 migrations apply sverigespelet-staging --env staging --remote && wrangler deploy --env staging",
     "test:e2e": "node e2e/run.mjs",
     "preview:cf": "npm run build && npm run db:migrate:local && wrangler dev",
     "db:migrate:local": "wrangler d1 migrations apply sverigespelet --local",

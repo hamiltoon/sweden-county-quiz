@@ -96,6 +96,18 @@ body {
   flex-direction: column;
 }
 
+/* Bara på staging (se environment.ts): en randig banderoll som inte går att missa. */
+.staging-banner {
+  flex: none;
+  padding: calc(4px + var(--safe-top)) 12px 4px;
+  background: repeating-linear-gradient(-45deg, #ffd400 0 14px, #ffbf00 14px 28px);
+  color: #1a1a1a;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-align: center;
+}
+
 .screen {
   flex: 1;
   min-height: 0;

@@ -88,7 +88,9 @@ Varje ändring går först till staging, sedan till produktion:
 1. **Staging:** `npm run deploy:staging` bygger, kör nya migreringar och deployar till
    <https://sverigespelet-staging.hamiltoon.workers.dev>. Staging är en egen Worker (`env.staging` i
    `wrangler.jsonc`) med egen D1-databas (`sverigespelet-staging`), egna live-rum och egen rate limiting;
-   inget delas med produktionens topplista eller konton.
+   inget delas med produktionens topplista eller konton. Staging visar en randig banderoll överst,
+   "STAGING – testmiljö, inte den riktiga topplistan", och "[Staging]" i sidans titel
+   (`VITE_ENVIRONMENT=staging` vid bygget, se `src/environment.ts`).
 2. **Acceptanstester:** `npm run test:e2e` (se nedan) mot staging.
 3. **UX-granskning** på staging.
 4. **Produktion:** när testerna gått igenom och UX har godkänt.
@@ -106,17 +108,18 @@ npm run deploy               # produktion: npm run build && wrangler deploy
 `npm run test:e2e` kör [Playwright](https://playwright.dev) mot staging, eller mot en annan adress:
 `npm run test:e2e -- http://localhost:8787/`. Kräver Playwright med Chromium (`npm i -D playwright && npx playwright install chromium`, eller en global installation) och Node 22.
 
-- **start:** Spela live syns utan scroll på iPhone 13 och en Android på 360 × 740.
+- **start:** Spela live syns utan scroll på iPhone 13 och en Android på 360 × 740. På staging finns banderollen och "[Staging]" i titeln, på produktionen inte.
 - **solo:** en hel omgång i vart och ett av de sju lägena, med rätt svar på varje fråga, fram till slutskärmen utan fel i sidan.
-- **live:** en match med 2 spelare (iPhone och Android, mörkt läge, engelska) och en med 12 (en webbläsare och 11 bottar via WebSocket, Blandat med alla sorter). Vid varje avslöjande ska rätt svar och allas prickar ligga i vyn och inte under rätt/fel-rutan, och den egna raden i ställningen ska synas helt.
-- **a11y:** rätt/fel-rutan har kontrast minst 4,5:1 och en ikon, axe-core hittar inga kontrastfel på spel- eller slutskärmen, och kartan och minikartan skiljer rätt direkt, fler försök och missat åt även med simulerad deuteranopi och protanopi (i ljust och mörkt läge).
+- **live:** en match med 2 spelare (iPhone och Android, mörkt läge, engelska) och en med 12 (en webbläsare och 11 bottar via WebSocket, Blandat med alla sorter). Starta matchen ska synas utan scroll i lobbyn. Vid varje avslöjande ska rätt svar och allas prickar ligga i vyn och inte under rätt/fel-rutan, och den egna raden i ställningen ska synas helt.
+- **a11y:** rätt/fel-rutan har kontrast minst 4,5:1 och en ikon, axe-core (WCAG 2.2 AA och best practice) hittar inget av nivån serious eller critical på start-, spel-, slut- eller lobbyskärmen (fynd på lägre nivå skrivs ut som kända), och kartan och minikartan skiljer rätt direkt, fler försök och missat åt även med simulerad deuteranopi och protanopi (i ljust och mörkt läge).
 - **guard:** skyddsräcket nedan fungerar.
 
 Testerna körs samtidigt och tar ungefär en och en halv minut. Skärmbilder från varje steg hamnar i
 `e2e-results/<tid>/`. `--only=solo,live` kör bara vissa tester, `--verbose` skriver ut alla kontroller.
 
-Mot produktionens adress stoppas alla anrop som skulle skriva på topplistan, skapa passkeys eller
-ändra ett kontos språk redan i webbläsaren (`e2e/lib.mjs`), och testerna anger aldrig något namn.
+Utom mot staging och localhost stoppas alla anrop som skulle skriva på topplistan, skapa passkeys
+eller ändra ett kontos språk redan i webbläsaren (`e2e/lib.mjs`). Skyddet är alltså på mot
+produktionen och mot alla adresser testerna inte känner till, och testerna anger aldrig något namn.
 Live-rum går bra att skapa var som helst; de töms av sig själva.
 
 Sajten deployas till Cloudflare Workers. `wrangler.jsonc` pekar ut `dist/` som static assets med `not_found_handling: "single-page-application"` (SPA-fallback till `index.html`). Bara `/api/*` går till Worker-scriptet i `worker/index.ts` (`run_worker_first`); allt annat serveras direkt som filer.

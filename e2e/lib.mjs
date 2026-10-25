@@ -18,7 +18,8 @@ const require = createRequire(import.meta.url);
 export const { chromium, devices } = require('playwright');
 
 export const STAGING = 'https://sverigespelet-staging.hamiltoon.workers.dev/';
-export const PRODUCTION_HOSTS = ['sverigespelet.hamiltoon.workers.dev'];
+/** Där testerna får skriva fritt. Överallt annars (produktionen, en framtida egen domän) är skyddet på. */
+export const UNGUARDED_HOSTS = ['sverigespelet-staging.hamiltoon.workers.dev', 'localhost', '127.0.0.1'];
 
 export const DEVICES = {
   // iPhone 13 (390 × 844); Playwrights mått räknar bort Safaris verktygsfält, så ytan är 390 × 664.
@@ -27,11 +28,15 @@ export const DEVICES = {
   desktop: { viewport: { width: 1280, height: 800 } },
 };
 
-export function isProduction(base) {
-  return PRODUCTION_HOSTS.includes(new URL(base).hostname);
+export function isGuarded(base) {
+  return !UNGUARDED_HOSTS.includes(new URL(base).hostname);
 }
 
-/** Det som aldrig får skickas mot produktionen: resultat till topplistan, passkeys och kontots språk. */
+export function isStaging(base) {
+  return new URL(base).hostname === new URL(STAGING).hostname;
+}
+
+/** Det som aldrig får skickas utanför staging och localhost: resultat till topplistan, passkeys och kontots språk. */
 export const GUARDED = [
   { path: '**/api/scores', methods: ['POST'] },
   { path: '**/api/passkey/**', methods: null },
@@ -39,10 +44,10 @@ export const GUARDED = [
 ];
 
 /**
- * En webbläsarkontext. Mot produktionen (eller med guard: true) stoppas alla anrop i GUARDED
- * innan de lämnar webbläsaren, och varje stoppat anrop räknas som ett fel i testet.
+ * En webbläsarkontext. Utom mot staging och localhost (eller med guard: true) stoppas alla anrop i
+ * GUARDED innan de lämnar webbläsaren, och varje stoppat anrop räknas som ett fel i testet.
  */
-export async function context(run, device, { dark = false, lang = 'sv', guard = isProduction(run.base) } = {}) {
+export async function context(run, device, { dark = false, lang = 'sv', guard = isGuarded(run.base) } = {}) {
   const ctx = await run.browser.newContext({ ...DEVICES[device], colorScheme: dark ? 'dark' : 'light', locale: lang === 'sv' ? 'sv-SE' : 'en-GB' });
   ctx.blocked = [];
   if (guard) {
@@ -75,6 +80,11 @@ export class Suite {
     this.failures = [];
     this.checks = 0;
     this.shots = 0;
+    this.notes = [];
+  }
+  /** Något att känna till som inte fäller testet, t.ex. ett känt fynd som en backlogpunkt ska rätta. */
+  note(message) {
+    if (!this.notes.includes(message)) this.notes.push(message);
   }
   check(ok, message) {
     this.checks++;
