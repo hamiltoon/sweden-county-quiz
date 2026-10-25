@@ -117,6 +117,8 @@ Beslutat med John 2026-10-25. Det är kontrollen av resultatet som begränsar os
   5. Testerna vägrar skriva till topplistan eller skapa passkeys mot produktionens adress. Det är kontrollerat med ett eget test.
   6. Hela sviten tar under 5 minuter och går igenom på main.
   7. Från och med nu driftsätter utvecklaren till staging först. Produktion kommer efter att testerna gått igenom och UX har godkänt.
+  8. Staging visar alltid en tydlig banderoll överst, "STAGING – testmiljö, inte den riktiga topplistan" (sv/en), och sidans titel
+     börjar med "[Staging]". Produktion visar ingen banderoll. (Tillagt 2026-10-25: John förväxlade staging med produktion.)
 
 ### PO-06 Startskärmen: hitta Spela live direkt
 - **Status:** ✅ Klar 2026-10-25 ([#23](https://github.com/hamiltoon/sweden-county-quiz/pull/23)). UX har godkänt alla fem kriterierna på produktion.
