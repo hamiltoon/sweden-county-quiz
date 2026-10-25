@@ -1,4 +1,4 @@
-import { geoArea, geoCentroid, geoPath, geoTransverseMercator, type GeoPermissibleObjects, type GeoProjection } from 'd3-geo';
+import { geoCentroid, geoPath, geoTransverseMercator, type GeoPermissibleObjects, type GeoProjection } from 'd3-geo';
 import { pointer, select, type Selection } from 'd3-selection';
 import 'd3-transition';
 import { zoom, zoomIdentity, type D3ZoomEvent, type ZoomBehavior, type ZoomTransform } from 'd3-zoom';
@@ -26,8 +26,8 @@ export interface MapOptions {
   /** Topologi med objektet "sjoar". Utan den ritas inga sjöar. */
   lakes?: Topology | null;
   /**
-   * Sjöläge: sjöarna går att klicka på och namnen döljs tills de visas med showLakeLabel().
-   * Annars är sjöarna bara riktmärken: namnen syns men klicken går igenom till länen.
+   * Sjöläge: sjöarna går att klicka på, och en sjös namn visas först med showLakeLabel().
+   * Annars är sjöarna bara riktmärken utan namn, och klicken går igenom till länen.
    */
   lakeMode?: boolean;
 }
@@ -110,9 +110,7 @@ export class SwedenMap {
     this.features = this.collection.features;
     const lakeObj = lakes?.objects.sjoar as GeometryCollection<LakeProps> | undefined;
     if (lakes && !lakeObj) throw new Error('TopoJSON saknar objektet "sjoar"');
-    // Största sjön först: den ordningen avgör vilka namn som får plats när kartan är trång.
     this.lakeFeatures = lakes && lakeObj ? ((feature(lakes, lakeObj) as FeatureCollection).features as LakeFeature[]) : [];
-    this.lakeFeatures.sort((a, b) => geoArea(b) - geoArea(a));
     this.lakeMode = lakeMode;
 
     // Transversal Mercator centrerad på lon 15°E passar ett avlångt land som Sverige bra.
@@ -167,13 +165,16 @@ export class SwedenMap {
         .attr('data-lake', (d) => d.properties.id);
     }
 
-    this.lakeLabelsG
-      .selectAll('text')
-      .data(this.lakeFeatures)
-      .join('text')
-      .attr('class', 'lake-label')
-      .attr('data-lake', (d) => d.properties.id)
-      .text((d) => d.properties.name);
+    // Sjönamn finns bara i sjöläget, där de visar svaret. Som riktmärken visas sjöarna utan namn.
+    if (lakeMode) {
+      this.lakeLabelsG
+        .selectAll('text')
+        .data(this.lakeFeatures)
+        .join('text')
+        .attr('class', 'lake-label')
+        .attr('data-lake', (d) => d.properties.id)
+        .text((d) => d.properties.name);
+    }
 
     this.zoomBehavior = zoom<SVGSVGElement, unknown>()
       .scaleExtent([MIN_ZOOM, MAX_ZOOM])
@@ -328,13 +329,10 @@ export class SwedenMap {
   }
 
   /**
-   * Placerar sjönamnen med konstant skärmstorlek. Varje namn hamnar inne i sjön om det får plats
-   * där, annars bredvid (höger, vänster, under, över), på första stället som inte täcker en annan
-   * sjö, inte krockar med ett namn som redan placerats och syns i vyn. Så hamnar inget namn så att
-   * det ser ut att höra till grannsjön, och små sjöar döljs inte av sitt eget namn.
-   *
-   * Som riktmärken placeras namnen i storleksordning; de som inte får plats döljs tills man zoomar.
-   * I sjöläget visas bara de namn som slagits på med showLakeLabel().
+   * Placerar de sjönamn som slagits på med showLakeLabel(), med konstant skärmstorlek. Namnet hamnar
+   * inne i sjön om det får plats där, annars bredvid (höger, vänster, under, över), på första stället
+   * som inte täcker en annan sjö, inte krockar med ett annat namn och syns i vyn. Så hamnar inget
+   * namn så att det ser ut att höra till grannsjön, och små sjöar döljs inte av sitt eget namn.
    */
   private renderLakeLabels(): void {
     const k = this.k;
@@ -356,8 +354,7 @@ export class SwedenMap {
     labels.each((d, i, nodes) => {
       const node = nodes[i];
       const id = d.properties.id;
-      const visible = !this.lakeMode || node.classList.contains('is-shown');
-      if (!visible) {
+      if (!node.classList.contains('is-shown')) {
         node.classList.add('is-hidden');
         return;
       }
@@ -385,11 +382,9 @@ export class SwedenMap {
         !placed.some((b) => overlaps(c.box, b)) &&
         ![...lakeBoxes].some(([other, b]) => other !== id && overlaps(c.box, b)) &&
         (c.inside || !overlaps(c.box, own));
-      let choice = candidates.find(free);
-      // Ett namn som visar ett svar i sjöläget ska alltid synas, även om det inte finns en helt fri plats.
-      if (!choice && this.lakeMode) choice = candidates.find((c) => c.inside) ?? candidates[0];
-      node.classList.toggle('is-hidden', !choice);
-      if (!choice) return;
+      // Namnet visar ett svar och ska alltid synas, även om det inte finns en helt fri plats.
+      const choice = candidates.find(free) ?? candidates.find((c) => c.inside) ?? candidates[0];
+      node.classList.remove('is-hidden');
       node.setAttribute('x', String(choice.x));
       node.setAttribute('y', String(choice.y));
       node.style.textAnchor = choice.anchor;

@@ -21,7 +21,7 @@ Det är en PWA, så det går att lägga till på hemskärmen och spela offline.
 
 En omgång går igenom alla 21 län (eller alla tio sjöar) i slumpad ordning. Rätt på första, andra eller tredje försöket ger 3, 2 respektive 1 poäng; därefter visas rätt svar och frågan ger 0 poäng (max 63 poäng per omgång, 30 i sjöläget).
 
-I de andra lägena finns sjöarna kvar på kartan som riktmärken, med namn där de får plats. Klicken går igenom sjöarna till länen under. Poängfunktionen är utbytbar (`defaultScoring` i `src/game/config.ts`). Bästa resultat per läge sparas i `localStorage`.
+I de andra lägena finns sjöarna kvar på kartan som riktmärken, utan namn. Klicken går igenom sjöarna till länen under. Poängfunktionen är utbytbar (`defaultScoring` i `src/game/config.ts`). Bästa resultat per läge sparas i `localStorage`.
 
 ## Kör lokalt
 
