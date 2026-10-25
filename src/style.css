@@ -955,12 +955,13 @@ a {
   }
 }
 
+/* Det klickade länet: samma färger som resultatet, så att rätt och fel syns även utan färgseende. */
 .county.is-correct {
-  fill: var(--ok);
+  fill: var(--res-first);
 }
 
 .county.is-wrong {
-  fill: var(--bad);
+  fill: url(#hatch-missed) var(--res-missed);
 }
 
 .county.is-reveal {
@@ -1030,11 +1031,11 @@ a {
 }
 
 .lake.is-correct {
-  fill: var(--ok);
+  fill: var(--res-first);
 }
 
 .lake.is-wrong {
-  fill: var(--bad);
+  fill: url(#hatch-missed) var(--res-missed);
 }
 
 .lake.is-reveal {
