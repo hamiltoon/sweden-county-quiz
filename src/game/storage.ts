@@ -66,6 +66,14 @@ export function savePlayerName(name: string): void {
   write(NAME_KEY, name);
 }
 
+export function clearPlayerName(): void {
+  try {
+    localStorage.removeItem(NAME_KEY);
+  } catch {
+    /* ignorera */
+  }
+}
+
 /** Resultat som väntar på att skickas till topplistan (t.ex. för att telefonen var offline). */
 export function getPending(): ScoreSubmission[] {
   const pending = read<unknown>(PENDING_KEY, []);
