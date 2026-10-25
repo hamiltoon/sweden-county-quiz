@@ -77,15 +77,17 @@ export interface LivePlayer {
 /** En spelares svar på en fråga, som det visas när rätt svar avslöjas. */
 export interface LiveAnswer {
   playerId: string;
-  /** Området eller sjön spelaren klickade på, eller null (tiden tog slut, eller ett klick på en punkt). */
+  /** Området eller sjön spelaren klickade på, eller null (inget svar, en stadsfråga eller ett klick på land i sjöläget). */
   code: string | null;
-  /** Klicket, för städerna (och för ett klick på land i sjöläget). */
+  /** Var på kartan spelaren klickade; saknas om spelaren inte svarade. */
   lat?: number;
   lon?: number;
   /** Avståndet till staden i km, avrundat, för städerna. */
   distanceKm?: number;
   correct: boolean;
   points: number;
+  /** Svarstiden i ms, mätt på servern från frågans start; saknas om spelaren inte svarade. */
+  ms?: number;
 }
 
 export interface LiveState {

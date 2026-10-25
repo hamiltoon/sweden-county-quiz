@@ -56,6 +56,16 @@ export interface MapClick {
   lat: number;
 }
 
+/** En spelares klick i live-läget, som visas för alla när svaret avslöjas. */
+export interface PlayerPin {
+  lon: number;
+  lat: number;
+  name: string;
+  correct: boolean;
+  /** Den egna pricken: större, med kraftigare kant, och namnet får sin plats först. */
+  mine: boolean;
+}
+
 interface Marker {
   lon: number;
   lat: number;
@@ -75,6 +85,12 @@ const REVEAL_MIN_ZOOM = 1.3;
 /** Teckenstorlek och konturbredd (px på skärmen) för sjönamnen. */
 const LAKE_LABEL_PX = 11;
 const LAKE_LABEL_HALO_PX = 2.5;
+/** Spelarnas prickar i live-läget (px på skärmen): radie, och teckenstorlek för namnen. */
+const PIN_PX = 7;
+const PIN_MINE_PX = 9;
+const PIN_LABEL_PX = 12;
+/** Längre namn kortas på kartan, så att fler får plats. */
+const PIN_LABEL_CHARS = 10;
 
 interface Box {
   x0: number;
@@ -102,6 +118,8 @@ export class SwedenMap {
   private readonly lakeLabelsG: Selection<SVGGElement, unknown, null, undefined>;
   private readonly resultDotsG: Selection<SVGGElement, unknown, null, undefined>;
   private readonly markersG: Selection<SVGGElement, unknown, null, undefined>;
+  private readonly pinsG: Selection<SVGGElement, unknown, null, undefined>;
+  private readonly pinLabelsG: Selection<SVGGElement, unknown, null, undefined>;
   private readonly zoomBehavior: ZoomBehavior<SVGSVGElement, unknown>;
   private readonly projection: GeoProjection;
   private readonly path = geoPath();
@@ -113,6 +131,9 @@ export class SwedenMap {
   private readonly swedenOutline: Geometry;
   private readonly lakeMode: boolean;
   private markers: Marker[] = [];
+  private pins: PlayerPin[] = [];
+  /** Var de synliga sjönamnen hamnade, så att spelarnas namn inte läggs över dem. */
+  private lakeLabelBoxes: Box[] = [];
   /** Städer som besvarats under omgången, färgade efter hur det gick (ligger kvar hela omgången). */
   private resultDots: { lon: number; lat: number; state: ResultState }[] = [];
   private width = 0;
@@ -166,6 +187,9 @@ export class SwedenMap {
     this.lakeLabelsG = this.root.append('g').attr('class', 'lake-labels');
     this.resultDotsG = this.root.append('g').attr('class', 'result-dots');
     this.markersG = this.root.append('g').attr('class', 'markers');
+    // Spelarnas prickar ligger ovanpå rätt svar, så att ett klick precis på staden syns med sitt ✓.
+    this.pinsG = this.root.append('g').attr('class', 'pins');
+    this.pinLabelsG = this.root.append('g').attr('class', 'pin-labels');
 
     this.coastG
       .selectAll('path')
@@ -243,6 +267,7 @@ export class SwedenMap {
         this.renderMarkers();
         this.renderResultDots();
         this.renderLakeLabels();
+        this.renderPins();
       });
 
     this.svg.call(this.zoomBehavior).on('dblclick.zoom', null);
@@ -282,6 +307,7 @@ export class SwedenMap {
     this.renderMarkers();
     this.renderResultDots();
     this.renderLakeLabels();
+    this.renderPins();
   }
 
   private handleClick(event: MouseEvent): void {
@@ -396,7 +422,125 @@ export class SwedenMap {
 
   clearMarkers(): void {
     this.markers = [];
+    this.pins = [];
     this.renderMarkers();
+    this.renderPins();
+  }
+
+  /**
+   * Visar spelarnas klick (live-läget). Anropas efter att rätt svar och sjönamnet ritats, så att
+   * namnen kan hålla sig borta från dem.
+   */
+  setPlayerPins(pins: PlayerPin[]): void {
+    this.pins = pins.slice().sort((a, b) => Number(a.mine) - Number(b.mine));
+    this.renderPins();
+  }
+
+  /**
+   * Ritar spelarnas prickar med ✓ eller ✗ (så att rätt och fel syns även utan färgseende) och
+   * namnet bredvid. Den egna ritas överst och får sitt namn placerat först. Ett namn hamnar till
+   * höger, vänster, över eller under pricken, på första stället som inte täcker rätt svar, ett
+   * sjönamn, en annan prick eller ett annat namn och som syns i vyn; annars döljs namnet men
+   * pricken syns.
+   */
+  private renderPins(): void {
+    const k = this.k;
+    const pos = (d: PlayerPin) => this.projection([d.lon, d.lat]) ?? [0, 0];
+    const radius = (d: PlayerPin) => (d.mine ? PIN_MINE_PX : PIN_PX) / k;
+    const pins = this.pinsG
+      .selectAll<SVGGElement, PlayerPin>('g.pin')
+      .data(this.pins)
+      .join((enter) => {
+        const g = enter.append('g');
+        g.append('circle').attr('class', 'pin-dot');
+        g.append('text').attr('class', 'pin-mark');
+        return g;
+      })
+      .attr('class', (d) => `pin ${d.correct ? 'is-correct' : 'is-wrong'}${d.mine ? ' is-mine' : ''}`)
+      .attr('transform', (d) => `translate(${pos(d)[0]},${pos(d)[1]})`);
+    pins
+      .select('circle.pin-dot')
+      .attr('r', radius)
+      .style('stroke-width', (d) => `${d.mine ? 3 : 1.5}px`);
+    pins
+      .select('text.pin-mark')
+      .attr('font-size', (d) => radius(d) * 1.35)
+      .text((d) => (d.correct ? '✓' : '✗'));
+
+    const fontSize = PIN_LABEL_PX / k;
+    const halfH = fontSize * 0.7;
+    const gap = 3 / k;
+    const t = this.transform;
+    const view: Box = { x0: -t.x / k, y0: -t.y / k, x1: (this.width - t.x) / k, y1: (this.height - t.y) / k };
+    const dotBoxes = this.pins.map((d) => {
+      const [x, y] = pos(d);
+      const r = radius(d) + 1 / k;
+      return { x0: x - r, y0: y - r, x1: x + r, y1: y + r };
+    });
+    const placed: Box[] = [...this.answerBoxes(), ...this.lakeLabelBoxes];
+    // Den egna pricken ligger sist (överst), men dess namn placeras först.
+    const order = this.pins.map((_, i) => i).sort((a, b) => Number(this.pins[b].mine) - Number(this.pins[a].mine));
+    const labels = new Map<number, { x: number; y: number; anchor: 'start' | 'middle' | 'end' }>();
+    for (const i of order) {
+      const d = this.pins[i];
+      const [x, y] = pos(d);
+      const r = radius(d);
+      const w = shortName(d.name).length * fontSize * 0.6 + 4 / k;
+      const candidates: { x: number; y: number; anchor: 'start' | 'middle' | 'end'; box: Box }[] = [
+        { x: x + r + gap, y, anchor: 'start', box: { x0: x + r + gap, x1: x + r + gap + w, y0: y - halfH, y1: y + halfH } },
+        { x: x - r - gap, y, anchor: 'end', box: { x0: x - r - gap - w, x1: x - r - gap, y0: y - halfH, y1: y + halfH } },
+        { x, y: y - r - gap - halfH, anchor: 'middle', box: { x0: x - w / 2, x1: x + w / 2, y0: y - r - gap - 2 * halfH, y1: y - r - gap } },
+        { x, y: y + r + gap + halfH, anchor: 'middle', box: { x0: x - w / 2, x1: x + w / 2, y0: y + r + gap, y1: y + r + gap + 2 * halfH } },
+      ];
+      const choice = candidates.find(
+        (c) =>
+          c.box.x0 >= view.x0 &&
+          c.box.x1 <= view.x1 &&
+          c.box.y0 >= view.y0 &&
+          c.box.y1 <= view.y1 &&
+          !placed.some((b) => overlaps(c.box, b)) &&
+          !dotBoxes.some((b, j) => j !== i && overlaps(c.box, b)),
+      );
+      if (!choice) continue;
+      placed.push(choice.box);
+      labels.set(i, choice);
+    }
+
+    this.pinLabelsG
+      .selectAll<SVGTextElement, PlayerPin>('text')
+      .data(this.pins)
+      .join('text')
+      .attr('class', (d) => `pin-label${d.mine ? ' is-mine' : ''}`)
+      .attr('font-size', fontSize)
+      .style('stroke-width', `${3 / k}px`)
+      .each((d, i, nodes) => {
+        const node = nodes[i];
+        const label = labels.get(i);
+        node.classList.toggle('is-hidden', !label);
+        node.textContent = shortName(d.name);
+        if (!label) return;
+        node.setAttribute('x', String(label.x));
+        node.setAttribute('y', String(label.y));
+        node.style.textAnchor = label.anchor;
+      });
+  }
+
+  /** Ytan som rätt svar (pricken och namnet för en stad) tar på kartan, i kartans koordinater. */
+  private answerBoxes(): Box[] {
+    const k = this.k;
+    return this.markers
+      .filter((m) => m.kind === 'reveal')
+      .flatMap((m) => {
+        const [x, y] = this.projection([m.lon, m.lat]) ?? [0, 0];
+        const dot = 6 / k;
+        const boxes: Box[] = [{ x0: x - dot, y0: y - dot, x1: x + dot, y1: y + dot }];
+        if (m.label) {
+          // Samma mått som marker-label i renderMarkers(): 14 px, centrerad 18 px ovanför.
+          const w = (m.label.length * 14 * 0.62 + 6) / k;
+          boxes.push({ x0: x - w / 2, y0: y - 30 / k, x1: x + w / 2, y1: y - 12 / k });
+        }
+        return boxes;
+      });
   }
 
   /** Ritar en cirkel med given radie i km runt en punkt (t.ex. träffzonen i stadsläget). */
@@ -488,6 +632,7 @@ export class SwedenMap {
       node.style.textAnchor = choice.anchor;
       placed.push(choice.box);
     });
+    this.lakeLabelBoxes = placed;
   }
 
   resetZoom(duration = 350): void {
@@ -549,6 +694,10 @@ export class SwedenMap {
     this.resizeObserver.disconnect();
     this.svg.remove();
   }
+}
+
+function shortName(name: string): string {
+  return name.length > PIN_LABEL_CHARS ? `${name.slice(0, PIN_LABEL_CHARS - 1).trimEnd()}…` : name;
 }
 
 /** Samma standardfilter som d3-zoom använder: ignorera ctrl+hjul-konflikter och sekundära musknappar. */

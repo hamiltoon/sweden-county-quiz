@@ -62,6 +62,8 @@ interface StoredAnswer {
   distanceKm?: number;
   correct: boolean;
   points: number;
+  /** Svarstiden i ms, från att frågan startade till att servern tog emot svaret. */
+  ms: number;
 }
 
 /** Det som sparas med varje anslutning, så att rummet vet vem den tillhör även efter hibernering. */
@@ -206,9 +208,10 @@ const isCoordinate = (value: unknown, min: number, max: number): value is number
 
 /**
  * Bedömer ett svar. Områden och sjöar är rätt om koden stämmer; städerna om klicket ligger inom
- * CONFIG.cityRadiusKm. I sjöläget räknas ett klick på land som fel. Ogiltiga svar ger null.
+ * CONFIG.cityRadiusKm. I sjöläget räknas ett klick på land som fel. Klickpunkten sparas för alla
+ * svar, så att allas klick kan visas när svaret avslöjas. Ogiltiga svar ger null.
  */
-function judge(q: LiveQuestion, answer: { code?: unknown; lat?: unknown; lon?: unknown }): Omit<StoredAnswer, 'points'> | null {
+function judge(q: LiveQuestion, answer: { code?: unknown; lat?: unknown; lon?: unknown }): Omit<StoredAnswer, 'points' | 'ms'> | null {
   const point = isCoordinate(answer.lat, 50, 75) && isCoordinate(answer.lon, -5, 40) ? { lat: answer.lat, lon: answer.lon } : null;
   if (isPointKind(q.kind)) {
     const target = targetPoint(q);
@@ -216,7 +219,7 @@ function judge(q: LiveQuestion, answer: { code?: unknown; lat?: unknown; lon?: u
     const km = haversineKm(point.lat, point.lon, target.lat, target.lon);
     return { code: null, ...point, distanceKm: Math.round(km), correct: km <= CONFIG.cityRadiusKm };
   }
-  if (typeof answer.code === 'string' && isKnownCode(q, answer.code)) return { code: answer.code, correct: answer.code === q.target };
+  if (typeof answer.code === 'string' && isKnownCode(q, answer.code)) return { code: answer.code, ...point, correct: answer.code === q.target };
   if (q.kind === 'sjo' && point) return { code: null, ...point, correct: false };
   return null;
 }
@@ -331,8 +334,8 @@ export class LiveRoom extends DurableObject<Env> {
       if (!room.players.some((p) => p.id === playerId)) return;
       const judged = judge(room.questions[room.index], msg);
       if (!judged) return;
-      const points = judged.correct ? livePoints(Date.now() - room.questionStartedAt) : 0;
-      room.answers[playerId] = { ...judged, points };
+      const ms = Date.now() - room.questionStartedAt;
+      room.answers[playerId] = { ...judged, points: judged.correct ? livePoints(ms) : 0, ms };
       if (this.everyoneAnswered()) await this.reveal();
       else {
         await this.save();
