@@ -37,7 +37,7 @@ klickade de andra) och att funktioner för daglig vana och bred publik väntar.
 | Status | Punkter |
 |---|---|
 | Pågår (utvecklaren) | PO-01, PO-06 |
-| Nästa | PO-14, PO-15, PO-16 |
+| Nästa | PO-14, PO-22, PO-15, PO-16 |
 | Väntar på UX-verifiering | – |
 | Väntar på svar från John | – |
 | Klart | – |
@@ -67,6 +67,10 @@ klickade de andra) och att funktioner för daglig vana och bred publik väntar.
   9. Allt finns på svenska och engelska.
   10. Det fungerar lika bra för en spelare som ansluter igen mitt i avslöjandet.
   11. `npm run typecheck` går igenom och en hel match med två spelare är spelad på produktion efter driftsättning.
+  12. Kartan visar både rätt svar och allas prickar i samma vy. Om ett klick ligger mycket långt bort visas hellre
+      hela Sverige än att pricken hamnar utanför bilden. (Tillagt 2026-10-25 efter UX-underlag.)
+  13. Avslöjandet visas i 5 sekunder med upp till tre spelare och i 7 sekunder med fyra eller fler, så att man hinner
+      läsa prickar och ställning. (Tillagt 2026-10-25.)
 
 ### PO-06 Startskärmen: hitta Spela live direkt
 - **Prioritet:** P1, pågår (liten och oberoende av PO-01, så den går parallellt)
@@ -169,7 +173,7 @@ klickade de andra) och att funktioner för daglig vana och bred publik väntar.
   3. Namnfältet är lika brett som knappen, och etiketten "Namn" hör ihop med fältet (skärmläsare och tryck på etiketten).
 
 ### PO-22 Live: värden når Starta matchen utan att scrolla
-- **Prioritet:** P2
+- **Prioritet:** P1 (liten; tas direkt efter PO-06, eftersom lobbyn är nästa skärm i samma flöde)
 - **Insats:** S
 - **Koppling:** UX-13, UX-14
 - **Värde:** Värden trycker på Starta före varje match, men knappen ligger under QR-koden. Lobbyn tappar dessutom
