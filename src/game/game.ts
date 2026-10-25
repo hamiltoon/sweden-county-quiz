@@ -1,20 +1,45 @@
 import { COUNTIES, type County } from '../data/counties';
 import { LAKES, type Lake } from '../data/lakes';
+import { OTHER_CITIES, type City } from '../data/cities';
 import { CONFIG, defaultScoring, type ScoringFn } from './config';
 import { haversineKm, shuffle } from './geo';
 
-export type Mode = 'lan' | 'stad' | 'sjo' | 'blandat';
+export type Mode = 'lan' | 'stad' | 'ort' | 'sjo' | 'blandat';
 
 export const MODE_LABELS: Record<Mode, string> = {
   lan: 'Län',
   stad: 'Residensstad',
+  ort: 'Fler städer',
   sjo: 'Sjöar',
   blandat: 'Blandat',
 };
 
 export type Question =
   | { kind: 'lan' | 'stad'; county: County }
+  | { kind: 'ort'; city: City }
   | { kind: 'sjo'; lake: Lake };
+
+/** En stad som går att klicka på: residensstäderna och de andra städerna i spelet. */
+interface Place {
+  name: string;
+  lat: number;
+  lon: number;
+}
+
+const ALL_PLACES: readonly Place[] = [
+  ...COUNTIES.map((c) => ({ name: c.city, lat: c.lat, lon: c.lon })),
+  ...OTHER_CITIES.map((c) => ({ name: c.name, lat: c.lat, lon: c.lon })),
+];
+
+/** Den stad i spelet som ligger närmast en punkt. */
+export function nearestPlace(lat: number, lon: number): { place: Place; distanceKm: number } {
+  let best = { place: ALL_PLACES[0], distanceKm: Infinity };
+  for (const place of ALL_PLACES) {
+    const d = haversineKm(lat, lon, place.lat, place.lon);
+    if (d < best.distanceKm) best = { place, distanceKm: d };
+  }
+  return best;
+}
 
 export type QuestionKind = Question['kind'];
 
@@ -39,8 +64,10 @@ export interface AnswerOutcome {
   pointsAwarded: number;
   /** Frågan är avslutad (rätt svar eller slut på försök). */
   finished: boolean;
-  /** Avstånd i km till staden (bara i stadsläget). */
+  /** Avstånd i km till staden (stadslägena). */
   distanceKm?: number;
+  /** I läget "Fler städer": klicket var på en annan stad i spelet än den som efterfrågades. */
+  closerTo?: string;
 }
 
 export interface Summary {
@@ -103,12 +130,20 @@ export class Game {
     const attempt = this.attempt;
     let correct = false;
     let distanceKm: number | undefined;
+    let closerTo: string | undefined;
 
     if (q.kind === 'lan') {
       correct = guess.kind === 'county' && guess.code === q.county.code;
     } else if (q.kind === 'sjo') {
       correct = guess.kind === 'lake' && guess.id === q.lake.id;
-    } else if (guess.kind === 'point') {
+    } else if (q.kind === 'ort' && guess.kind === 'point') {
+      // Rätt om klicket är nära staden och inte närmare någon annan stad i spelet.
+      distanceKm = haversineKm(guess.lat, guess.lon, q.city.lat, q.city.lon);
+      const nearest = nearestPlace(guess.lat, guess.lon);
+      const isTarget = nearest.place.name === q.city.name;
+      correct = distanceKm <= CONFIG.otherCityRadiusKm && isTarget;
+      if (!isTarget && nearest.distanceKm <= CONFIG.otherCityRadiusKm) closerTo = nearest.place.name;
+    } else if (q.kind === 'stad' && guess.kind === 'point') {
       distanceKm = haversineKm(guess.lat, guess.lon, q.county.lat, q.county.lon);
       correct = distanceKm <= CONFIG.cityRadiusKm;
     }
@@ -133,6 +168,7 @@ export class Game {
       pointsAwarded,
       finished,
       distanceKm,
+      closerTo,
     };
   }
 
@@ -161,13 +197,17 @@ export class Game {
   }
 }
 
-/** Frågorna för en omgång i slumpad ordning: alla 21 län, eller alla sjöar i sjöläget. */
+/**
+ * Frågorna för en omgång i slumpad ordning: alla 21 län, alla sjöar i sjöläget, eller ett
+ * slumpat urval av de andra städerna.
+ */
 export function buildQuestions(mode: Mode): Question[] {
   if (mode === 'sjo') return shuffle(LAKES).map((lake) => ({ kind: 'sjo', lake }));
+  if (mode === 'ort') return shuffle(OTHER_CITIES).slice(0, CONFIG.otherCitiesPerRound).map((city) => ({ kind: 'ort', city }));
   return shuffle(COUNTIES).map((county) => ({ kind: pickCountyKind(mode), county }));
 }
 
-function pickCountyKind(mode: Exclude<Mode, 'sjo'>): 'lan' | 'stad' {
+function pickCountyKind(mode: Exclude<Mode, 'sjo' | 'ort'>): 'lan' | 'stad' {
   if (mode === 'blandat') return Math.random() < 0.5 ? 'lan' : 'stad';
   return mode;
 }
@@ -175,5 +215,6 @@ function pickCountyKind(mode: Exclude<Mode, 'sjo'>): 'lan' | 'stad' {
 /** Det frågan gäller: länets namn, stadens namn eller sjöns namn. */
 export function questionLabel(q: Question): string {
   if (q.kind === 'sjo') return q.lake.name;
+  if (q.kind === 'ort') return q.city.name;
   return q.kind === 'lan' ? q.county.name : q.county.city;
 }

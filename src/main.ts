@@ -31,6 +31,9 @@ function loadTopology(url: string): Promise<Topology> {
   return promise;
 }
 
+/** Svar norr om den här breddgraden hamnar under toasten om den ligger överst. */
+const NORTH_TOAST_LAT = 64.5;
+
 const COUNTIES_URL = '/data/lan.topo.json';
 const LAKES_URL = '/data/sjoar.topo.json';
 const NEIGHBORS_URL = '/data/grannar.topo.json';
@@ -150,6 +153,8 @@ async function showGame(mode: Mode): Promise<void> {
     if (!CONFIG.fillMapDuringRound || !outcome.finished) return;
     const state: ResultState = outcome.correct ? (outcome.attempt === 0 ? 'first' : 'later') : 'missed';
     if (q.kind === 'sjo') map.setLakeResult(q.lake.id, state);
+    // Flera av de andra städerna kan ligga i samma län, så de markeras med en prick i stället.
+    else if (q.kind === 'ort') map.addResultDot(q.city.lon, q.city.lat, state);
     else map.setCountyResult(q.county.code, state);
   };
 
@@ -238,21 +243,34 @@ async function showGame(mode: Mode): Promise<void> {
         toast.show(`Fel, det var ${countyLabel(click.code, topology)}. ${attemptsText(outcome.attemptsLeft)}`, 'bad', CONFIG.toastMs);
       }
     } else {
+      // Residensstad eller en av de andra städerna: samma klick, olika mål.
+      const target =
+        q.kind === 'ort'
+          ? { name: q.city.name, lat: q.city.lat, lon: q.city.lon }
+          : { name: q.county.city, lat: q.county.lat, lon: q.county.lon };
       const outcome = game.answer({ kind: 'point', lat: click.lat, lon: click.lon });
       markResult(q, outcome);
+      // Städer längst norrut (Kiruna, Gällivare, Luleå …) ligger där toasten annars hamnar.
+      toast.setPlacement(target.lat > NORTH_TOAST_LAT ? 'bottom' : 'top');
       const km = Math.round(outcome.distanceKm ?? 0);
+      // Klickade spelaren på en annan stad i spelet? Säg vilken, det är tydligare än bara avståndet.
+      const miss = outcome.closerTo ? `Det där är ${outcome.closerTo}, ${target.name} ligger ${km} km bort.` : `${km} km bort.`;
       if (outcome.correct) {
         map.addMarker(click.lon, click.lat, 'correct');
-        map.addMarker(q.county.lon, q.county.lat, 'reveal', q.county.city);
-        revealAndContinue(`Rätt! ${km} km från ${q.county.city} · +${outcome.pointsAwarded} p`, 'ok');
+        map.addMarker(target.lon, target.lat, 'reveal', target.name);
+        revealAndContinue(`Rätt! ${km} km från ${target.name} · +${outcome.pointsAwarded} p`, 'ok');
       } else if (outcome.finished) {
         map.addMarker(click.lon, click.lat, 'wrong');
-        map.addMarker(q.county.lon, q.county.lat, 'reveal', q.county.city);
-        map.focusPoint(q.county.lon, q.county.lat);
-        revealAndContinue(`Fel – ${km} km bort. Här ligger ${q.county.city}.`, 'bad', CONFIG.revealMissMs);
+        map.addMarker(target.lon, target.lat, 'reveal', target.name);
+        map.focusPoint(target.lon, target.lat);
+        revealAndContinue(
+          outcome.closerTo ? `Fel – ${miss} Här ligger den.` : `Fel – ${km} km bort. Här ligger ${target.name}.`,
+          'bad',
+          CONFIG.revealMissMs,
+        );
       } else {
         map.addMarker(click.lon, click.lat, 'wrong');
-        toast.show(`${km} km bort. ${attemptsText(outcome.attemptsLeft)}`, 'bad', CONFIG.toastMs);
+        toast.show(`${miss} ${attemptsText(outcome.attemptsLeft)}`, 'bad', CONFIG.toastMs);
       }
     }
     score.textContent = `${game.score} p`;
@@ -274,11 +292,13 @@ async function showGame(mode: Mode): Promise<void> {
 function renderRecap(summary: Summary, counties: Topology, lakes: Topology | null): HTMLElement {
   const countyResults = new Map<string, ResultState>();
   const lakeResults = new Map<string, ResultState>();
+  const points: { lon: number; lat: number; state: ResultState }[] = [];
   const counts = { first: 0, later: 0, missed: 0 };
   for (const r of summary.results) {
     const state: ResultState = r.solved ? (r.attempts === 1 ? 'first' : 'later') : 'missed';
     counts[state] += 1;
     if (r.question.kind === 'sjo') lakeResults.set(r.question.lake.id, state);
+    else if (r.question.kind === 'ort') points.push({ lon: r.question.city.lon, lat: r.question.city.lat, state });
     else countyResults.set(r.question.county.code, state);
   }
   const map = renderMiniMap({
@@ -288,6 +308,7 @@ function renderRecap(summary: Summary, counties: Topology, lakes: Topology | nul
     height: 210,
     countyResults,
     lakeResults,
+    points,
     className: 'recap-map',
     label: `Karta över omgången: ${counts.first} rätt direkt, ${counts.later} efter fler försök, ${counts.missed} missade.`,
   });

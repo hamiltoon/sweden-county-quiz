@@ -91,6 +91,7 @@ export class SwedenMap {
   private readonly lakeHitG: Selection<SVGGElement, unknown, null, undefined>;
   private readonly lakesG: Selection<SVGGElement, unknown, null, undefined>;
   private readonly lakeLabelsG: Selection<SVGGElement, unknown, null, undefined>;
+  private readonly resultDotsG: Selection<SVGGElement, unknown, null, undefined>;
   private readonly markersG: Selection<SVGGElement, unknown, null, undefined>;
   private readonly zoomBehavior: ZoomBehavior<SVGSVGElement, unknown>;
   private readonly projection: GeoProjection;
@@ -103,6 +104,8 @@ export class SwedenMap {
   private readonly swedenOutline: Geometry;
   private readonly lakeMode: boolean;
   private markers: Marker[] = [];
+  /** Städer som besvarats under omgången, färgade efter hur det gick (ligger kvar hela omgången). */
+  private resultDots: { lon: number; lat: number; state: ResultState }[] = [];
   private width = 0;
   private height = 0;
   private k = 1;
@@ -151,6 +154,7 @@ export class SwedenMap {
     this.lakeHitG = this.root.append('g').attr('class', 'lake-hits');
     this.lakesG = this.root.append('g').attr('class', 'lakes');
     this.lakeLabelsG = this.root.append('g').attr('class', 'lake-labels');
+    this.resultDotsG = this.root.append('g').attr('class', 'result-dots');
     this.markersG = this.root.append('g').attr('class', 'markers');
 
     this.coastG
@@ -217,6 +221,7 @@ export class SwedenMap {
         this.root.attr('transform', event.transform.toString());
         this.svg.classed('is-zoomed', this.k > 1.01);
         this.renderMarkers();
+        this.renderResultDots();
         this.renderLakeLabels();
       });
 
@@ -254,6 +259,7 @@ export class SwedenMap {
       [w, h],
     ]);
     this.renderMarkers();
+    this.renderResultDots();
     this.renderLakeLabels();
   }
 
@@ -312,6 +318,25 @@ export class SwedenMap {
       .selectAll<SVGPathElement, LakeFeature>('path')
       .filter((d) => d.properties.id === id)
       .attr('data-result', state);
+  }
+
+  /** Markerar en besvarad stad med en liten färgad prick som ligger kvar resten av omgången. */
+  addResultDot(lon: number, lat: number, state: ResultState): void {
+    this.resultDots.push({ lon, lat, state });
+    this.renderResultDots();
+  }
+
+  private renderResultDots(): void {
+    const k = this.k;
+    this.resultDotsG
+      .selectAll<SVGCircleElement, { lon: number; lat: number; state: ResultState }>('circle')
+      .data(this.resultDots)
+      .join('circle')
+      .attr('class', 'result-dot')
+      .attr('data-result', (d) => d.state)
+      .attr('r', 4.5 / k)
+      .attr('cx', (d) => this.projection([d.lon, d.lat])?.[0] ?? 0)
+      .attr('cy', (d) => this.projection([d.lon, d.lat])?.[1] ?? 0);
   }
 
   highlightLake(id: string, state: HighlightState): void {
