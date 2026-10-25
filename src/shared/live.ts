@@ -9,9 +9,30 @@ export const LIVE_CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 export const LIVE_CODE_LENGTH = 4;
 export const LIVE_CODE_PATTERN = /^[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{4}$/;
 
-/** Live-lägen. Börjar med Län; fler kan läggas till här och i rummets frågor. */
-export type LiveMode = 'lan';
-export const LIVE_MODES: readonly LiveMode[] = ['lan'];
+/** Live-lägena: samma som spelets lägen. Värden väljer läge i lobbyn. */
+export type LiveMode = 'lan' | 'landskap' | 'kommun' | 'stad' | 'ort' | 'sjo' | 'blandat';
+export const LIVE_MODES: readonly LiveMode[] = ['lan', 'landskap', 'kommun', 'stad', 'ort', 'sjo', 'blandat'];
+
+export function isLiveMode(value: unknown): value is LiveMode {
+  return typeof value === 'string' && (LIVE_MODES as readonly string[]).includes(value);
+}
+
+/** Vilken sorts fråga det är. Blandat består av län- och residensstadsfrågor. */
+export type LiveQuestionKind = Exclude<LiveMode, 'blandat'>;
+
+/**
+ * En fråga: `target` är länets, landskapets eller kommunens kod, länskoden för residensstaden,
+ * stadens namn (Fler städer) eller sjöns id.
+ */
+export interface LiveQuestion {
+  kind: LiveQuestionKind;
+  target: string;
+}
+
+/** Frågor som besvaras med en punkt på kartan (inom ett avstånd) i stället för ett område. */
+export function isPointKind(kind: LiveQuestionKind): kind is 'stad' | 'ort' {
+  return kind === 'stad' || kind === 'ort';
+}
 
 export const LIVE_QUESTIONS = 10;
 /** Tid att svara på en fråga. */
@@ -46,8 +67,13 @@ export interface LivePlayer {
 /** En spelares svar på en fråga, som det visas när rätt svar avslöjas. */
 export interface LiveAnswer {
   playerId: string;
-  /** Länet spelaren klickade på, eller null om tiden tog slut. */
+  /** Området eller sjön spelaren klickade på, eller null (tiden tog slut, eller ett klick på en punkt). */
   code: string | null;
+  /** Klicket, för städerna (och för ett klick på land i sjöläget). */
+  lat?: number;
+  lon?: number;
+  /** Avståndet till staden i km, avrundat, för städerna. */
+  distanceKm?: number;
   correct: boolean;
   points: number;
 }
@@ -66,7 +92,8 @@ export interface LiveState {
     /** 0-baserat. */
     index: number;
     total: number;
-    /** Länets kod; spelet visar namnet. */
+    kind: LiveQuestionKind;
+    /** Se LiveQuestion; spelet visar namnet. */
     target: string;
     /** När frågan (phase "question") eller visningen (phase "reveal") tar slut, i serverns klocka (ms). */
     endsAt: number;
@@ -79,7 +106,9 @@ export interface LiveState {
 
 export type LiveClientMessage =
   | { type: 'start' }
-  | { type: 'answer'; question: number; code: string }
+  /** Ett område eller en sjö (`code`), eller en punkt på kartan (`lat`, `lon`). */
+  | { type: 'answer'; question: number; code?: string; lat?: number; lon?: number }
+  | { type: 'mode'; mode: LiveMode }
   | { type: 'lobby' };
 
 export type LiveServerMessage = { type: 'state'; state: LiveState } | { type: 'error'; message: string; fatal: boolean };

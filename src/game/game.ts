@@ -100,13 +100,7 @@ export class Game {
   /** Formulerar frågetexten. */
   prompt(): string {
     const q = this.current;
-    if (!q) return '';
-    if (q.kind === 'kommun') {
-      // Kommunerna är många och ofta små, så frågan säger vilket län kommunen ligger i.
-      const county = COUNTY_BY_CODE.get(q.municipality.county);
-      return t().game.whereIn(questionLabel(q), county ? countyName(county) : q.municipality.county);
-    }
-    return t().game.where(questionLabel(q));
+    return q ? questionPrompt(q) : '';
   }
 
   answer(guess: Guess): AnswerOutcome {
@@ -200,6 +194,16 @@ export function buildQuestions(mode: Mode): Question[] {
 function pickCountyKind(mode: Exclude<Mode, 'sjo' | 'ort' | 'landskap' | 'kommun'>): 'lan' | 'stad' {
   if (mode === 'blandat') return Math.random() < 0.5 ? 'lan' : 'stad';
   return mode;
+}
+
+/** Frågan som den ställs, t.ex. "Var ligger Skåne län?". */
+export function questionPrompt(q: Question): string {
+  if (q.kind === 'kommun') {
+    // Kommunerna är många och ofta små, så frågan säger vilket län kommunen ligger i.
+    const county = COUNTY_BY_CODE.get(q.municipality.county);
+    return t().game.whereIn(questionLabel(q), county ? countyName(county) : q.municipality.county);
+  }
+  return t().game.where(questionLabel(q));
 }
 
 /** Det frågan gäller: länets, landskapets, kommunens, stadens eller sjöns namn. */

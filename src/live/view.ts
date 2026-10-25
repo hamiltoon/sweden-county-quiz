@@ -5,32 +5,59 @@
  */
 import type { Topology } from 'topojson-specification';
 import { COUNTY_BY_CODE } from '../data/counties';
-import { LIVE_MAX_POINTS, LIVE_MIN_POINTS, LIVE_QUESTIONS, LIVE_QUESTION_MS, LIVE_REVEAL_MS, type LivePlayer, type LiveState } from '../shared/live';
-import { SwedenMap, type MapClick } from '../map/map';
+import { PROVINCE_BY_CODE } from '../data/provinces';
+import { MUNICIPALITY_BY_CODE } from '../data/municipalities';
+import { LAKE_BY_ID } from '../data/lakes';
+import { modeLabel, questionLabel, questionPrompt, type Question } from '../game/game';
+import {
+  LIVE_MAX_POINTS,
+  LIVE_MIN_POINTS,
+  LIVE_MODES,
+  LIVE_QUESTIONS,
+  LIVE_QUESTION_MS,
+  LIVE_REVEAL_MS,
+  isPointKind,
+  type LiveAnswer,
+  type LiveMode,
+  type LivePlayer,
+  type LiveState,
+} from '../shared/live';
+import { SwedenMap, type MapClick, type ResultState } from '../map/map';
+import type { RegionSteps } from '../map/adjacency';
 import { el, clear } from '../ui/dom';
 import { Toast } from '../ui/toast';
-import { countyName, t } from '../i18n';
+import { countyName, municipalityName, provinceName, t } from '../i18n';
 import type { LiveConnection } from './connection';
 import { renderQr } from './qr';
+import { toGameQuestion } from './question';
 
+/** Kartan för ett läge, som main.ts laddar. */
 export interface LiveMaps {
-  counties: Topology;
+  regions: Topology;
+  objectName: string;
+  groupBy?: string;
   lakes: Topology | null;
   neighbors: Topology | null;
+  lakeMode: boolean;
+  /** Kommunläget: hur många kommuner bort ett fel klick var. */
+  steps: RegionSteps | null;
 }
 
 const MEDALS = ['🥇', '🥈', '🥉'];
+/** Svar norr om den här breddgraden hamnar under toasten om den ligger överst. */
+const NORTH_TOAST_LAT = 64.5;
 
 export class LiveView {
   private state: LiveState | null = null;
   private map: SwedenMap | null = null;
+  private maps: LiveMaps | null = null;
   private toast: Toast | null = null;
   private game: { question: HTMLElement; progress: HTMLElement; score: HTMLElement; timerBar: HTMLElement; status: HTMLElement } | null = null;
   /** Frågan vi senast ritade, så att kartan bara nollställs vid en ny fråga. */
   private shownQuestion = -1;
   private shownPhase = '';
-  /** Länet vi klickade på i den pågående frågan (innan servern bekräftat). */
-  private picked: string | null = null;
+  /** Har vi svarat på den pågående frågan (innan servern bekräftat)? */
+  private picked = false;
   private frame = 0;
   private building: Promise<void> | null = null;
   private banner: HTMLElement;
@@ -38,7 +65,7 @@ export class LiveView {
   constructor(
     private readonly screen: HTMLElement,
     private readonly conn: () => LiveConnection | null,
-    private readonly maps: Promise<LiveMaps>,
+    private readonly loadMaps: (mode: LiveMode) => Promise<LiveMaps>,
     private readonly onLeave: () => void,
   ) {
     this.banner = el('div', { class: 'live-banner', role: 'status', 'aria-live': 'polite' });
@@ -88,6 +115,7 @@ export class LiveView {
     cancelAnimationFrame(this.frame);
     this.map?.destroy();
     this.map = null;
+    this.maps = null;
     this.building = null;
     this.toast = null;
     this.game = null;
@@ -132,12 +160,13 @@ export class LiveView {
       el(
         'section',
         { class: 'end live-lobby' },
-        el('h2', {}, t().live.lobbyTitle),
+        el('h2', {}, t().live.lobbyTitle(modeLabel(state.mode))),
         el('p', { class: 'lead' }, t().live.rules(LIVE_QUESTIONS, LIVE_QUESTION_MS / 1000, LIVE_MIN_POINTS, LIVE_MAX_POINTS)),
         el('div', { class: 'live-code-card' }, el('span', { class: 'live-code-label' }, t().live.codeLabel), el('span', { class: 'live-code' }, state.code), share),
         shareNote,
         // Kompisarna i samma rum skannar koden med kameran och hamnar direkt i formuläret för rummet.
         el('figure', { class: 'live-qr' }, renderQr(url, t().live.qrLabel(state.code)), el('figcaption', {}, t().live.qrCaption)),
+        renderModePicker(state, isHost, (mode) => this.conn()?.send({ type: 'mode', mode })),
         el('h3', { class: 'live-heading' }, t().live.players(state.players.length)),
         renderPlayers(state, (p) => (p.id === state.hostId ? t().live.host : '')),
         el('div', { class: 'btn-row' }, action),
@@ -149,20 +178,19 @@ export class LiveView {
   // ---------- Fråga och avslöjande ----------
 
   private async renderRound(state: LiveState): Promise<void> {
-    // Flera lägen kan komma medan kartan laddas; den byggs bara en gång.
-    this.building ??= this.buildGame();
+    // Flera lägen kan komma medan kartan laddas; den byggs bara en gång per match.
+    this.building ??= this.buildGame(state.mode);
     await this.building;
     // Ett nyare läge kan ha kommit medan kartan laddades; rita bara det senaste.
     if (this.state !== state || !this.map || !this.game || !state.question) return;
     const q = state.question;
+    const gq = toGameQuestion(q);
     const map = this.map;
-    const county = COUNTY_BY_CODE.get(q.target);
-    const name = county ? countyName(county) : q.target;
     const me = this.me(state);
 
     this.game.progress.textContent = `${q.index + 1}/${q.total}`;
     this.game.score.textContent = t().common.points(me?.score ?? 0);
-    this.game.question.textContent = t().game.where(name);
+    this.game.question.textContent = gq ? questionPrompt(gq) : '';
 
     const newQuestion = q.index !== this.shownQuestion;
     const newPhase = newQuestion || state.phase !== this.shownPhase;
@@ -171,36 +199,79 @@ export class LiveView {
 
     if (state.phase === 'question') {
       if (newQuestion) {
-        this.picked = null;
+        this.picked = false;
         map.clearHighlights();
+        map.clearMarkers();
         this.toast?.hide();
         if (map.isTransformed) map.resetZoom();
+        // Toasten får inte täcka svaret: nederst för sjöarna och städerna längst norrut.
+        const target = gq ? targetPoint(gq) : undefined;
+        this.toast?.setPlacement(q.kind === 'sjo' || (target && target.lat > NORTH_TOAST_LAT) ? 'bottom' : 'top');
       }
-      const answered = Boolean(me?.answered) || this.picked !== null;
+      const answered = Boolean(me?.answered) || this.picked;
       map.setInteractive(!answered);
       this.game.status.textContent = statusText(state, answered);
       if (newPhase) this.runTimer(q.endsAt, LIVE_QUESTION_MS);
       return;
     }
 
-    // Avslöjande: rätt län, mitt eget klick, och ställningen.
     map.setInteractive(false);
-    if (!newPhase) return;
-    const mine = state.answers?.find((a) => a.playerId === state.you);
+    if (!newPhase || !gq) return;
     map.clearHighlights();
-    if (mine?.code && !mine.correct) map.highlight(mine.code, 'wrong');
-    map.highlight(q.target, mine?.correct ? 'correct' : 'reveal');
-    if (county) map.setCountyResult(q.target, mine?.correct ? 'first' : 'missed');
-    if (!mine?.correct) map.focusCounty(q.target);
-    const clicked = mine?.code ? COUNTY_BY_CODE.get(mine.code) : undefined;
-    if (mine?.correct) this.toast?.show(t().game.right(mine.points), 'ok', 0);
-    else if (mine?.code) this.toast?.show(t().game.wrongWasReveal(clicked ? countyName(clicked) : mine.code, name), 'bad', 0);
-    else this.toast?.show(t().live.timeUp(name), 'bad', 0);
+    map.clearMarkers();
+    this.reveal(gq, state.answers?.find((a) => a.playerId === state.you));
     this.game.status.replaceChildren(renderStandings(state));
     this.runTimer(q.endsAt, LIVE_REVEAL_MS);
   }
 
-  private async buildGame(): Promise<void> {
+  /** Visar rätt svar och mitt eget klick, och färgar kartan efter hur det gick. */
+  private reveal(q: Question, mine: LiveAnswer | undefined): void {
+    const map = this.map!;
+    const name = questionLabel(q);
+    const state: ResultState = mine?.correct ? 'first' : 'missed';
+    const show = (text: string, ok: boolean) => this.toast?.show(text, ok ? 'ok' : 'bad', 0);
+
+    if (q.kind === 'stad' || q.kind === 'ort') {
+      const target = targetPoint(q)!;
+      if (mine?.lat !== undefined && mine.lon !== undefined) map.addMarker(mine.lon, mine.lat, mine.correct ? 'correct' : 'wrong');
+      map.addMarker(target.lon, target.lat, 'reveal', name);
+      map.addResultDot(target.lon, target.lat, state);
+      if (!mine?.correct) map.focusPoint(target.lon, target.lat);
+      if (mine?.correct) show(t().game.rightCity(mine.distanceKm ?? 0, name, mine.points), true);
+      else if (mine?.distanceKm !== undefined) show(t().game.missReveal(t().game.wrongKm(mine.distanceKm), name), false);
+      else show(t().live.timeUp(name), false);
+      return;
+    }
+
+    if (q.kind === 'sjo') {
+      if (mine?.code && !mine.correct) map.highlightLake(mine.code, 'wrong');
+      else if (mine?.lat !== undefined && mine.lon !== undefined) map.addMarker(mine.lon, mine.lat, 'wrong');
+      map.highlightLake(q.lake.id, mine?.correct ? 'correct' : 'reveal');
+      map.showLakeLabel(q.lake.id);
+      map.setLakeResult(q.lake.id, state);
+      if (!mine?.correct) map.focusLake(q.lake.id);
+      if (mine?.correct) show(t().game.rightLake(t().game.lakeRank(q.lake.rank), mine.points), true);
+      else if (mine?.code) show(t().game.wrongWasReveal(LAKE_BY_ID.get(mine.code)?.name ?? mine.code, name), false);
+      else if (mine?.lat !== undefined) show(t().game.missReveal(t().game.wrong, name), false);
+      else show(t().live.timeUp(name), false);
+      return;
+    }
+
+    // Län, landskap eller kommun.
+    const target = q.kind === 'landskap' ? q.province.code : q.kind === 'kommun' ? q.municipality.code : q.county.code;
+    if (mine?.code && !mine.correct) map.highlight(mine.code, 'wrong');
+    map.highlight(target, mine?.correct ? 'correct' : 'reveal');
+    map.setCountyResult(target, state);
+    if (!mine?.correct) map.focusCounty(target);
+    if (mine?.correct) show(t().game.right(mine.points), true);
+    else if (mine?.code) {
+      const away = this.maps?.steps?.(mine.code, target);
+      const clicked = regionName(mine.code);
+      show(away ? t().game.wrongWasAwayReveal(clicked, t().game.municipalitiesAway(away), name) : t().game.wrongWasReveal(clicked, name), false);
+    } else show(t().live.timeUp(name), false);
+  }
+
+  private async buildGame(mode: LiveMode): Promise<void> {
     clear(this.screen);
     this.screen.className = 'screen screen-game';
     const question = el('h2', { class: 'question', 'aria-live': 'polite' }, t().game.loadingMap);
@@ -212,7 +283,7 @@ export class LiveView {
     const hud = el(
       'header',
       { class: 'hud' },
-      el('div', { class: 'hud-row' }, el('span', { class: 'hud-mode' }, `Live · ${this.state?.code ?? ''}`), progress, score, quit),
+      el('div', { class: 'hud-row' }, el('span', { class: 'hud-mode' }, `Live · ${modeLabel(mode)}`), progress, score, quit),
       question,
       el('div', { class: 'live-timer', 'aria-hidden': 'true' }, timerBar),
     );
@@ -224,28 +295,50 @@ export class LiveView {
 
     let maps: LiveMaps;
     try {
-      maps = await this.maps;
+      maps = await this.loadMaps(mode);
     } catch {
       if (mapEl.isConnected) this.showError(t().common.mapFailed);
       return;
     }
     // Har spelaren lämnat medan kartan laddades finns det inget att rita på.
     if (!mapEl.isConnected) return;
-    const map = new SwedenMap(mapEl, maps.counties, { lakes: maps.lakes, neighbors: maps.neighbors });
+    const map = new SwedenMap(mapEl, maps.regions, {
+      objectName: maps.objectName,
+      groupBy: maps.groupBy,
+      lakes: maps.lakes,
+      neighbors: maps.neighbors,
+      lakeMode: maps.lakeMode,
+    });
     map.onClick = (click) => this.answer(click);
     this.map = map;
+    this.maps = maps;
     this.toast = new Toast(mapWrap, 'top');
     this.game = { question, progress, score, timerBar, status };
   }
 
   private answer(click: MapClick): void {
     const state = this.state;
-    if (!state || state.phase !== 'question' || !state.question || this.picked || !click.code || !this.map) return;
-    this.picked = click.code;
-    this.conn()?.send({ type: 'answer', question: state.question.index, code: click.code });
-    this.map.highlight(click.code, 'picked');
-    this.map.setInteractive(false);
-    if (this.game) this.game.status.textContent = statusText(state, true);
+    const q = state?.question;
+    if (!state || state.phase !== 'question' || !q || this.picked || !this.map) return;
+    const send = (answer: { code?: string; lat?: number; lon?: number }) => {
+      this.picked = true;
+      this.conn()?.send({ type: 'answer', question: q.index, ...answer });
+      this.map?.setInteractive(false);
+      if (this.game) this.game.status.textContent = statusText(state, true);
+    };
+    if (isPointKind(q.kind)) {
+      // Städerna: klicket är svaret, servern räknar avståndet.
+      this.map.addMarker(click.lon, click.lat, 'picked');
+      send({ lat: click.lat, lon: click.lon });
+    } else if (q.kind === 'sjo') {
+      if (click.lake) this.map.highlightLake(click.lake, 'picked');
+      else this.map.addMarker(click.lon, click.lat, 'picked');
+      send(click.lake ? { code: click.lake } : { lat: click.lat, lon: click.lon });
+    } else if (click.code) {
+      // Ett klick utanför alla områden (i havet) räknas inte.
+      this.map.highlight(click.code, 'picked');
+      send({ code: click.code });
+    }
   }
 
   /** Nedräkningsstapeln: full vid frågans början, tom när tiden är ute. */
@@ -308,6 +401,39 @@ export class LiveView {
   }
 }
 
+/** Var staden ligger i en stadsfråga. */
+function targetPoint(q: Question): { lat: number; lon: number } | undefined {
+  if (q.kind === 'ort') return q.city;
+  if (q.kind === 'stad') return q.county;
+  return undefined;
+}
+
+/** Namnet på ett klickat län, landskap eller kommun. */
+function regionName(code: string): string {
+  const county = COUNTY_BY_CODE.get(code);
+  if (county) return countyName(county);
+  const province = PROVINCE_BY_CODE.get(code);
+  if (province) return provinceName(province);
+  const municipality = MUNICIPALITY_BY_CODE.get(code);
+  return municipality ? municipalityName(municipality) : code;
+}
+
+/** Lägesväljaren i lobbyn: värden väljer, de andra ser vilket läge som gäller. */
+function renderModePicker(state: LiveState, isHost: boolean, onPick: (mode: LiveMode) => void): HTMLElement {
+  if (!isHost) return el('p', { class: 'live-mode-note' }, t().live.modeIs(modeLabel(state.mode)));
+  const chips = LIVE_MODES.map((mode) => {
+    const chip = el('button', { class: 'live-mode-chip', type: 'button', 'data-mode': mode, 'aria-pressed': String(mode === state.mode) }, modeLabel(mode));
+    chip.addEventListener('click', () => mode !== state.mode && onPick(mode));
+    return chip;
+  });
+  return el(
+    'div',
+    { class: 'live-modes' },
+    el('h3', { class: 'live-heading' }, t().live.chooseMode),
+    el('div', { class: 'live-mode-chips', role: 'group', 'aria-label': t().live.chooseMode }, ...chips),
+  );
+}
+
 /** Placering med delad plats vid lika poäng. */
 function rank(players: LivePlayer[]): { player: LivePlayer; place: number }[] {
   const sorted = players.slice().sort((a, b) => b.score - a.score);
@@ -332,7 +458,7 @@ function renderPlayers(state: LiveState, tag: (p: LivePlayer) => string): HTMLEl
 function statusText(state: LiveState, answered: boolean): string {
   const present = state.players.filter((p) => p.connected);
   const done = present.filter((p) => p.answered || (p.id === state.you && answered)).length;
-  if (present.length <= 1) return answered ? t().live.answerSent : t().live.clickCounty;
+  if (present.length <= 1) return answered ? t().live.answerSent : t().live.tapMap;
   return t().live.answered(answered, done, present.length);
 }
 
@@ -344,12 +470,13 @@ function renderStandings(state: LiveState): HTMLElement {
     { class: 'live-standings' },
     ...rank(state.players).map(({ player, place }) => {
       const a = answers.get(player.id);
+      const answered = a && (a.code !== null || a.lat !== undefined);
       return el(
         'li',
         { class: player.id === state.you ? 'is-me' : '' },
         el('span', { class: 'live-place' }, `${place}`),
         el('span', { class: 'live-name' }, player.name),
-        el('span', { class: `live-delta ${a?.correct ? 'is-ok' : 'is-bad'}` }, a?.correct ? `+${a.points}` : a?.code ? '✗' : '–'),
+        el('span', { class: `live-delta ${a?.correct ? 'is-ok' : 'is-bad'}` }, a?.correct ? `+${a.points}` : answered ? '✗' : '–'),
         el('span', { class: 'live-points' }, t().common.points(player.score)),
       );
     }),
