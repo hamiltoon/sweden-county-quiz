@@ -24,6 +24,8 @@ klickade de andra) och att funktioner för daglig vana och bred publik väntar.
   Ett fel som stoppar eller förstör en match går alltid före nya funktioner.
 - **Fokus:** hellre en sak klar och bra än tre halvfärdiga. Nya kategorier och nya spelsätt väntar
   tills live är riktigt bra, eftersom bredden redan är stor (sju lägen).
+- **Lärande och tillgänglighet före glans:** det som gör att alla ser rätt och fel och lär sig av sina missar
+  (PO-14–PO-16) går före live-paketets finlir (PO-02–PO-04), eftersom kärnan är att lära sig geografi.
 - **Insats:** S = högst en halv dag, M = en till två dagar, L = mer än så eller ny kartdata.
 - **Prioritet:** P0 = fel som stoppar spelet, åtgärdas direkt. P1 = nu. P2 = nästa. P3 = senare.
   Parkerad = inte nu, med motivering.
@@ -35,6 +37,7 @@ klickade de andra) och att funktioner för daglig vana och bred publik väntar.
 | Status | Punkter |
 |---|---|
 | Pågår (utvecklaren) | PO-01, PO-06 |
+| Nästa | PO-14, PO-15, PO-16 |
 | Väntar på UX-verifiering | – |
 | Väntar på svar från John | – |
 | Klart | – |
@@ -69,7 +72,7 @@ klickade de andra) och att funktioner för daglig vana och bred publik väntar.
 - **Prioritet:** P1, pågår (liten och oberoende av PO-01, så den går parallellt)
 - **Beslut (PO):** live-kortet flyttas upp direkt under rubriken.
 - **Insats:** S
-- **Koppling:** Eget fynd vid genomspelning på mobil (2026-10-25)
+- **Koppling:** UX-04; eget fynd vid genomspelning på mobil (2026-10-25)
 - **Värde:** Live är det som spelas mest, men på en iPhone ligger knappen under sju lägeskort och syns först efter
   mycket scrollning.
 - **Acceptanskriterier:**
@@ -78,6 +81,90 @@ klickade de andra) och att funktioner för daglig vana och bred publik väntar.
   3. På dator ligger det också före lägeskorten.
   4. Lägeskorten, deras bästa resultat och topplistan fungerar som förut.
   5. Svenska och engelska; tangentbordsordningen följer den nya ordningen.
+
+### PO-14 Rätt och fel syns för alla
+- **Prioritet:** P1, nästa när PO-06 är klar
+- **Insats:** S–M
+- **Koppling:** UX-02, UX-03
+- **Värde:** Rätt/fel-rutan är spelets viktigaste återkoppling, men vit text på grönt har kontrasten 3,45:1 (2,31:1 i
+  mörkt läge). Rätt och missat skiljer sig bara i kulör, så den som är rödgrön färgblind (ungefär var tolfte man)
+  ser inte skillnad på kartan eller minikartan.
+- **Motivering:** Rör allt spel, i alla lägen och i live. Lite arbete, mest färger och en ikon.
+- **Acceptanskriterier:**
+  1. All text i rätt/fel-rutan har kontrast minst 4,5:1 mot bakgrunden, i både ljust och mörkt läge.
+  2. Rutan har en ikon (✓ eller ✗) så att den går att läsa utan färg.
+  3. På kartan under omgången och på minikartan går rätt direkt, rätt efter flera försök och missat att skilja åt med
+     simulerad deuteranopi och protanopi, t.ex. med en annan palett, ett mönster eller en kontur på missade.
+  4. Förklaringen under minikartan stämmer med de nya färgerna.
+  5. Live använder samma färger och ikoner.
+  6. axe-core hittar inga kontrastfel på spelskärmen eller slutskärmen.
+
+### PO-15 Avslöjandet lär ut var rätt svar ligger
+- **Prioritet:** P1
+- **Insats:** M
+- **Koppling:** UX-07
+- **Värde:** Kärnan är att lära sig geografi. Efter en miss visas rätt svar i 2,4 sekunder, och det egna felklicket
+  hamnar ofta utanför bilden. Man hinner inte se var man hade fel eller var det rätta låg.
+- **Motivering:** Gör varje miss till något man lär sig av.
+- **Acceptanskriterier:**
+  1. Efter en miss i solospelet visar kartan både det egna (sista) felklicket och rätt svar i samma vy.
+  2. Rätt svar har sitt namn utskrivet på kartan.
+  3. Efter en miss går spelet vidare först när man trycker (t.ex. "Nästa" eller ett tryck på kartan), eller efter
+     minst 4 sekunder om man inte rör något. Rätt svar på första försöket går vidare lika snabbt som i dag.
+  4. Det fungerar i alla lägen, också städerna och sjöarna.
+  5. Live påverkas inte (där styr servern tiden; PO-01 visar klicken).
+  6. Svenska och engelska.
+
+### PO-16 Kommuner: kartan zoomar in på länet
+- **Prioritet:** P1
+- **Insats:** M
+- **Koppling:** UX-01
+- **Värde:** 274 av 290 kommuner är mindre än ett finger på en iPhone, och zoomen nollställs vid varje fråga, så man
+  nyper in i Stockholm 20 gånger. I live, med 12 sekunder och ett klick, blir det nästan omöjligt.
+- **Motivering:** Frågan säger redan vilket län kommunen ligger i, så spelet kan zooma åt spelaren. Kommuner är det
+  bästa läget för lärande, men just nu straffar det ovana fingrar mer än okunskap.
+- **Acceptanskriterier:**
+  1. När en kommunfråga visas zoomar kartan mjukt in så att hela länet som frågan nämner fyller kartan.
+  2. Man kan fortfarande zooma ut och in själv.
+  3. De minsta kommunerna (t.ex. Sundbyberg, Solna, Öckerö) går att träffa på en iPhone 13 och en Android 360 px,
+     antingen genom högre maxzoom eller genom större osynliga träffytor.
+  4. I live gäller samma inzoomning, och kommunkartan laddas redan i lobbyn när läget innehåller kommuner, så att
+     ingen förlorar tid på laddning.
+  5. Övriga lägen påverkas inte.
+
+### PO-17 Slutskärmen: Spela igen utan att scrolla
+- **Prioritet:** P2
+- **Insats:** S
+- **Koppling:** UX-05
+- **Värde:** "En gång till" ska vara ett tryck. I dag ligger knappen under vecket, på Android 360 px två skärmhöjder ner.
+- **Acceptanskriterier:**
+  1. På iPhone 13 och Android 360 px syns "Spela igen" och "Byt läge" utan att man scrollar, också med namnformulär och topplista.
+  2. Poängen och minikartan syns fortfarande först.
+  3. Knapparna täcker inget innehåll som inte går att scrolla fram.
+
+### PO-18 Namn: säg direkt om namnet är skyddat
+- **Prioritet:** P2
+- **Insats:** S–M
+- **Koppling:** UX-06
+- **Värde:** I dag godtas ett skyddat namn när man skriver det, och först efter en hel omgång kommer beskedet att
+  resultatet inte sparas, med en text som inte stämmer. Ett oskyddat namn som redan finns slås tyst ihop med någon annans resultat.
+- **Motivering:** Ett fel som tar bort resultat utan att säga det, och som drabbar just familjen när någon prövar en annans namn.
+- **Acceptanskriterier:**
+  1. När man väljer ett namn som är skyddat av någon annan säger spelet det direkt: "Namnet är skyddat – logga in eller välj ett annat". Namnet sparas inte.
+  2. När man väljer ett oskyddat namn som redan finns på topplistan får man en varning: "Det finns redan en spelare som heter X. Är det du?" och kan välja ett annat.
+  3. Texten om resultat som inte kunde sparas stämmer med vad som faktiskt händer.
+  4. Inga befintliga resultat eller namn på topplistan ändras.
+  5. Svenska och engelska.
+
+### PO-19 Live: inbjudningssidan förklarar vad man går med i
+- **Prioritet:** P2
+- **Insats:** S
+- **Koppling:** UX-08
+- **Värde:** För den i familjen som skannar QR-koden är det här första mötet med spelet, och sidan säger inte vad det är.
+- **Acceptanskriterier:**
+  1. Sidan visar spelets namn och logga, en mening om spelet, rummets läge och vilka som redan är i rummet.
+  2. Det går att byta språk på sidan.
+  3. Namnfältet är lika brett som knappen, och etiketten "Namn" hör ihop med fältet (skärmläsare och tryck på etiketten).
 
 ### PO-02 Live: se vilka som har svarat medan frågan pågår
 - **Prioritet:** P2
@@ -201,6 +288,23 @@ klickade de andra) och att funktioner för daglig vana och bred publik väntar.
 - **Insats:** M
 - **Koppling:** IDEER.md "Göra live mer levande" 9
 
+### PO-20 Bekräfta innan man avslutar en omgång
+- **Prioritet:** P3
+- **Insats:** S
+- **Koppling:** UX-09
+- **Acceptanskriterier:**
+  1. Ett tryck på ✕ efter minst tre besvarade frågor frågar först: "Avsluta? Resultatet sparas inte."
+  2. I live: "Lämna matchen?".
+  3. Före tre besvarade frågor avslutar ✕ direkt som i dag.
+
+### PO-21 Byt namn: säg vad som händer med de gamla resultaten
+- **Prioritet:** P3
+- **Insats:** S
+- **Koppling:** UX-10
+- **Acceptanskriterier:**
+  1. Formuläret för namnbyte säger att de gamla resultaten ligger kvar under det gamla namnet.
+  2. Att flytta resultaten till det nya namnet ändrar topplistan och är en **fråga till John**; den byggs inte nu.
+
 ## Parkerat
 
 | Idé | Varför inte nu |
@@ -218,7 +322,17 @@ Fynd från UX-specialisten (UX-01, UX-02 …) läggs in här med prioritet och k
 
 | UX-id | Fynd | Prioritet | PO-punkt |
 |---|---|---|---|
-| – | Inga fynd inkomna än | – | – |
+| UX-01 | Kommuner: målen för små, zoomen nollställs | P1 | PO-16 |
+| UX-02 | Rätt/fel-rutan har för låg kontrast | P1 | PO-14 |
+| UX-03 | Rött mot grönt är enda skillnaden | P1 | PO-14 |
+| UX-04 | Spela live under vecket | P1 | PO-06 |
+| UX-05 | Spela igen under vecket | P2 | PO-17 |
+| UX-06 | Skyddat namn avvisas först efter en omgång | P2 | PO-18 |
+| UX-07 | Avslöjandet lär ut för lite | P1 | PO-15 |
+| UX-08 | Inbjudningssidan förklarar inget | P2 | PO-19 |
+| UX-09 | ✕ avslutar utan bekräftelse | P3 | PO-20 |
+| UX-10 | Namnbyte lämnar gamla resultat | P3 | PO-21 |
+| UX-11–30 | Kommer | – | – |
 
 ## Klart
 
