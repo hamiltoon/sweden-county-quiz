@@ -1,19 +1,12 @@
 # Idéer för Sverigespelet
 
 Saker vi har pratat om men inte byggt än, ungefär i den ordning vi tänkt ta dem.
-Klart: Landskap (oktober 2026).
+Klart: Landskap och Live-läget med Län (oktober 2026).
 
-## På gång
+## Nästa steg för live
 
-- **Live-läge** – tävla mot varandra i realtid:
-  - Någon skapar ett rum och får en kod (t.ex. `KXR4`) och en länk att dela; de andra går med.
-  - Alla får samma fråga samtidigt med nedräkning (cirka 10 s) och ett klick var.
-  - Rätt svar ger poäng, snabbare svar ger fler. Servern avgör vad som är rätt och mäter tiden.
-  - Efter varje fråga visas rätt svar, allas klick och ställningen; efter 10–15 frågor en pallplats
-    och "Spela igen".
-  - Bara rum med kod (ingen matchning med främlingar), egen vinnare per match (räknas inte på
-    topplistan). Börjar med Län.
-  - Tekniskt: Cloudflare Durable Objects med WebSockets (finns i gratisplanen), ett objekt per rum.
+- Fler kategorier i live: landskap, residensstäder (avstånd i stället för län) och sjöar.
+- Visa de andras klick på kartan när rätt svar avslöjas.
 
 ## Fler kategorier
 

@@ -6,7 +6,7 @@ import { distanceToShapeKm } from './game/geo';
 import { LAKE_BY_ID, lakeRankText } from './data/lakes';
 import { COUNTY_BY_CODE } from './data/counties';
 import { PROVINCE_BY_CODE } from './data/provinces';
-import { saveBest } from './game/storage';
+import { getCurrentLiveRoom, getLiveName, getLivePlayerId, saveBest, saveLiveName, setCurrentLiveRoom } from './game/storage';
 import { SwedenMap, type MapClick, type ResultState } from './map/map';
 import { renderMiniMap } from './map/minimap';
 import { el, clear } from './ui/dom';
@@ -15,6 +15,9 @@ import { renderEnd, renderRecapLegend, renderStart } from './ui/screens';
 import { renderEndLeaderboard, renderStartLeaderboard } from './ui/leaderboard';
 import { newResultId } from './api/leaderboard';
 import { registerServiceWorker } from './pwa';
+import { createRoom, LiveConnection } from './live/connection';
+import { renderLiveEntry } from './live/entry';
+import { LiveView, type LiveMaps } from './live/view';
 
 const screen = document.getElementById('screen') as HTMLElement;
 const topologyPromises = new Map<string, Promise<Topology>>();
@@ -53,13 +56,68 @@ function showStart(): void {
   clear(screen);
   screen.className = 'screen screen-start';
   const brandMap = el('div', { class: 'brand-map' });
-  screen.append(renderStart((mode) => void showGame(mode), renderStartLeaderboard(), brandMap));
+  screen.append(renderStart((mode) => void showGame(mode), renderStartLeaderboard(), brandMap, () => showLive()));
   screen.append(renderFooter());
   // Förladda kartan i bakgrunden och rita en liten Sverigekarta bredvid rubriken när den finns.
   void Promise.all([loadTopology(COUNTIES_URL), loadOptional(LAKES_URL)])
     .then(([counties, lakes]) => brandMap.append(renderMiniMap({ counties, lakes, width: 46, height: 100 })))
     .catch(() => undefined);
   void loadOptional(NEIGHBORS_URL);
+}
+
+/** Sökvägen för en delad länk till ett live-rum, t.ex. /live/KXR4. */
+const LIVE_PATH = /^\/live\/([A-Za-z0-9]{4})\/?$/;
+
+function goHome(): void {
+  setCurrentLiveRoom(null);
+  if (location.pathname !== '/') history.replaceState(null, '', '/');
+  showStart();
+}
+
+/** Live-lägets första skärm: skapa ett rum eller gå med (med koden förifylld från en länk). */
+function showLive(code?: string): void {
+  const name = getLiveName();
+  // Omladdning mitt i en match: tillbaka in i samma rum direkt.
+  if (code && name && getCurrentLiveRoom() === code) {
+    joinLive(code, name);
+    return;
+  }
+  clear(screen);
+  screen.className = 'screen screen-end';
+  screen.append(
+    renderLiveEntry({
+      code,
+      name,
+      onCreate: async (name) => joinLive(await createRoom(), name),
+      onJoin: joinLive,
+      onBack: goHome,
+    }),
+    renderFooter(),
+  );
+}
+
+function joinLive(code: string, name: string): void {
+  saveLiveName(name);
+  setCurrentLiveRoom(code);
+  // Adressen blir rummets länk, så att en omladdning går tillbaka in i rummet.
+  history.replaceState(null, '', `/live/${code}`);
+  const maps: Promise<LiveMaps> = Promise.all([loadTopology(COUNTIES_URL), loadOptional(LAKES_URL), loadOptional(NEIGHBORS_URL)]).then(
+    ([counties, lakes, neighbors]) => ({ counties, lakes, neighbors }),
+  );
+  let conn: LiveConnection | null = null;
+  const view = new LiveView(screen, () => conn, maps, () => {
+    conn?.close();
+    view.destroy();
+    goHome();
+  });
+  clear(screen);
+  screen.className = 'screen screen-end';
+  screen.append(el('section', { class: 'end' }, el('h2', {}, `Ansluter till ${code} …`)));
+  conn = new LiveConnection(code, getLivePlayerId(), name, {
+    onState: (state) => view.render(state),
+    onError: (message, fatal) => (fatal ? view.showError(message) : view.notify(message)),
+    onReconnecting: (reconnecting) => view.setBanner(reconnecting ? 'Anslutningen bröts – återansluter …' : ''),
+  });
 }
 
 function renderFooter(): HTMLElement {
@@ -329,5 +387,7 @@ function regionName(code: string): string {
   return COUNTY_BY_CODE.get(code)?.name ?? PROVINCE_BY_CODE.get(code)?.name ?? code;
 }
 
-showStart();
+const liveLink = LIVE_PATH.exec(location.pathname);
+if (liveLink) showLive(liveLink[1].toUpperCase());
+else showStart();
 registerServiceWorker();

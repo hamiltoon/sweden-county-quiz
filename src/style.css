@@ -1112,6 +1112,259 @@ a {
   color: #fff;
 }
 
+/* ---------- Live ---------- */
+.mode-btn-live {
+  width: 100%;
+  margin-top: 12px;
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+.mode-btn-live .mode-icon {
+  color: var(--accent);
+}
+
+/* Spelarens svar i live-läget, innan rätt svar visas. */
+.county.is-picked {
+  fill: color-mix(in srgb, var(--accent) 45%, var(--land));
+  stroke: var(--accent);
+  stroke-width: 2px;
+}
+
+.live-banner {
+  display: none;
+  flex: none;
+  width: 100%;
+  padding: calc(8px + var(--safe-top)) 16px 8px;
+  background: var(--warn);
+  color: #1a1200;
+  font-weight: 600;
+  text-align: center;
+  font-size: 0.9rem;
+  z-index: 4;
+}
+
+.live-banner.is-visible {
+  display: block;
+}
+
+.screen-end > .live-banner {
+  margin: calc(-16px - var(--safe-top)) 0 12px;
+  width: calc(100% + 32px);
+}
+
+.live-or {
+  margin: 18px 0 8px;
+  color: var(--muted);
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.live-join .btn {
+  width: 100%;
+}
+
+.live-join .name-row .btn {
+  width: auto;
+}
+
+.live-code-input {
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-weight: 700;
+  text-align: center;
+}
+
+.live-code-card {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 4px 12px;
+  margin: 8px 0 10px;
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.live-code-label {
+  grid-column: 1;
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.live-code {
+  grid-column: 1;
+  font-size: 2.2rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  font-variant-numeric: tabular-nums;
+}
+
+.live-code-card .btn {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  flex: none;
+  padding: 10px 16px;
+}
+
+.live-heading {
+  margin: 18px 0 8px;
+  font-size: 0.95rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.live-players,
+.live-podium,
+.live-standings {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.live-players li,
+.live-podium li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.live-players li.is-me,
+.live-podium li.is-me,
+.live-standings li.is-me {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.live-players li.is-away {
+  opacity: 0.55;
+}
+
+.live-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.live-tag {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.live-wait {
+  flex: 1;
+  margin: 0;
+  padding: 12px 0;
+  color: var(--muted);
+  text-align: center;
+}
+
+.live-place {
+  flex: none;
+  width: 1.8em;
+  text-align: center;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.live-podium .live-place {
+  font-size: 1.3rem;
+}
+
+.live-points {
+  flex: none;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.live-podium {
+  margin-top: 14px;
+}
+
+/* Nedräkningen under frågan. */
+.live-timer {
+  height: 6px;
+  margin-top: 8px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--border) 25%, transparent);
+  overflow: hidden;
+}
+
+.live-timer-bar {
+  height: 100%;
+  background: var(--accent);
+  transform-origin: left center;
+  transform: scaleX(1);
+}
+
+.live-timer-bar.is-low {
+  background: var(--bad);
+}
+
+.live-timer-bar.is-reveal {
+  background: color-mix(in srgb, var(--muted) 60%, transparent);
+}
+
+/* Under kartan: hur många som svarat, eller ställningen efter en fråga. */
+.live-status {
+  flex: none;
+  max-height: 38%;
+  overflow-y: auto;
+  padding: 10px calc(12px + var(--safe-right)) calc(10px + var(--safe-bottom)) calc(12px + var(--safe-left));
+  background: var(--panel);
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.08);
+  color: var(--muted);
+  font-size: 0.95rem;
+  text-align: center;
+  z-index: 2;
+}
+
+.live-status:empty {
+  display: none;
+}
+
+.live-standings {
+  gap: 2px;
+  text-align: left;
+  color: var(--text);
+}
+
+.live-standings li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: 10px;
+}
+
+.live-delta {
+  flex: none;
+  min-width: 2.4em;
+  text-align: right;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.live-delta.is-ok {
+  color: var(--ok);
+}
+
+.live-delta.is-bad {
+  color: var(--muted);
+}
+
 /* Desktop: bredare layout, kartan centrerad med max-bredd */
 @media (min-width: 900px) {
   .hud {

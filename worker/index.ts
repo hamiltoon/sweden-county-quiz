@@ -7,6 +7,7 @@
  *   GET  /api/scores?mode=total&limit=10  → summan av varje spelares bästa resultat i alla lägen
  *   POST /api/scores                       → spara ett eller flera avslutade resultat
  *   /api/me, /api/logout, /api/passkey/*   → konton, se auth.ts
+ *   /api/live, /api/live/:kod/ws           → live-läget, se live.ts
  *
  * Ett namn som skyddats med en passkey kan bara användas av den som är inloggad på det kontot.
  */
@@ -30,6 +31,9 @@ import {
 import { CONFIG } from '../src/game/config';
 import { handleAuth, nameKeyOf, protectedPlayer, sessionPlayer } from './auth';
 import { clientIp, isCrossOrigin, json, readJson } from './http';
+import { handleLive } from './live';
+
+export { LiveRoom } from './live';
 
 const MAX_BODY_BYTES = 4096;
 /** Resultat från före spelets första version, eller långt fram i tiden, är inte äkta. */
@@ -46,6 +50,8 @@ export default {
       }
       const auth = await handleAuth(request, env, url);
       if (auth) return auth;
+      const live = await handleLive(request, env, url);
+      if (live) return live;
       if (url.pathname === '/api/scores') {
         if (request.method === 'GET') return await getTop(url, env);
         if (request.method === 'POST') return await submit(request, env);

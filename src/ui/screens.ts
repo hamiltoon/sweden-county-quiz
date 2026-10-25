@@ -14,7 +14,7 @@ export const ATTRIBUTION_HTML_ID = 'attribution';
  * Startskärmen. `brandMap` är en plats bredvid rubriken där en liten Sverigekarta kan läggas
  * när kartdatan har laddats; den har fast storlek så att inget hoppar.
  */
-export function renderStart(onStart: (mode: Mode) => void, leaderboard?: HTMLElement, brandMap?: HTMLElement): HTMLElement {
+export function renderStart(onStart: (mode: Mode) => void, leaderboard?: HTMLElement, brandMap?: HTMLElement, onLive?: () => void): HTMLElement {
   const modes: { mode: Mode; desc: string }[] = [
     { mode: 'lan', desc: 'Klicka på rätt län.' },
     { mode: 'landskap', desc: `Klicka på rätt landskap, alla ${PROVINCES.length}.` },
@@ -61,6 +61,7 @@ export function renderStart(onStart: (mode: Mode) => void, leaderboard?: HTMLEle
       ),
     ),
     el('div', { class: 'mode-list' }, ...buttons),
+    onLive ? renderLiveButton(onLive) : null,
     el(
       'p',
       { class: 'rules' },
@@ -68,6 +69,22 @@ export function renderStart(onStart: (mode: Mode) => void, leaderboard?: HTMLEle
     ),
     leaderboard,
   );
+}
+
+function renderLiveButton(onLive: () => void): HTMLElement {
+  const btn = el(
+    'button',
+    { class: 'mode-btn mode-btn-live', type: 'button', 'data-mode': 'live' },
+    modeIcon('live'),
+    el(
+      'span',
+      { class: 'mode-text' },
+      el('span', { class: 'mode-title' }, 'Spela live'),
+      el('span', { class: 'mode-desc' }, 'Tävla mot kompisar i realtid: samma län för alla, snabbast rätt svar vinner.'),
+    ),
+  );
+  btn.addEventListener('click', onLive);
+  return btn;
 }
 
 export function renderEnd(
