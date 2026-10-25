@@ -83,11 +83,40 @@ Topplistan behöver API:t, så den fungerar i `npm run preview:cf` men inte i `n
 
 ## Deploya
 
+Varje ändring går först till staging, sedan till produktion:
+
+1. **Staging:** `npm run deploy:staging` bygger, kör nya migreringar och deployar till
+   <https://sverigespelet-staging.hamiltoon.workers.dev>. Staging är en egen Worker (`env.staging` i
+   `wrangler.jsonc`) med egen D1-databas (`sverigespelet-staging`), egna live-rum och egen rate limiting;
+   inget delas med produktionens topplista eller konton.
+2. **Acceptanstester:** `npm run test:e2e` (se nedan) mot staging.
+3. **UX-granskning** på staging.
+4. **Produktion:** när testerna gått igenom och UX har godkänt.
+
 ```sh
 npx wrangler login           # en gång
+npm run deploy:staging       # bygg, migrera och deploya till staging
+npm run test:e2e             # acceptanstesterna mot staging
 npm run db:migrate:remote    # när det finns nya filer i migrations/
-npm run deploy               # npm run build && wrangler deploy
+npm run deploy               # produktion: npm run build && wrangler deploy
 ```
+
+### Acceptanstester
+
+`npm run test:e2e` kör [Playwright](https://playwright.dev) mot staging, eller mot en annan adress:
+`npm run test:e2e -- http://localhost:8787/`. Kräver Playwright med Chromium (`npm i -D playwright && npx playwright install chromium`, eller en global installation) och Node 22.
+
+- **start:** Spela live syns utan scroll på iPhone 13 och en Android på 360 × 740.
+- **solo:** en hel omgång i vart och ett av de sju lägena, med rätt svar på varje fråga, fram till slutskärmen utan fel i sidan.
+- **live:** en match med 2 spelare (iPhone och Android, mörkt läge, engelska) och en med 12 (en webbläsare och 11 bottar via WebSocket, Blandat med alla sorter). Vid varje avslöjande ska rätt svar och allas prickar ligga i vyn och inte under rätt/fel-rutan, och den egna raden i ställningen ska synas helt.
+- **guard:** skyddsräcket nedan fungerar.
+
+Testerna körs samtidigt och tar ungefär en och en halv minut. Skärmbilder från varje steg hamnar i
+`e2e-results/<tid>/`. `--only=solo,live` kör bara vissa tester, `--verbose` skriver ut alla kontroller.
+
+Mot produktionens adress stoppas alla anrop som skulle skriva på topplistan, skapa passkeys eller
+ändra ett kontos språk redan i webbläsaren (`e2e/lib.mjs`), och testerna anger aldrig något namn.
+Live-rum går bra att skapa var som helst; de töms av sig själva.
 
 Sajten deployas till Cloudflare Workers. `wrangler.jsonc` pekar ut `dist/` som static assets med `not_found_handling: "single-page-application"` (SPA-fallback till `index.html`). Bara `/api/*` går till Worker-scriptet i `worker/index.ts` (`run_worker_first`); allt annat serveras direkt som filer.
 
@@ -149,7 +178,8 @@ Vite + TypeScript utan ramverk (vanilla DOM). Kartan ritas som SVG med [d3-geo](
 - `vite.config.ts` – Vite-konfig med ett litet plugin som genererar `sw.js` (precachar appen och kartdatan; API:t går alltid till nätet).
 - `worker/` – Worker-scriptet för `/api/*`: topplistan (`index.ts`), konton med passkeys (`auth.ts`), live-rummen (`live.ts`), hjälpare och genererade typer.
 - `migrations/` – databasschemat för D1.
-- `wrangler.jsonc` – Cloudflare Workers-konfig: static assets, D1, Durable Objects och rate limiting.
+- `e2e/` – acceptanstesterna (`npm run test:e2e`).
+- `wrangler.jsonc` – Cloudflare Workers-konfig: static assets, D1, Durable Objects och rate limiting, och staging-miljön.
 
 ## Licens
 
