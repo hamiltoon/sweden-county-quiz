@@ -30,5 +30,31 @@
       "namespace_id": "1001",
       "simple": { "limit": 20, "period": 60 }
     }
-  ]
+  ],
+  "env": {
+    // Staging: en egen Worker (sverigespelet-staging.hamiltoon.workers.dev) med egen databas och egna
+    // live-rum, så att inget delas med produktionens topplista eller konton. Se README, "Staging".
+    "staging": {
+      "name": "sverigespelet-staging",
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "sverigespelet-staging",
+          "database_id": "b9f352f8-c6f4-4418-a301-fe1d3dd5a1cf",
+          "migrations_dir": "migrations"
+        }
+      ],
+      "durable_objects": {
+        "bindings": [{ "name": "LIVE_ROOM", "class_name": "LiveRoom" }]
+      },
+      "migrations": [{ "tag": "v1", "new_sqlite_classes": ["LiveRoom"] }],
+      "ratelimits": [
+        {
+          "name": "SUBMIT_LIMITER",
+          "namespace_id": "1002",
+          "simple": { "limit": 20, "period": 60 }
+        }
+      ]
+    }
+  }
 }
