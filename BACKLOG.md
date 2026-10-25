@@ -16,6 +16,15 @@ John, 2026-10-25:
 Det betyder att live-kvällarna går först, att varje avslöjande ska lära ut något (var låg det rätta svaret, var
 klickade de andra) och att funktioner för daglig vana och bred publik väntar.
 
+## Arbetssätt
+
+Beslutat med John 2026-10-25. Det är kontrollen av resultatet som begränsar oss, inte hur fort koden skrivs. Därför:
+
+1. **Körbara acceptanskriterier.** Där det går skrivs kriterierna så att de kan testas automatiskt, och testerna körs före varje driftsättning (PO-29).
+2. **Staging före produktion.** Varje ändring går först till en staging-miljö där UX verifierar. Produktion, där familjen spelar, får bara godkända ändringar.
+3. **Flera förslag när lösningen är osäker.** Två eller tre agenter bygger varsin variant på staging, och UX testar och rekommenderar; PO väljer. John testar inte. Först ut: PO-15 och PO-16.
+4. **Agenter per uppgift, inte per område.** När 1 och 2 finns kan en kortlivad agent ta en uppgift i egen gren. Den nuvarande utvecklaren sätter ihop och driftsätter.
+
 ## Så prioriterar vi
 
 - **Vilka som spelar:** främst John och de närmaste, t.ex. Erika, som tävlar mot varandra, oftast i live på mobilen.
@@ -36,16 +45,17 @@ klickade de andra) och att funktioner för daglig vana och bred publik väntar.
 
 | Status | Punkter |
 |---|---|
-| Pågår (utvecklaren) | PO-06, sedan PO-01b (kriterium 12–13 i PO-01) |
-| Nästa | PO-22, PO-14, PO-15, PO-16 |
-| Väntar på UX-verifiering | PO-01 (kriterium 1–11, driftsatt i #22) |
+| Pågår (utvecklaren) | PO-01b (kriterium 2–3 underkända av UX, rättas) |
+| Nästa | PO-29, sedan PO-14, och PO-15 och PO-16 med flera förslag parallellt |
+| Väntar på UX-verifiering | – |
+| Underkänd, rättas | PO-01: kriterium 8 underkänt av UX, rättas i PO-01b |
 | Väntar på svar från John | – |
-| Klart | – |
+| Klart | PO-06, PO-22 |
 
 ## Backlog i prioritetsordning
 
 ### PO-01 Live: se allas klick och vem som var snabbast när svaret visas
-- **Prioritet:** P1. Kriterium 1–11 driftsatta 2026-10-25 ([#22](https://github.com/hamiltoon/sweden-county-quiz/pull/22)), väntar på UX. Kriterium 12–13 görs som PO-01b.
+- **Prioritet:** P1. Driftsatt 2026-10-25 ([#22](https://github.com/hamiltoon/sweden-county-quiz/pull/22)). UX: 1–7, 9 och 10 godkända; 8 underkänt med 12 spelare (vyn räknas innan ställningen ritats, och ställningen tar halva skärmen). Rättas i PO-01b.
 - **Insats:** M (servern sparar klick och svarstid för alla svar; kartan ritar prickar med namn)
 - **Koppling:** IDEER.md "Göra live mer levande" 4 och 5
 - **Värde:** Det är i avslöjandet som snacket uppstår: "Du klickade ju i Norge!" I dag ser man bara sitt eget
@@ -72,8 +82,46 @@ klickade de andra) och att funktioner för daglig vana och bred publik väntar.
   13. Avslöjandet visas i 5 sekunder med upp till tre spelare och i 7 sekunder med fyra eller fler, så att man hinner
       läsa prickar och ställning. (Tillagt 2026-10-25.)
 
+### PO-01b Live: avslöjandet håller med många spelare
+- **Prioritet:** P1, pågår. Driftsatt i [#25](https://github.com/hamiltoon/sweden-county-quiz/pull/25). UX: kriterium 1 och 4 godkända,
+  2 och 3 underkända; dessutom täcker toasten prickar i kanten när hela Sverige visas.
+- **Insats:** S–M
+- **Koppling:** PO-01 kriterium 8, 12 och 13; UX-07
+- **Beslut (PO):** med fler än 5 spelare visar ställningen under avslöjandet topp 3, den egna raden och "… och N till".
+  Hela listan visas på pallen.
+- **Acceptanskriterier:**
+  1. Vyn räknas ut efter att ställningen och snabbast-raden har ritats, så att kartan inte flyttar sig efteråt. Från
+     första bildrutan syns rätt svar och allas prickar; ligger ett klick mycket långt bort visas hela Sverige.
+  2. Ställningen följer regeln ovan och tar högst ungefär en tredjedel av skärmhöjden på iPhone 13 och Android 360 med 12 spelare.
+  3. Den egna raden syns alltid helt.
+  4. Avslöjandet varar 5 s med upp till 3 spelare och 7 s med 4 eller fler.
+  5. Testat med 12 spelare i län, residensstad, sjöar och kommuner, på båda skärmstorlekarna.
+
+### PO-29 Staging och automatiska acceptanstester
+- **Prioritet:** P1, direkt efter PO-01b
+- **Insats:** M–L
+- **Koppling:** Beslut om arbetssätt med John 2026-10-25; felet i PO-01 kriterium 8 nådde produktion
+- **Värde för spelarna:** Det som når John och Erika är redan kontrollerat, så att en kväll i live inte förstörs av ett fel.
+  Det gör det också säkert att arbeta parallellt, så att resten av backloggen kommer fortare.
+- **Motivering:** En investering som gör varje följande leverans billigare och säkrare. UX har redan Playwright-skript
+  från granskningen som kan vara grunden.
+- **Acceptanskriterier:**
+  1. Det finns en staging-miljö med egen adress, t.ex. `sverigespelet-staging.hamiltoon.workers.dev`, och egen D1-databas
+     och egna live-rum. Ingenting delas med produktionens topplista eller konton.
+     (Cloudflares förhandsadresser per version fungerar troligen inte för Workers med Durable Objects, därför en egen miljö.)
+  2. Ett kommando, t.ex. `npm run deploy:staging`, driftsätter dit. README beskriver flödet: staging, UX-verifiering och sedan produktion.
+  3. `npm run test:e2e` kör Playwright mot en valfri adress (standard: staging) och täcker minst:
+     - startskärmen på 390×844 och 360×740: "Spela live" syns utan scroll;
+     - en omgång i varje läge spelad till slutskärmen utan fel i konsolen;
+     - en live-match med 2 och med 12 botspelare: varje avslöjande visar rätt svar och allas prickar inom kartans vy,
+       och den egna raden i ställningen syns helt.
+  4. Testerna sparar skärmbilder från varje steg, så att UX kan granska dem utan att köra själv.
+  5. Testerna vägrar skriva till topplistan eller skapa passkeys mot produktionens adress. Det är kontrollerat med ett eget test.
+  6. Hela sviten tar under 5 minuter och går igenom på main.
+  7. Från och med nu driftsätter utvecklaren till staging först. Produktion kommer efter att testerna gått igenom och UX har godkänt.
+
 ### PO-06 Startskärmen: hitta Spela live direkt
-- **Prioritet:** P1, pågår (liten och oberoende av PO-01, så den går parallellt)
+- **Status:** ✅ Klar 2026-10-25 ([#23](https://github.com/hamiltoon/sweden-county-quiz/pull/23)). UX har godkänt alla fem kriterierna på produktion.
 - **Beslut (PO):** live-kortet flyttas upp direkt under rubriken.
 - **Insats:** S
 - **Koppling:** UX-04; eget fynd vid genomspelning på mobil (2026-10-25)
@@ -104,7 +152,7 @@ klickade de andra) och att funktioner för daglig vana och bred publik väntar.
   6. axe-core hittar inga kontrastfel på spelskärmen eller slutskärmen.
 
 ### PO-15 Avslöjandet lär ut var rätt svar ligger
-- **Prioritet:** P1
+- **Prioritet:** P1, efter PO-29. Byggs som två till tre varianter på staging som UX testar och PO väljer mellan.
 - **Insats:** M
 - **Koppling:** UX-07, UX-18
 - **Värde:** Kärnan är att lära sig geografi. Efter en miss visas rätt svar i 2,4 sekunder, och det egna felklicket
@@ -121,7 +169,7 @@ klickade de andra) och att funktioner för daglig vana och bred publik väntar.
   7. Svenska och engelska.
 
 ### PO-16 Kommuner: kartan zoomar in på länet
-- **Prioritet:** P1
+- **Prioritet:** P1, efter PO-29. Byggs som två till tre varianter på staging som UX testar och PO väljer mellan.
 - **Insats:** M
 - **Koppling:** UX-01
 - **Värde:** 274 av 290 kommuner är mindre än ett finger på en iPhone, och zoomen nollställs vid varje fråga, så man
@@ -173,7 +221,7 @@ klickade de andra) och att funktioner för daglig vana och bred publik väntar.
   3. Namnfältet är lika brett som knappen, och etiketten "Namn" hör ihop med fältet (skärmläsare och tryck på etiketten).
 
 ### PO-22 Live: värden når Starta matchen utan att scrolla
-- **Prioritet:** P1 (liten; tas direkt efter PO-06, eftersom lobbyn är nästa skärm i samma flöde)
+- **Status:** ✅ Klar 2026-10-25 ([#26](https://github.com/hamiltoon/sweden-county-quiz/pull/26)). UX har godkänt kriterierna på produktion.
 - **Insats:** S
 - **Koppling:** UX-13, UX-14
 - **Värde:** Värden trycker på Starta före varje match, men knappen ligger under QR-koden. Lobbyn tappar dessutom
@@ -404,7 +452,7 @@ Fynd från UX-specialisten (UX-01, UX-02 …) läggs in här med prioritet och k
 | UX-01 | Kommuner: målen för små, zoomen nollställs | P1 | PO-16 |
 | UX-02 | Rätt/fel-rutan har för låg kontrast | P1 | PO-14 |
 | UX-03 | Rött mot grönt är enda skillnaden | P1 | PO-14 |
-| UX-04 | Spela live under vecket | P1 | PO-06 |
+| UX-04 | Spela live under vecket | ✅ Klar | PO-06 |
 | UX-05 | Spela igen under vecket | P2 | PO-17 |
 | UX-06 | Skyddat namn avvisas först efter en omgång | P2 | PO-18 |
 | UX-07 | Avslöjandet lär ut för lite | P1 | PO-15 |
@@ -413,8 +461,8 @@ Fynd från UX-specialisten (UX-01, UX-02 …) läggs in här med prioritet och k
 | UX-10 | Namnbyte lämnar gamla resultat | P3 | PO-21 |
 | UX-11 | Kartan går inte att spela med tangentbord/skärmläsare | Parkerad | – |
 | UX-12 | Residensstad: ifyllt län avslöjar de sista svaren | P2 | PO-28 |
-| UX-13 | Lobbyn tappar fokus | P2 | PO-22 |
-| UX-14 | Starta matchen under vecket | P2 | PO-22 |
+| UX-13 | Lobbyn tappar fokus | ✅ Klar | PO-22 |
+| UX-14 | Starta matchen under vecket | ✅ Klar | PO-22 |
 | UX-15 | Live-timern saknar siffror och 3–2–1 | P2 | PO-03 |
 | UX-16 | Live: klick i havet ignoreras tyst | P2 | PO-23 |
 | UX-17 | Live: sjömiss ger bara "Fel." | P2 | PO-23 |
@@ -434,4 +482,5 @@ Fynd från UX-specialisten (UX-01, UX-02 …) läggs in här med prioritet och k
 
 ## Klart
 
-Inget än.
+- **PO-22** Live: Starta matchen nåbar i lobbyn (UX-13, UX-14). Driftsatt i [#26](https://github.com/hamiltoon/sweden-county-quiz/pull/26), godkänd av UX 2026-10-25.
+- **PO-06** Startskärmen: Spela live först (UX-04). Driftsatt i [#23](https://github.com/hamiltoon/sweden-county-quiz/pull/23), godkänd av UX 2026-10-25.
