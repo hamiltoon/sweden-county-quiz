@@ -21,7 +21,7 @@ import { registerServiceWorker } from './pwa';
 import { createRoom, LiveConnection } from './live/connection';
 import { renderLiveEntry } from './live/entry';
 import { LiveView, type LiveMaps } from './live/view';
-import type { LiveMode } from './shared/live';
+import type { LiveQuestionKind } from './shared/live';
 import { applyToDocument, countyName, municipalityName, onLangChange, provinceName, t } from './i18n';
 import { adoptAccountLanguage } from './api/account';
 
@@ -98,10 +98,10 @@ function showLive(code?: string): void {
   );
 }
 
-/** Kartan för en livematch i ett visst läge (samma kartor som det vanliga spelet). */
-async function loadLiveMaps(mode: LiveMode): Promise<LiveMaps> {
-  const source = regionsFor(mode);
-  const lakeMode = mode === 'sjo';
+/** Kartan för en sorts livefråga (samma kartor som det vanliga spelet). */
+async function loadLiveMaps(kind: LiveQuestionKind): Promise<LiveMaps> {
+  const source = regionsFor(kind);
+  const lakeMode = kind === 'sjo';
   const [regions, lakes, neighbors] = await Promise.all([
     loadTopology(source.url),
     lakeMode ? loadTopology(LAKES_URL) : loadOptional(LAKES_URL),
@@ -114,7 +114,7 @@ async function loadLiveMaps(mode: LiveMode): Promise<LiveMaps> {
     lakes,
     neighbors,
     lakeMode,
-    steps: mode === 'kommun' ? regionSteps(regions, source.objectName) : null,
+    steps: kind === 'kommun' ? regionSteps(regions, source.objectName) : null,
   };
 }
 

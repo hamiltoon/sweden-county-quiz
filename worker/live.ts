@@ -26,6 +26,8 @@ import {
   LIVE_QUESTIONS,
   LIVE_QUESTION_MS,
   LIVE_REVEAL_MS,
+  DEFAULT_MIX,
+  cleanMix,
   isLiveMode,
   isPointKind,
   livePoints,
@@ -35,6 +37,7 @@ import {
   type LiveMode,
   type LivePhase,
   type LiveQuestion,
+  type LiveQuestionKind,
   type LiveServerMessage,
   type LiveState,
 } from '../src/shared/live';
@@ -71,6 +74,8 @@ interface Attachment {
 interface Room {
   code: string;
   mode: LiveMode;
+  /** Sorterna som blandas i läget Blandat (saknas i rum från före valet fanns). */
+  mix?: LiveQuestionKind[];
   phase: LivePhase;
   hostId: string | null;
   players: StoredPlayer[];
@@ -126,8 +131,44 @@ function shuffled<T>(items: readonly T[]): T[] {
 
 const CITY_BY_NAME = new Map(OTHER_CITIES.map((c) => [c.name, c]));
 
-/** Frågorna för en match: tio slumpade ur lägets lista. Blandat slumpar län eller residensstad. */
-function buildQuestions(mode: LiveMode): LiveQuestion[] {
+/** Alla frågor av en sort, i slumpad ordning. */
+function questionPool(kind: LiveQuestionKind): LiveQuestion[] {
+  switch (kind) {
+    case 'landskap':
+      return shuffled(PROVINCES).map((p) => ({ kind, target: p.code }));
+    case 'kommun':
+      return shuffled(MUNICIPALITIES).map((m) => ({ kind, target: m.code }));
+    case 'ort':
+      return shuffled(OTHER_CITIES).map((c) => ({ kind, target: c.name }));
+    case 'sjo':
+      return shuffled(LAKES).map((l) => ({ kind, target: l.id }));
+    default:
+      return shuffled(COUNTIES).map((c) => ({ kind, target: c.code }));
+  }
+}
+
+/**
+ * Blandat: varje fråga får en slumpad sort bland de valda. Län och residensstad delar län, så
+ * att samma län inte kommer två gånger (en gång som län, en gång som stad).
+ */
+function buildMixed(mix: readonly LiveQuestionKind[]): LiveQuestion[] {
+  const pools = new Map(mix.map((kind) => [kind, questionPool(kind)]));
+  const usedCounties = new Set<string>();
+  const out: LiveQuestion[] = [];
+  while (out.length < LIVE_QUESTIONS) {
+    const open = mix.filter((kind) => pools.get(kind)!.length > 0);
+    if (!open.length) break;
+    const kind = open[crypto.getRandomValues(new Uint32Array(1))[0] % open.length];
+    const q = pools.get(kind)!.pop()!;
+    if ((kind === 'lan' || kind === 'stad') && usedCounties.has(q.target)) continue;
+    if (kind === 'lan' || kind === 'stad') usedCounties.add(q.target);
+    out.push(q);
+  }
+  return out;
+}
+
+/** Frågorna för en match: tio slumpade ur lägets lista, eller ur de valda sorterna i Blandat. */
+function buildQuestions(mode: LiveMode, mix: readonly LiveQuestionKind[]): LiveQuestion[] {
   const pick = <T>(items: readonly T[], toQuestion: (item: T) => LiveQuestion) => shuffled(items).slice(0, LIVE_QUESTIONS).map(toQuestion);
   switch (mode) {
     case 'landskap':
@@ -141,7 +182,7 @@ function buildQuestions(mode: LiveMode): LiveQuestion[] {
     case 'stad':
       return pick(COUNTIES, (c) => ({ kind: 'stad', target: c.code }));
     case 'blandat':
-      return pick(COUNTIES, (c) => ({ kind: crypto.getRandomValues(new Uint8Array(1))[0] < 128 ? 'lan' : 'stad', target: c.code }));
+      return buildMixed(mix);
     default:
       return pick(COUNTIES, (c) => ({ kind: 'lan', target: c.code }));
   }
@@ -271,12 +312,18 @@ export class LiveRoom extends DurableObject<Env> {
       if (playerId !== room.hostId) return this.sendError(ws, messages(lang).hostOnly);
       if (room.phase !== 'lobby' && room.phase !== 'done') return;
       for (const p of room.players) p.score = 0;
-      room.questions = buildQuestions(room.mode);
+      room.questions = buildQuestions(room.mode, room.mix ?? DEFAULT_MIX);
       room.index = 0;
       await this.startQuestion();
     } else if (msg.type === 'mode') {
       if (playerId !== room.hostId || (room.phase !== 'lobby' && room.phase !== 'done') || !isLiveMode(msg.mode)) return;
       room.mode = msg.mode;
+      await this.save();
+      this.broadcast();
+    } else if (msg.type === 'mix') {
+      const mix = cleanMix(msg.kinds);
+      if (playerId !== room.hostId || (room.phase !== 'lobby' && room.phase !== 'done') || !mix) return;
+      room.mix = mix;
       await this.save();
       this.broadcast();
     } else if (msg.type === 'answer') {
@@ -411,6 +458,7 @@ export class LiveRoom extends DurableObject<Env> {
     const state: LiveState = {
       code: room.code,
       mode: room.mode,
+      mix: room.mix ?? [...DEFAULT_MIX],
       phase: room.phase,
       hostId: room.hostId,
       you,

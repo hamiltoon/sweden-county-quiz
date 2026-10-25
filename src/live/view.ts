@@ -12,6 +12,7 @@ import { modeLabel, questionLabel, questionPrompt, type Question } from '../game
 import {
   LIVE_MAX_POINTS,
   LIVE_MIN_POINTS,
+  LIVE_KINDS,
   LIVE_MODES,
   LIVE_QUESTIONS,
   LIVE_QUESTION_MS,
@@ -20,10 +21,12 @@ import {
   type LiveAnswer,
   type LiveMode,
   type LivePlayer,
+  type LiveQuestionKind,
   type LiveState,
 } from '../shared/live';
 import { SwedenMap, type MapClick, type ResultState } from '../map/map';
 import type { RegionSteps } from '../map/adjacency';
+import { regionsFor } from '../map/sources';
 import { el, clear } from '../ui/dom';
 import { Toast } from '../ui/toast';
 import { countyName, municipalityName, provinceName, t } from '../i18n';
@@ -31,7 +34,7 @@ import type { LiveConnection } from './connection';
 import { renderQr } from './qr';
 import { toGameQuestion } from './question';
 
-/** Kartan för ett läge, som main.ts laddar. */
+/** Kartan för en sorts fråga, som main.ts laddar. */
 export interface LiveMaps {
   regions: Topology;
   objectName: string;
@@ -52,7 +55,10 @@ export class LiveView {
   private map: SwedenMap | null = null;
   private maps: LiveMaps | null = null;
   private toast: Toast | null = null;
-  private game: { question: HTMLElement; progress: HTMLElement; score: HTMLElement; timerBar: HTMLElement; status: HTMLElement } | null = null;
+  private game: { question: HTMLElement; progress: HTMLElement; score: HTMLElement; timerBar: HTMLElement; status: HTMLElement; mapWrap: HTMLElement } | null = null;
+  /** Vilken karta som ritas just nu; i Blandat byts den när frågans sort kräver en annan. */
+  private mapKey = '';
+  private mapReady: Promise<void> | null = null;
   /** Frågan vi senast ritade, så att kartan bara nollställs vid en ny fråga. */
   private shownQuestion = -1;
   private shownPhase = '';
@@ -65,7 +71,7 @@ export class LiveView {
   constructor(
     private readonly screen: HTMLElement,
     private readonly conn: () => LiveConnection | null,
-    private readonly loadMaps: (mode: LiveMode) => Promise<LiveMaps>,
+    private readonly loadMaps: (kind: LiveQuestionKind) => Promise<LiveMaps>,
     private readonly onLeave: () => void,
   ) {
     this.banner = el('div', { class: 'live-banner', role: 'status', 'aria-live': 'polite' });
@@ -116,6 +122,8 @@ export class LiveView {
     this.map?.destroy();
     this.map = null;
     this.maps = null;
+    this.mapKey = '';
+    this.mapReady = null;
     this.building = null;
     this.toast = null;
     this.game = null;
@@ -166,7 +174,12 @@ export class LiveView {
         shareNote,
         // Kompisarna i samma rum skannar koden med kameran och hamnar direkt i formuläret för rummet.
         el('figure', { class: 'live-qr' }, renderQr(url, t().live.qrLabel(state.code)), el('figcaption', {}, t().live.qrCaption)),
-        renderModePicker(state, isHost, (mode) => this.conn()?.send({ type: 'mode', mode })),
+        renderModePicker(
+          state,
+          isHost,
+          (mode) => this.conn()?.send({ type: 'mode', mode }),
+          (kinds) => this.conn()?.send({ type: 'mix', kinds }),
+        ),
         el('h3', { class: 'live-heading' }, t().live.players(state.players.length)),
         renderPlayers(state, (p) => (p.id === state.hostId ? t().live.host : '')),
         el('div', { class: 'btn-row' }, action),
@@ -178,9 +191,12 @@ export class LiveView {
   // ---------- Fråga och avslöjande ----------
 
   private async renderRound(state: LiveState): Promise<void> {
-    // Flera lägen kan komma medan kartan laddas; den byggs bara en gång per match.
+    // Flera lägen kan komma medan kartan laddas; spelvyn byggs en gång per match, och kartan
+    // när frågans sort kräver en ny (i Blandat).
     this.building ??= this.buildGame(state.mode);
     await this.building;
+    if (this.state !== state || !this.game || !state.question) return;
+    await this.ensureMap(state.question.kind);
     // Ett nyare läge kan ha kommit medan kartan laddades; rita bara det senaste.
     if (this.state !== state || !this.map || !this.game || !state.question) return;
     const q = state.question;
@@ -288,20 +304,38 @@ export class LiveView {
       el('div', { class: 'live-timer', 'aria-hidden': 'true' }, timerBar),
     );
     const mapWrap = el('div', { class: 'map-wrap' });
-    const mapEl = el('div', { class: 'map' });
-    mapWrap.append(mapEl);
     const status = el('div', { class: 'live-status', 'aria-live': 'polite' });
     this.screen.append(this.banner, hud, mapWrap, status);
+    this.toast = new Toast(mapWrap, 'top');
+    this.game = { question, progress, score, timerBar, status, mapWrap };
+  }
 
+  /** Ritar kartan som frågans sort behöver, om den inte redan visas. */
+  private ensureMap(kind: LiveQuestionKind): Promise<void> {
+    const key = `${regionsFor(kind).objectName}:${kind === 'sjo'}`;
+    if (key !== this.mapKey || !this.mapReady) {
+      this.mapKey = key;
+      this.mapReady = this.buildMap(kind, key);
+    }
+    return this.mapReady;
+  }
+
+  private async buildMap(kind: LiveQuestionKind, key: string): Promise<void> {
+    const wrap = this.game?.mapWrap;
+    if (!wrap) return;
     let maps: LiveMaps;
     try {
-      maps = await this.loadMaps(mode);
+      maps = await this.loadMaps(kind);
     } catch {
-      if (mapEl.isConnected) this.showError(t().common.mapFailed);
+      if (wrap.isConnected) this.showError(t().common.mapFailed);
       return;
     }
-    // Har spelaren lämnat medan kartan laddades finns det inget att rita på.
-    if (!mapEl.isConnected) return;
+    // Har spelaren lämnat, eller behövs en annan karta nu, ritas inget.
+    if (!wrap.isConnected || key !== this.mapKey) return;
+    this.map?.destroy();
+    wrap.querySelector('.map')?.remove();
+    const mapEl = el('div', { class: 'map' });
+    wrap.prepend(mapEl);
     const map = new SwedenMap(mapEl, maps.regions, {
       objectName: maps.objectName,
       groupBy: maps.groupBy,
@@ -312,8 +346,6 @@ export class LiveView {
     map.onClick = (click) => this.answer(click);
     this.map = map;
     this.maps = maps;
-    this.toast = new Toast(mapWrap, 'top');
-    this.game = { question, progress, score, timerBar, status };
   }
 
   private answer(click: MapClick): void {
@@ -418,19 +450,51 @@ function regionName(code: string): string {
   return municipality ? municipalityName(municipality) : code;
 }
 
-/** Lägesväljaren i lobbyn: värden väljer, de andra ser vilket läge som gäller. */
-function renderModePicker(state: LiveState, isHost: boolean, onPick: (mode: LiveMode) => void): HTMLElement {
-  if (!isHost) return el('p', { class: 'live-mode-note' }, t().live.modeIs(modeLabel(state.mode)));
+/**
+ * Lägesväljaren i lobbyn: värden väljer läge och, i Blandat, vilka sorter som blandas. De andra
+ * ser vad som gäller.
+ */
+function renderModePicker(
+  state: LiveState,
+  isHost: boolean,
+  onPick: (mode: LiveMode) => void,
+  onMix: (kinds: LiveQuestionKind[]) => void,
+): HTMLElement {
+  const mixNames = state.mix.map((kind) => modeLabel(kind)).join(', ');
+  if (!isHost) {
+    return el('p', { class: 'live-mode-note' }, state.mode === 'blandat' ? t().live.modeIsMix(modeLabel(state.mode), mixNames) : t().live.modeIs(modeLabel(state.mode)));
+  }
   const chips = LIVE_MODES.map((mode) => {
     const chip = el('button', { class: 'live-mode-chip', type: 'button', 'data-mode': mode, 'aria-pressed': String(mode === state.mode) }, modeLabel(mode));
     chip.addEventListener('click', () => mode !== state.mode && onPick(mode));
     return chip;
   });
+  let mix: HTMLElement | null = null;
+  if (state.mode === 'blandat') {
+    const kindChips = LIVE_KINDS.map((kind) => {
+      const on = state.mix.includes(kind);
+      const chip = el('button', { class: 'live-mode-chip live-mix-chip', type: 'button', 'data-kind': kind, 'aria-pressed': String(on) }, modeLabel(kind));
+      // Minst en sort måste vara vald; den sista går inte att slå av.
+      chip.addEventListener('click', () => {
+        const next = on ? state.mix.filter((k) => k !== kind) : [...state.mix, kind];
+        if (next.length) onMix(next);
+      });
+      return chip;
+    });
+    mix = el(
+      'div',
+      { class: 'live-mix' },
+      el('h3', { class: 'live-heading' }, t().live.mixHeading),
+      el('p', { class: 'live-mode-note' }, t().live.mixHint),
+      el('div', { class: 'live-mode-chips', role: 'group', 'aria-label': t().live.mixHeading }, ...kindChips),
+    );
+  }
   return el(
     'div',
     { class: 'live-modes' },
     el('h3', { class: 'live-heading' }, t().live.chooseMode),
     el('div', { class: 'live-mode-chips', role: 'group', 'aria-label': t().live.chooseMode }, ...chips),
+    mix,
   );
 }
 
