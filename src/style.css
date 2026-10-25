@@ -954,6 +954,17 @@ a {
   pointer-events: none;
 }
 
+/* Länsgränserna ovanpå kommunkartan. */
+.group-border {
+  fill: none;
+  stroke: var(--text);
+  stroke-opacity: 0.55;
+  stroke-width: 1.6px;
+  vector-effect: non-scaling-stroke;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
 /* Sjöar: riktmärken som klicken går igenom, utom i sjöläget där de är svaren. */
 .lake {
   fill: var(--lake);

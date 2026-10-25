@@ -31,6 +31,7 @@ export const en: Messages = {
   modes: {
     lan: 'Counties',
     landskap: 'Provinces',
+    kommun: 'Municipalities',
     stad: 'County seats',
     ort: 'More cities',
     sjo: 'Lakes',
@@ -38,10 +39,11 @@ export const en: Messages = {
     total: 'Overall',
   },
   start: {
-    lead: "Find Sweden's 21 counties, 25 provinces, cities and largest lakes on the map. Pick a mode to start.",
+    lead: "Find Sweden's counties, provinces, municipalities, cities and largest lakes on the map. Pick a mode to start.",
     desc: {
       lan: 'Tap the right county.',
       landskap: (n) => `Tap the right province, all ${n} of them.`,
+      kommun: (n, total) => `${n} of Sweden's ${total} municipalities. The question tells you which county it's in.`,
       stad: (km) => `Tap where the city is (within ${km} km).`,
       ort: (n, total, km) => `${n} of Sweden's ${total} largest cities that aren't county seats. Tap within ${km} km.`,
       sjo: (n) => `Tap the right lake among Sweden's ${n} largest.`,
@@ -55,7 +57,7 @@ export const en: Messages = {
   },
   footer: {
     mapData: 'Map data: ',
-    landskap: ' (public domain), provinces © ',
+    landskap: ' (public domain), provinces and municipalities © ',
     source: 'Source code',
   },
   map: {
@@ -64,6 +66,7 @@ export const en: Messages = {
   },
   game: {
     where: (place) => `Where is ${place}?`,
+    whereIn: (place, county) => `Where is ${place} in ${county}?`,
     loadingMap: 'Loading the map…',
     quit: 'Quit the round',
     quitTitle: 'Quit',
@@ -73,6 +76,7 @@ export const en: Messages = {
     zoomResetTitle: 'Reset',
     clickCounty: 'Tap a county',
     clickProvince: 'Tap a province',
+    clickMunicipality: 'Tap a municipality',
     right: (points) => `Right! +${points} pts`,
     rightLake: (rank, points) => `Right! ${rank} · +${points} pts`,
     rightCity: (km, place, points) => `Right! ${km} km from ${place} · +${points} pts`,

@@ -3,6 +3,7 @@ import { modeLabel, questionLabel, type Mode, type Question, type Summary } from
 import { LAKES } from '../data/lakes';
 import { OTHER_CITIES } from '../data/cities';
 import { PROVINCES } from '../data/provinces';
+import { MUNICIPALITIES } from '../data/municipalities';
 import { getBest } from '../game/storage';
 import { CONFIG } from '../game/config';
 import { modeIcon } from './icons';
@@ -22,6 +23,7 @@ export function renderStart(onStart: (mode: Mode) => void, leaderboard?: HTMLEle
   const modes: { mode: Mode; desc: string }[] = [
     { mode: 'lan', desc: desc.lan },
     { mode: 'landskap', desc: desc.landskap(PROVINCES.length) },
+    { mode: 'kommun', desc: desc.kommun(CONFIG.municipalitiesPerRound, MUNICIPALITIES.length) },
     { mode: 'stad', desc: desc.stad(CONFIG.cityRadiusKm) },
     { mode: 'ort', desc: desc.ort(CONFIG.otherCitiesPerRound, OTHER_CITIES.length, CONFIG.cityRadiusKm) },
     { mode: 'sjo', desc: desc.sjo(LAKES.length) },

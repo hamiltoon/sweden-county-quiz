@@ -26,6 +26,7 @@ export const sv = {
   modes: {
     lan: 'Län',
     landskap: 'Landskap',
+    kommun: 'Kommuner',
     stad: 'Residensstad',
     ort: 'Fler städer',
     sjo: 'Sjöar',
@@ -33,10 +34,11 @@ export const sv = {
     total: 'Totalt',
   },
   start: {
-    lead: 'Hitta Sveriges 21 län, 25 landskap, städer och största sjöar på kartan. Välj läge och starta.',
+    lead: 'Hitta Sveriges län, landskap, kommuner, städer och största sjöar på kartan. Välj läge och starta.',
     desc: {
       lan: 'Klicka på rätt län.',
       landskap: (n: number) => `Klicka på rätt landskap, alla ${n}.`,
+      kommun: (n: number, total: number) => `${n} av Sveriges ${total} kommuner. Frågan säger vilket län kommunen ligger i.`,
       stad: (km: number) => `Klicka där staden ligger (inom ${km} km).`,
       ort: (n: number, total: number, km: number) =>
         `${n} av Sveriges ${total} största städer som inte är residensstäder. Klicka inom ${km} km.`,
@@ -52,7 +54,7 @@ export const sv = {
   },
   footer: {
     mapData: 'Kartdata: ',
-    landskap: ' (public domain), landskap © ',
+    landskap: ' (public domain), landskap och kommuner © ',
     source: 'Källkod',
   },
   map: {
@@ -61,6 +63,7 @@ export const sv = {
   },
   game: {
     where: (place: string) => `Var ligger ${place}?`,
+    whereIn: (place: string, county: string) => `Var ligger ${place} i ${county}?`,
     loadingMap: 'Laddar kartan…',
     quit: 'Avsluta omgången',
     quitTitle: 'Avsluta',
@@ -70,6 +73,7 @@ export const sv = {
     zoomResetTitle: 'Återställ',
     clickCounty: 'Klicka på ett län',
     clickProvince: 'Klicka på ett landskap',
+    clickMunicipality: 'Klicka på en kommun',
     right: (points: number) => `Rätt! +${points} p`,
     rightLake: (rank: string, points: number) => `Rätt! ${rank} · +${points} p`,
     rightCity: (km: number, place: string, points: number) => `Rätt! ${km} km från ${place} · +${points} p`,

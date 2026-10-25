@@ -6,6 +6,7 @@ import { distanceToShapeKm } from './game/geo';
 import { LAKE_BY_ID } from './data/lakes';
 import { COUNTY_BY_CODE } from './data/counties';
 import { PROVINCE_BY_CODE } from './data/provinces';
+import { MUNICIPALITY_BY_CODE } from './data/municipalities';
 import { getCurrentLiveRoom, getLiveName, getLivePlayerId, saveBest, saveLiveName, setCurrentLiveRoom } from './game/storage';
 import { SwedenMap, type MapClick, type ResultState } from './map/map';
 import { renderMiniMap } from './map/minimap';
@@ -18,7 +19,7 @@ import { registerServiceWorker } from './pwa';
 import { createRoom, LiveConnection } from './live/connection';
 import { renderLiveEntry } from './live/entry';
 import { LiveView, type LiveMaps } from './live/view';
-import { applyToDocument, countyName, onLangChange, provinceName, t } from './i18n';
+import { applyToDocument, countyName, municipalityName, onLangChange, provinceName, t } from './i18n';
 import { adoptAccountLanguage } from './api/account';
 
 const screen = document.getElementById('screen') as HTMLElement;
@@ -43,6 +44,7 @@ const NORTH_TOAST_LAT = 64.5;
 
 const COUNTIES_URL = '/data/lan.topo.json';
 const PROVINCES_URL = '/data/landskap.topo.json';
+const MUNICIPALITIES_URL = '/data/kommuner.topo.json';
 const LAKES_URL = '/data/sjoar.topo.json';
 const NEIGHBORS_URL = '/data/grannar.topo.json';
 
@@ -162,8 +164,14 @@ async function showGame(mode: Mode): Promise<void> {
   // Sjöarna längst norrut (Torneträsk, Akkajaure) ligger där toasten annars hamnar.
   const toast = new Toast(mapWrap, lakeMode ? 'bottom' : 'top');
 
-  // Landskapsläget ritar landskapen i stället för länen; resten av kartan är densamma.
-  const regions = mode === 'landskap' ? { url: PROVINCES_URL, objectName: 'landskap' } : { url: COUNTIES_URL, objectName: 'lan' };
+  // Landskaps- och kommunläget ritar landskapen eller kommunerna i stället för länen; resten av
+  // kartan är densamma. På kommunkartan ritas länsgränserna tjockare, som stöd.
+  const regions =
+    mode === 'landskap'
+      ? { url: PROVINCES_URL, objectName: 'landskap' }
+      : mode === 'kommun'
+        ? { url: MUNICIPALITIES_URL, objectName: 'kommuner', groupBy: 'county' }
+        : { url: COUNTIES_URL, objectName: 'lan' };
   let topology: Topology;
   let lakes: Topology | null = null;
   let neighbors: Topology | null = null;
@@ -179,7 +187,7 @@ async function showGame(mode: Mode): Promise<void> {
     return;
   }
 
-  const map = new SwedenMap(mapEl, topology, { objectName: regions.objectName, lakes, neighbors, lakeMode });
+  const map = new SwedenMap(mapEl, topology, { objectName: regions.objectName, groupBy: regions.groupBy, lakes, neighbors, lakeMode });
   const game = new Game(mode);
   let locked = false;
   let timer: number | undefined;
@@ -223,6 +231,7 @@ async function showGame(mode: Mode): Promise<void> {
     // Flera av de andra städerna kan ligga i samma län, så de markeras med en prick i stället.
     else if (q.kind === 'ort') map.addResultDot(q.city.lon, q.city.lat, state);
     else if (q.kind === 'landskap') map.setCountyResult(q.province.code, state);
+    else if (q.kind === 'kommun') map.setCountyResult(q.municipality.code, state);
     else map.setCountyResult(q.county.code, state);
   };
 
@@ -289,12 +298,18 @@ async function showGame(mode: Mode): Promise<void> {
         }
         toast.show(`${missText()} ${attemptsText(outcome.attemptsLeft)}`, 'bad', CONFIG.toastMs);
       }
-    } else if (q.kind === 'lan' || q.kind === 'landskap') {
+    } else if (q.kind === 'lan' || q.kind === 'landskap' || q.kind === 'kommun') {
       if (!click.code) {
-        toast.show(q.kind === 'lan' ? t().game.clickCounty : t().game.clickProvince, 'info', CONFIG.toastMs);
+        const hint = { lan: t().game.clickCounty, landskap: t().game.clickProvince, kommun: t().game.clickMunicipality }[q.kind];
+        toast.show(hint, 'info', CONFIG.toastMs);
         return;
       }
-      const target = 'province' in q ? { code: q.province.code, name: provinceName(q.province) } : { code: q.county.code, name: countyName(q.county) };
+      const target =
+        q.kind === 'landskap'
+          ? { code: q.province.code, name: provinceName(q.province) }
+          : q.kind === 'kommun'
+            ? { code: q.municipality.code, name: municipalityName(q.municipality) }
+            : { code: q.county.code, name: countyName(q.county) };
       const outcome = game.answer({ kind: 'county', code: click.code });
       markResult(q, outcome);
       if (outcome.correct) {
@@ -363,6 +378,7 @@ function renderRecap(summary: Summary, regions: Topology, objectName: string, la
     if (r.question.kind === 'sjo') lakeResults.set(r.question.lake.id, state);
     else if (r.question.kind === 'ort') points.push({ lon: r.question.city.lon, lat: r.question.city.lat, state });
     else if (r.question.kind === 'landskap') countyResults.set(r.question.province.code, state);
+    else if (r.question.kind === 'kommun') countyResults.set(r.question.municipality.code, state);
     else countyResults.set(r.question.county.code, state);
   }
   const map = renderMiniMap({
@@ -384,12 +400,14 @@ function attemptsText(left: number): string {
   return left === 1 ? t().game.lastAttempt : t().game.attemptsLeft(left);
 }
 
-/** Namnet på ett klickat län eller landskap (länskoder är versaler, landskapskoder gemener). */
+/** Namnet på ett klickat län, landskap eller kommun (versaler, gemener respektive fyra siffror). */
 function regionName(code: string): string {
   const county = COUNTY_BY_CODE.get(code);
   if (county) return countyName(county);
   const province = PROVINCE_BY_CODE.get(code);
-  return province ? provinceName(province) : code;
+  if (province) return provinceName(province);
+  const municipality = MUNICIPALITY_BY_CODE.get(code);
+  return municipality ? municipalityName(municipality) : code;
 }
 
 applyToDocument();

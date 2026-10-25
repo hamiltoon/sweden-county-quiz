@@ -2,7 +2,7 @@ import { geoCentroid, geoPath, geoTransverseMercator, type GeoPermissibleObjects
 import { pointer, select, type Selection } from 'd3-selection';
 import 'd3-transition';
 import { zoom, zoomIdentity, type D3ZoomEvent, type ZoomBehavior, type ZoomTransform } from 'd3-zoom';
-import { feature, merge } from 'topojson-client';
+import { feature, merge, mesh } from 'topojson-client';
 import type { Topology, GeometryCollection } from 'topojson-specification';
 import type { Feature, FeatureCollection, Geometry, MultiPolygon, Polygon } from 'geojson';
 import { t } from '../i18n';
@@ -24,6 +24,11 @@ export type LakeFeature = Feature<Polygon | MultiPolygon, LakeProps>;
 export interface MapOptions {
   /** Namnet på länsobjektet i topologin. */
   objectName?: string;
+  /**
+   * Egenskap som grupperar områdena, t.ex. "county" på kommunkartan. Gränser mellan grupper ritas
+   * tjockare ovanpå områdena (länsgränserna mellan kommunerna).
+   */
+  groupBy?: string;
   /** Topologi med objektet "sjoar". Utan den ritas inga sjöar. */
   lakes?: Topology | null;
   /** Topologi med objektet "grannar" (grannländerna). Utan den ritas bara Sverige. */
@@ -89,6 +94,7 @@ export class SwedenMap {
   private readonly coastG: Selection<SVGGElement, unknown, null, undefined>;
   private readonly neighborsG: Selection<SVGGElement, unknown, null, undefined>;
   private readonly countiesG: Selection<SVGGElement, unknown, null, undefined>;
+  private readonly groupBordersG: Selection<SVGGElement, unknown, null, undefined>;
   private readonly hitG: Selection<SVGGElement, unknown, null, undefined>;
   private readonly lakeHitG: Selection<SVGGElement, unknown, null, undefined>;
   private readonly lakesG: Selection<SVGGElement, unknown, null, undefined>;
@@ -120,7 +126,7 @@ export class SwedenMap {
   constructor(
     private readonly container: HTMLElement,
     topology: Topology,
-    { objectName = 'lan', lakes = null, neighbors = null, lakeMode = false }: MapOptions = {},
+    { objectName = 'lan', groupBy, lakes = null, neighbors = null, lakeMode = false }: MapOptions = {},
   ) {
     const obj = topology.objects[objectName] as GeometryCollection<CountyProps>;
     if (!obj) throw new Error(`TopoJSON saknar objektet "${objectName}"`);
@@ -150,6 +156,7 @@ export class SwedenMap {
     this.coastG = this.root.append('g').attr('class', 'coast');
     this.neighborsG = this.root.append('g').attr('class', 'neighbors');
     this.countiesG = this.root.append('g').attr('class', 'counties');
+    this.groupBordersG = this.root.append('g').attr('class', 'group-borders');
     this.hitG = this.root.append('g').attr('class', 'county-hits');
     // Sjöarnas träffytor ligger under själva sjöarna, så att ett klick inne i en sjö alltid
     // träffar den sjön och aldrig grannsjöns träffyta.
@@ -177,6 +184,16 @@ export class SwedenMap {
       .join('path')
       .attr('class', 'county')
       .attr('data-code', (d) => d.properties.code);
+
+    // Gränserna mellan grupper av områden (länsgränserna på kommunkartan), ur samma topologi så
+    // att de ligger exakt på områdenas kanter.
+    if (groupBy) {
+      const group = (g: { properties?: unknown }) => (g.properties as Record<string, unknown> | undefined)?.[groupBy];
+      this.groupBordersG
+        .append('path')
+        .datum(mesh(topology, obj, (a, b) => group(a) !== group(b)))
+        .attr('class', 'group-border');
+    }
 
     // Osynliga "träffhalos" runt de minsta länen så de går att träffa med fingret utan zoom.
     this.hitG
@@ -253,6 +270,7 @@ export class SwedenMap {
     this.coastG.selectAll<SVGPathElement, Feature<Geometry> | Geometry>('path').attr('d', (d) => this.path(d));
     this.neighborsG.selectAll<SVGPathElement, Feature<Geometry>>('path').attr('d', (d) => this.path(d));
     this.countiesG.selectAll<SVGPathElement, CountyFeature>('path').attr('d', (d) => this.path(d));
+    this.groupBordersG.selectAll<SVGPathElement, Geometry>('path').attr('d', (d) => this.path(d));
     this.hitG.selectAll<SVGPathElement, CountyFeature>('path').attr('d', (d) => this.path(d));
     this.lakesG.selectAll<SVGPathElement, LakeFeature>('path').attr('d', (d) => this.path(d));
     this.lakeHitG.selectAll<SVGPathElement, LakeFeature>('path').attr('d', (d) => this.path(d));

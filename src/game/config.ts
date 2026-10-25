@@ -6,6 +6,8 @@ export const CONFIG = {
   pointsByAttempt: [3, 2, 1] as readonly number[],
   /** Hur nära (km) klicket måste vara staden, både residensstäderna och "Fler städer". */
   cityRadiusKm: 30,
+  /** Antal kommuner per omgång i kommunläget (slumpas bland alla 290). */
+  municipalitiesPerRound: 20,
   /** Antal städer per omgång i läget "Fler städer" (slumpas ur hela listan). */
   otherCitiesPerRound: 20,
   /** Hur länge (ms) rätt svar visas efter en fråga innan nästa. */
