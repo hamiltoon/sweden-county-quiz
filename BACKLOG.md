@@ -67,9 +67,9 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
 
 | Status | Punkter |
 |---|---|
-| Pågår (utvecklaren) | PO-29 |
-| Nästa | PO-14 (byggd, väntar på staging), PO-30, och PO-15 och PO-16 med flera förslag parallellt |
-| Väntar på UX-verifiering | – |
+| Pågår (utvecklaren) | PO-14 (på staging), banderollen i PO-29 |
+| Nästa | PO-30, och PO-15 och PO-16 med flera förslag parallellt |
+| Väntar på UX-verifiering | PO-29 (mergad i #29) |
 | Väntar på svar från John | – |
 | Klart | PO-01, PO-01b, PO-06, PO-22 |
 
