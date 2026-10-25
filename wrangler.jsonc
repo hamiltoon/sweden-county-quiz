@@ -1,9 +1,29 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "sverigespelet",
+  "main": "worker/index.ts",
   "compatibility_date": "2026-10-25",
   "assets": {
     "directory": "./dist",
-    "not_found_handling": "single-page-application"
-  }
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    // Bara API:t går via Worker-scriptet; allt annat serveras direkt som statiska filer.
+    "run_worker_first": ["/api/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "sverigespelet",
+      "database_id": "e0179868-6c4d-4e28-8689-31565b91c2f7",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "ratelimits": [
+    {
+      // Begränsar hur ofta en IP-adress kan spara resultat.
+      "name": "SUBMIT_LIMITER",
+      "namespace_id": "1001",
+      "simple": { "limit": 20, "period": 60 }
+    }
+  ]
 }

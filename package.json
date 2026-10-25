@@ -7,8 +7,10 @@
     "build": "vite build",
     "preview": "vite preview",
     "deploy": "npm run build && wrangler deploy",
-    "preview:cf": "npm run build && wrangler dev",
-    "typecheck": "tsc --noEmit"
+    "preview:cf": "npm run build && npm run db:migrate:local && wrangler dev",
+    "db:migrate:local": "wrangler d1 migrations apply sverigespelet --local",
+    "db:migrate:remote": "wrangler d1 migrations apply sverigespelet --remote",
+    "typecheck": "tsc --noEmit && tsc -p worker --noEmit"
   },
   "keywords": [],
   "author": "John Mårtensson",

@@ -274,6 +274,180 @@ a {
   border-color: var(--accent);
 }
 
+/* ---------- Topplista ---------- */
+.leaderboard {
+  margin-top: 24px;
+}
+
+.end .leaderboard {
+  margin-top: 0;
+}
+
+.leaderboard h2 {
+  margin: 0 0 8px;
+  font-size: 1.3rem;
+}
+
+.leaderboard h3 {
+  margin: 12px 0 6px;
+  font-size: 0.95rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.player-name {
+  margin: 0 0 10px;
+}
+
+.link-btn {
+  border: none;
+  background: none;
+  padding: 4px 0;
+  color: var(--accent);
+  text-decoration: underline;
+  font-size: inherit;
+}
+
+.name-form {
+  margin-bottom: 10px;
+}
+
+.name-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.name-row {
+  display: flex;
+  gap: 8px;
+}
+
+.name-input {
+  flex: 1;
+  min-width: 0;
+  min-height: 48px;
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  /* 16px hindrar iOS från att zooma in när fältet får fokus. */
+  font: inherit;
+  font-size: 16px;
+}
+
+.name-row .btn {
+  flex: none;
+  padding: 10px 18px;
+}
+
+.name-error {
+  margin: 4px 0 0;
+  color: var(--bad);
+  font-size: 0.85rem;
+}
+
+.name-error:empty {
+  display: none;
+}
+
+.top-note {
+  margin: 0 0 10px;
+  color: var(--ok);
+  font-size: 0.9rem;
+}
+
+.top-note:empty {
+  display: none;
+}
+
+.top-tabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  margin-bottom: 8px;
+  scrollbar-width: none;
+}
+
+.top-tab {
+  flex: none;
+  padding: 8px 12px;
+  min-height: 40px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
+  background: var(--panel);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.top-tab[aria-selected='true'] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+
+.top-status {
+  margin: 0;
+  padding: 14px;
+  color: var(--muted);
+  background: var(--panel);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  font-size: 0.92rem;
+}
+
+.top-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: var(--panel);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.top-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 10px 14px;
+  border-top: 1px solid color-mix(in srgb, var(--border) 25%, transparent);
+}
+
+.top-row:first-child {
+  border-top: none;
+}
+
+.top-row.is-me {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  font-weight: 700;
+}
+
+.top-rank {
+  flex: none;
+  width: 1.6em;
+  text-align: right;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.top-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.top-score {
+  flex: none;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
 /* ---------- Spelskärm ---------- */
 .screen-game {
   overflow: hidden;

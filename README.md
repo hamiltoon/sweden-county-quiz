@@ -1,6 +1,6 @@
 # Sverigespelet
 
-Ett geografispel i webbläsaren om Sveriges 21 län, residensstäder och tio största sjöar. Klicka rätt på kartan, samla poäng och slå ditt bästa resultat – fungerar lika bra på mobilen som på datorn.
+Ett geografispel i webbläsaren om Sveriges 21 län, residensstäder och tio största sjöar. Klicka rätt på kartan, samla poäng och ta dig in på topplistan – fungerar lika bra på mobilen som på datorn.
 
 ![Sverigespelet](docs/screenshot.png)
 
@@ -21,7 +21,16 @@ Det är en PWA, så det går att lägga till på hemskärmen och spela offline.
 
 En omgång går igenom alla 21 län (eller alla tio sjöar) i slumpad ordning. Rätt på första, andra eller tredje försöket ger 3, 2 respektive 1 poäng; därefter visas rätt svar och frågan ger 0 poäng (max 63 poäng per omgång, 30 i sjöläget).
 
-I de andra lägena finns sjöarna kvar på kartan som riktmärken, utan namn. Klicken går igenom sjöarna till länen under. Poängfunktionen är utbytbar (`defaultScoring` i `src/game/config.ts`). Bästa resultat per läge sparas i `localStorage`.
+I de andra lägena finns sjöarna kvar på kartan som riktmärken, utan namn. Klicken går igenom sjöarna till länen under. Poängfunktionen är utbytbar (`defaultScoring` i `src/game/config.ts`). Bästa resultat per läge sparas också i `localStorage` och visas på startskärmen.
+
+## Topplista
+
+Skriv ett namn (på startskärmen eller efter en omgång) så sparas varje avslutad omgång på topplistan. Topplistan visar varje spelares bästa resultat per läge, topp 10. Lika poäng ger delad placering, och den som kom dit först står överst.
+
+- **Tidigare resultat:** första gången man väljer namn laddas webbläsarens sparade rekord upp, ett per läge.
+- **Offline:** resultat som inte går att skicka läggs i en kö i `localStorage` och skickas nästa gång startskärmen visas. Varje resultat har ett eget id, så ett omförsök sparar aldrig dubbelt.
+- **Rimlighetskontroll:** servern godtar bara poäng som går att få i läget och som stämmer med andelen rätt. Den kan inte bevisa att en omgång faktiskt spelats, så topplistan bygger på förtroende.
+- **Integritet:** namnet visas öppet för alla. IP-adressen används bara för att begränsa antalet sparningar (20 per minut) och sparas inte.
 
 ## Kör lokalt
 
@@ -29,19 +38,29 @@ I de andra lägena finns sjöarna kvar på kartan som riktmärken, utan namn. Kl
 npm install
 npm run dev          # Vite dev-server med hot reload
 npm run build        # bygger till dist/
-npm run preview:cf   # bygger + wrangler dev, serverar dist/ precis som på Cloudflare
+npm run preview:cf   # bygger, skapar lokal D1-databas och kör wrangler dev med API:t, som på Cloudflare
 ```
 
-`npm run typecheck` kör `tsc --noEmit`.
+Topplistan behöver API:t, så den fungerar i `npm run preview:cf` men inte i `npm run dev`.
+
+`npm run typecheck` kör `tsc` för både spelet och Worker-scriptet.
 
 ## Deploya
 
 ```sh
-npx wrangler login   # en gång
-npm run deploy       # npm run build && wrangler deploy
+npx wrangler login           # en gång
+npm run db:migrate:remote    # när det finns nya filer i migrations/
+npm run deploy               # npm run build && wrangler deploy
 ```
 
-Sajten deployas som en statisk site på Cloudflare Workers. `wrangler.jsonc` pekar ut `dist/` som static assets med `not_found_handling: "single-page-application"` (SPA-fallback till `index.html`) – det finns inget Worker-script, bara filerna.
+Sajten deployas till Cloudflare Workers. `wrangler.jsonc` pekar ut `dist/` som static assets med `not_found_handling: "single-page-application"` (SPA-fallback till `index.html`). Bara `/api/*` går till Worker-scriptet i `worker/index.ts` (`run_worker_first`); allt annat serveras direkt som filer.
+
+Topplistan ligger i D1-databasen `sverigespelet` (tabellen `scores`, se `migrations/`). Antalet sparningar per IP-adress begränsas med Workers rate limiting (`SUBMIT_LIMITER`). Kör `npx wrangler types worker/worker-configuration.d.ts` efter ändringar i `wrangler.jsonc`.
+
+API:
+
+- `GET /api/scores?mode=lan&limit=10` – bästa resultat per spelare i ett läge (`lan`, `stad`, `sjo`, `blandat`).
+- `POST /api/scores` med `{ "name": "...", "results": [{ "id", "mode", "score", "percent", "playedAt" }] }` – sparar upp till tio resultat och svarar med spelarens placering per läge.
 
 ## Kartdata
 
@@ -67,15 +86,19 @@ Vite + TypeScript utan ramverk (vanilla DOM). Kartan ritas som SVG med [d3-geo](
 
 - `src/main.ts` – startar appen och kopplar ihop spel, karta och UI.
 - `src/data/` – länen med koder, namn, residensstäder och koordinater, samt de största sjöarna.
-- `src/game/` – spellogik: frågor, försök, poäng (`config.ts`), avståndsberäkning och lagring av bästa resultat.
+- `src/game/` – spellogik: frågor, försök, poäng (`config.ts`), avståndsberäkning och lagring av rekord, namn och osända resultat.
+- `src/shared/` – topplistans regler och typer, delade av spelet och Worker-scriptet.
+- `src/api/` – klienten för topplistans API, med kö för osända resultat.
 - `src/map/` – SVG-kartan: projektion, zoom, klick, markeringar, sjöar och sjönamn.
-- `src/ui/` – start- och resultatskärm, DOM-hjälpare, toast.
+- `src/ui/` – start- och resultatskärm, topplista, DOM-hjälpare, toast.
 - `src/pwa.ts` – registrerar service workern i produktion.
 - `src/style.css` – stilar, mobile first, dark mode via `prefers-color-scheme`.
 - `public/` – kartdata, ikoner och `manifest.webmanifest`.
 - `scripts/` – bygger kartdata och ikoner.
-- `vite.config.ts` – Vite-konfig med ett litet plugin som genererar `sw.js` (precachar appen och kartdatan).
-- `wrangler.jsonc` – Cloudflare Workers-konfig (static assets).
+- `vite.config.ts` – Vite-konfig med ett litet plugin som genererar `sw.js` (precachar appen och kartdatan; API:t går alltid till nätet).
+- `worker/` – Worker-scriptet för `/api/*` (topplistan) och genererade typer.
+- `migrations/` – databasschemat för D1.
+- `wrangler.jsonc` – Cloudflare Workers-konfig: static assets, D1 och rate limiting.
 
 ## Licens
 
