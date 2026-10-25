@@ -172,6 +172,8 @@ export const en: Messages = {
     shareText: (code) => `Play Sverigespelet live against me! Room code ${code}`,
     shareTitle: 'Sverigespelet live',
     copied: 'Link copied.',
+    qrLabel: (code) => `QR code with the link to room ${code}`,
+    qrCaption: 'Scan with your phone camera to join.',
     players: (n) => `Players (${n})`,
     you: ' (you)',
     host: 'Host',

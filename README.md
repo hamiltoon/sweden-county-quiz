@@ -36,7 +36,7 @@ I de andra lägena finns sjöarna kvar på kartan som riktmärken, utan namn. Kl
 
 ## Live
 
-**Spela live** på startskärmen: tävla mot kompisar i realtid. Den som skapar ett rum får en kod på fyra tecken (t.ex. `KXR4`) och en länk, `/live/KXR4`, att dela; de andra går med via länken eller koden. Värden startar matchen.
+**Spela live** på startskärmen: tävla mot kompisar i realtid. Den som skapar ett rum får en kod på fyra tecken (t.ex. `KXR4`), en länk, `/live/KXR4`, att dela, och en QR-kod med samma länk som kompisarna kan skanna med mobilkameran; de andra går med via länken, QR-koden eller koden. QR-koden ritas i telefonen med [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) (MIT), så ingen tjänst på nätet ser länken. Värden startar matchen.
 
 - **Matchen:** 10 slumpade län. Alla får samma fråga samtidigt, med 12 sekunder och ett klick var. Rätt svar ger 5–10 poäng: 10 för ett svar direkt, färre ju längre man väntar. Frågan avslutas när alla har svarat eller tiden är ute.
 - **Efter varje fråga** visas rätt län, ens eget klick och ställningen med allas poäng för frågan. Efter sista frågan visas en pallplats, och värden kan starta en ny match.

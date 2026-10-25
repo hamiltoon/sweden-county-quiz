@@ -1245,6 +1245,28 @@ a {
   padding: 10px 16px;
 }
 
+/* QR-koden i lobbyn: alltid svart på vitt, så att den går att skanna även i mörkt läge. */
+.live-qr {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  margin: 4px 0 6px;
+}
+
+.live-qr .qr {
+  display: block;
+  width: min(200px, 60vw);
+  height: auto;
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+
+.live-qr figcaption {
+  color: var(--muted);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
 .live-heading {
   margin: 18px 0 8px;
   font-size: 0.95rem;

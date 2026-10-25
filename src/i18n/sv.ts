@@ -172,6 +172,8 @@ export const sv = {
     shareText: (code: string) => `Spela Sverigespelet live mot mig! Rumskod ${code}`,
     shareTitle: 'Sverigespelet live',
     copied: 'Länken är kopierad.',
+    qrLabel: (code: string) => `QR-kod med länken till rum ${code}`,
+    qrCaption: 'Skanna med mobilkameran för att gå med.',
     players: (n: number) => `Spelare (${n})`,
     you: ' (du)',
     host: 'Värd',
