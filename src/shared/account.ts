@@ -3,9 +3,12 @@
  * WebAuthn-objekten själva skickas som JSON enligt @simplewebauthn.
  */
 
-/** GET /api/me: inloggad spelare, eller null. */
+import type { Lang } from './i18n';
+
+/** GET /api/me: inloggad spelare (eller null) och kontots språk (null om inget är sparat). */
 export interface MeResponse {
   name: string | null;
+  language: Lang | null;
 }
 
 /** Svar från .../options: utmaningen ska skickas tillbaka tillsammans med webbläsarens svar. */

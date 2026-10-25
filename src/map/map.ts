@@ -5,6 +5,7 @@ import { zoom, zoomIdentity, type D3ZoomEvent, type ZoomBehavior, type ZoomTrans
 import { feature, merge } from 'topojson-client';
 import type { Topology, GeometryCollection } from 'topojson-specification';
 import type { Feature, FeatureCollection, Geometry, MultiPolygon, Polygon } from 'geojson';
+import { t } from '../i18n';
 
 export interface CountyProps {
   code: string;
@@ -143,7 +144,7 @@ export class SwedenMap {
       .attr('class', 'map-svg')
       .classed('is-lake-mode', lakeMode)
       .attr('role', 'img')
-      .attr('aria-label', this.lakeFeatures.length ? 'Karta över Sveriges län och största sjöar' : 'Karta över Sveriges län');
+      .attr('aria-label', this.lakeFeatures.length ? t().map.labelWithLakes : t().map.label);
     this.root = this.svg.append('g').attr('class', 'map-root');
     // Underst: en ljus glöd längs alla kuster, sedan grannländerna som bakgrund. Ingen av dem tar emot klick.
     this.coastG = this.root.append('g').attr('class', 'coast');

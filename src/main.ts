@@ -1,9 +1,9 @@
 import './style.css';
 import type { Topology } from 'topojson-specification';
-import { Game, MODE_LABELS, type AnswerOutcome, type Mode, type Question, type Summary } from './game/game';
+import { Game, modeLabel, type AnswerOutcome, type Mode, type Question, type Summary } from './game/game';
 import { CONFIG } from './game/config';
 import { distanceToShapeKm } from './game/geo';
-import { LAKE_BY_ID, lakeRankText } from './data/lakes';
+import { LAKE_BY_ID } from './data/lakes';
 import { COUNTY_BY_CODE } from './data/counties';
 import { PROVINCE_BY_CODE } from './data/provinces';
 import { getCurrentLiveRoom, getLiveName, getLivePlayerId, saveBest, saveLiveName, setCurrentLiveRoom } from './game/storage';
@@ -18,6 +18,8 @@ import { registerServiceWorker } from './pwa';
 import { createRoom, LiveConnection } from './live/connection';
 import { renderLiveEntry } from './live/entry';
 import { LiveView, type LiveMaps } from './live/view';
+import { applyToDocument, countyName, onLangChange, provinceName, t } from './i18n';
+import { adoptAccountLanguage } from './api/account';
 
 const screen = document.getElementById('screen') as HTMLElement;
 const topologyPromises = new Map<string, Promise<Topology>>();
@@ -27,7 +29,7 @@ function loadTopology(url: string): Promise<Topology> {
   let promise = topologyPromises.get(url);
   if (!promise) {
     promise = fetch(url).then((r) => {
-      if (!r.ok) throw new Error(`Kunde inte läsa kartdata ${url} (${r.status})`);
+      if (!r.ok) throw new Error(t().common.mapDataFailed(url, r.status));
       return r.json() as Promise<Topology>;
     });
     promise.catch(() => topologyPromises.delete(url));
@@ -112,11 +114,11 @@ function joinLive(code: string, name: string): void {
   });
   clear(screen);
   screen.className = 'screen screen-end';
-  screen.append(el('section', { class: 'end' }, el('h2', {}, `Ansluter till ${code} …`)));
+  screen.append(el('section', { class: 'end' }, el('h2', {}, t().live.connecting(code))));
   conn = new LiveConnection(code, getLivePlayerId(), name, {
     onState: (state) => view.render(state),
     onError: (message, fatal) => (fatal ? view.showError(message) : view.notify(message)),
-    onReconnecting: (reconnecting) => view.setBanner(reconnecting ? 'Anslutningen bröts – återansluter …' : ''),
+    onReconnecting: (reconnecting) => view.setBanner(reconnecting ? t().live.reconnecting : ''),
   });
 }
 
@@ -124,12 +126,12 @@ function renderFooter(): HTMLElement {
   return el(
     'footer',
     { class: 'footer' },
-    'Kartdata: ',
+    t().footer.mapData,
     el('a', { href: 'https://www.naturalearthdata.com/', target: '_blank', rel: 'noopener' }, 'Natural Earth'),
-    ' (public domain), landskap © ',
+    t().footer.landskap,
     el('a', { href: 'https://www.openstreetmap.org/copyright', target: '_blank', rel: 'noopener' }, 'OpenStreetMap'),
     ' · ',
-    el('a', { href: 'https://github.com/hamiltoon/sweden-county-quiz', target: '_blank', rel: 'noopener' }, 'Källkod'),
+    el('a', { href: 'https://github.com/hamiltoon/sweden-county-quiz', target: '_blank', rel: 'noopener' }, t().footer.source),
   );
 }
 
@@ -138,21 +140,21 @@ async function showGame(mode: Mode): Promise<void> {
   screen.className = 'screen screen-game';
 
   const hud = el('header', { class: 'hud' });
-  const question = el('h2', { class: 'question', 'aria-live': 'polite' }, 'Laddar kartan…');
+  const question = el('h2', { class: 'question', 'aria-live': 'polite' }, t().game.loadingMap);
   const progress = el('span', { class: 'hud-progress' }, '');
   const score = el('span', { class: 'hud-score' }, '');
-  const quit = el('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Avsluta omgången', title: 'Avsluta' }, '✕');
+  const quit = el('button', { class: 'icon-btn', type: 'button', 'aria-label': t().game.quit, title: t().game.quitTitle }, '✕');
   hud.append(
-    el('div', { class: 'hud-row' }, el('span', { class: 'hud-mode' }, MODE_LABELS[mode]), progress, score, quit),
+    el('div', { class: 'hud-row' }, el('span', { class: 'hud-mode' }, modeLabel(mode)), progress, score, quit),
     question,
   );
 
   const mapWrap = el('div', { class: 'map-wrap' });
   const mapEl = el('div', { class: 'map', id: 'map' });
   const zoomCtrls = el('div', { class: 'zoom-ctrls' });
-  const zoomIn = el('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Zooma in' }, '+');
-  const zoomOut = el('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Zooma ut' }, '−');
-  const zoomReset = el('button', { class: 'icon-btn zoom-reset', type: 'button', 'aria-label': 'Återställ zoom', title: 'Återställ' }, '⟲');
+  const zoomIn = el('button', { class: 'icon-btn', type: 'button', 'aria-label': t().game.zoomIn }, '+');
+  const zoomOut = el('button', { class: 'icon-btn', type: 'button', 'aria-label': t().game.zoomOut }, '−');
+  const zoomReset = el('button', { class: 'icon-btn zoom-reset', type: 'button', 'aria-label': t().game.zoomReset, title: t().game.zoomResetTitle }, '⟲');
   zoomCtrls.append(zoomIn, zoomOut, zoomReset);
   mapWrap.append(mapEl, zoomCtrls);
   screen.append(hud, mapWrap);
@@ -171,7 +173,7 @@ async function showGame(mode: Mode): Promise<void> {
     const lakesPromise = lakeMode ? loadTopology(LAKES_URL) : loadOptional(LAKES_URL);
     [topology, lakes, neighbors] = await Promise.all([loadTopology(regions.url), lakesPromise, loadOptional(NEIGHBORS_URL)]);
   } catch (err) {
-    question.textContent = 'Kartan kunde inte laddas. Kontrollera uppkopplingen och försök igen.';
+    question.textContent = t().common.mapFailed;
     console.error(err);
     quit.addEventListener('click', showStart);
     return;
@@ -185,7 +187,7 @@ async function showGame(mode: Mode): Promise<void> {
 
   const updateHud = () => {
     progress.textContent = `${game.number}/${game.total}`;
-    score.textContent = `${game.score} p`;
+    score.textContent = t().common.points(game.score);
     question.textContent = game.prompt();
   };
 
@@ -261,22 +263,22 @@ async function showGame(mode: Mode): Promise<void> {
       const clicked = click.lake ? LAKE_BY_ID.get(click.lake) : undefined;
       // Vid miss: säg vilken sjö det var, eller hur långt bort från rätt sjö klicket hamnade.
       const missText = () => {
-        if (clicked) return `Fel, det var ${clicked.name}.`;
+        if (clicked) return t().game.wrongWas(clicked.name);
         const shape = map.lakeGeometry(target.id);
         const km = shape ? Math.round(distanceToShapeKm(shape, click.lat, click.lon)) : null;
-        return km === null ? 'Fel.' : `Fel – ${km} km bort.`;
+        return km === null ? t().game.wrong : t().game.wrongKm(km);
       };
       if (outcome.correct) {
         map.highlightLake(target.id, 'correct');
         map.showLakeLabel(target.id);
-        revealAndContinue(`Rätt! ${lakeRankText(target)} · +${outcome.pointsAwarded} p`, 'ok');
+        revealAndContinue(t().game.rightLake(t().game.lakeRank(target.rank), outcome.pointsAwarded), 'ok');
       } else if (outcome.finished) {
         if (clicked) map.highlightLake(clicked.id, 'wrong');
         else map.addMarker(click.lon, click.lat, 'wrong');
         map.highlightLake(target.id, 'reveal');
         map.showLakeLabel(target.id);
         map.focusLake(target.id);
-        revealAndContinue(`${missText()} Här ligger ${target.name}.`, 'bad', CONFIG.revealMissMs);
+        revealAndContinue(t().game.missReveal(missText(), target.name), 'bad', CONFIG.revealMissMs);
       } else {
         if (clicked) {
           map.highlightLake(clicked.id, 'wrong');
@@ -289,25 +291,25 @@ async function showGame(mode: Mode): Promise<void> {
       }
     } else if (q.kind === 'lan' || q.kind === 'landskap') {
       if (!click.code) {
-        toast.show(q.kind === 'lan' ? 'Klicka på ett län' : 'Klicka på ett landskap', 'info', CONFIG.toastMs);
+        toast.show(q.kind === 'lan' ? t().game.clickCounty : t().game.clickProvince, 'info', CONFIG.toastMs);
         return;
       }
-      const target = 'province' in q ? q.province : q.county;
+      const target = 'province' in q ? { code: q.province.code, name: provinceName(q.province) } : { code: q.county.code, name: countyName(q.county) };
       const outcome = game.answer({ kind: 'county', code: click.code });
       markResult(q, outcome);
       if (outcome.correct) {
         map.highlight(click.code, 'correct');
-        revealAndContinue(`Rätt! +${outcome.pointsAwarded} p`, 'ok');
+        revealAndContinue(t().game.right(outcome.pointsAwarded), 'ok');
       } else if (outcome.finished) {
         map.highlight(click.code, 'wrong');
         map.highlight(target.code, 'reveal');
         map.focusCounty(target.code);
-        revealAndContinue(`Fel – det var ${regionName(click.code)}. Här är ${target.name}.`, 'bad', CONFIG.revealMissMs);
+        revealAndContinue(t().game.wrongWasReveal(regionName(click.code), target.name), 'bad', CONFIG.revealMissMs);
       } else {
         map.highlight(click.code, 'wrong');
         // Ta inte bort markeringen om frågan hunnit avslutas; då ska felklicket synas med svaret.
         window.setTimeout(() => !locked && map.unhighlight(click.code!, 'wrong'), CONFIG.toastMs);
-        toast.show(`Fel, det var ${regionName(click.code)}. ${attemptsText(outcome.attemptsLeft)}`, 'bad', CONFIG.toastMs);
+        toast.show(`${t().game.wrongWas(regionName(click.code))} ${attemptsText(outcome.attemptsLeft)}`, 'bad', CONFIG.toastMs);
       }
     } else {
       // Residensstad eller en av de andra städerna: samma klick, olika mål.
@@ -323,18 +325,18 @@ async function showGame(mode: Mode): Promise<void> {
       if (outcome.correct) {
         map.addMarker(click.lon, click.lat, 'correct');
         map.addMarker(target.lon, target.lat, 'reveal', target.name);
-        revealAndContinue(`Rätt! ${km} km från ${target.name} · +${outcome.pointsAwarded} p`, 'ok');
+        revealAndContinue(t().game.rightCity(km, target.name, outcome.pointsAwarded), 'ok');
       } else if (outcome.finished) {
         map.addMarker(click.lon, click.lat, 'wrong');
         map.addMarker(target.lon, target.lat, 'reveal', target.name);
         map.focusPoint(target.lon, target.lat);
-        revealAndContinue(`Fel – ${km} km bort. Här ligger ${target.name}.`, 'bad', CONFIG.revealMissMs);
+        revealAndContinue(t().game.missReveal(t().game.wrongKm(km), target.name), 'bad', CONFIG.revealMissMs);
       } else {
         map.addMarker(click.lon, click.lat, 'wrong');
-        toast.show(`${km} km bort. ${attemptsText(outcome.attemptsLeft)}`, 'bad', CONFIG.toastMs);
+        toast.show(`${t().game.kmAway(km)} ${attemptsText(outcome.attemptsLeft)}`, 'bad', CONFIG.toastMs);
       }
     }
-    score.textContent = `${game.score} p`;
+    score.textContent = t().common.points(game.score);
   };
 
   zoomIn.addEventListener('click', () => map.zoomBy(1.6));
@@ -373,21 +375,31 @@ function renderRecap(summary: Summary, regions: Topology, objectName: string, la
     lakeResults,
     points,
     className: 'recap-map',
-    label: `Karta över omgången: ${counts.first} rätt direkt, ${counts.later} efter fler försök, ${counts.missed} missade.`,
+    label: t().game.recapLabel(counts.first, counts.later, counts.missed),
   });
   return el('div', { class: 'recap' }, map, renderRecapLegend(counts));
 }
 
 function attemptsText(left: number): string {
-  return left === 1 ? 'Sista försöket!' : `${left} försök kvar.`;
+  return left === 1 ? t().game.lastAttempt : t().game.attemptsLeft(left);
 }
 
 /** Namnet på ett klickat län eller landskap (länskoder är versaler, landskapskoder gemener). */
 function regionName(code: string): string {
-  return COUNTY_BY_CODE.get(code)?.name ?? PROVINCE_BY_CODE.get(code)?.name ?? code;
+  const county = COUNTY_BY_CODE.get(code);
+  if (county) return countyName(county);
+  const province = PROVINCE_BY_CODE.get(code);
+  return province ? provinceName(province) : code;
 }
 
+applyToDocument();
+// Byter spelaren språk (på startskärmen, eller för att kontot har ett annat språk sparat) ritas
+// startskärmen om på det nya språket.
+onLangChange(() => {
+  if (screen.classList.contains('screen-start')) showStart();
+});
 const liveLink = LIVE_PATH.exec(location.pathname);
 if (liveLink) showLive(liveLink[1].toUpperCase());
 else showStart();
+void adoptAccountLanguage();
 registerServiceWorker();

@@ -4,17 +4,14 @@ import { OTHER_CITIES, type City } from '../data/cities';
 import { PROVINCES, type Province } from '../data/provinces';
 import { CONFIG, defaultScoring, type ScoringFn } from './config';
 import { haversineKm, shuffle } from './geo';
+import { countyName, provinceName, t } from '../i18n';
 
 export type Mode = 'lan' | 'landskap' | 'stad' | 'ort' | 'sjo' | 'blandat';
 
-export const MODE_LABELS: Record<Mode, string> = {
-  lan: 'Län',
-  landskap: 'Landskap',
-  stad: 'Residensstad',
-  ort: 'Fler städer',
-  sjo: 'Sjöar',
-  blandat: 'Blandat',
-};
+/** Lägets namn på det valda språket. */
+export function modeLabel(mode: Mode): string {
+  return t().modes[mode];
+}
 
 export type Question =
   | { kind: 'lan' | 'stad'; county: County }
@@ -100,7 +97,7 @@ export class Game {
   /** Formulerar frågetexten. */
   prompt(): string {
     const q = this.current;
-    return q ? `Var ligger ${questionLabel(q)}?` : '';
+    return q ? t().game.where(questionLabel(q)) : '';
   }
 
   answer(guess: Guess): AnswerOutcome {
@@ -191,8 +188,8 @@ function pickCountyKind(mode: Exclude<Mode, 'sjo' | 'ort' | 'landskap'>): 'lan' 
 
 /** Det frågan gäller: länets, landskapets, stadens eller sjöns namn. */
 export function questionLabel(q: Question): string {
-  if (q.kind === 'landskap') return q.province.name;
+  if (q.kind === 'landskap') return provinceName(q.province);
   if (q.kind === 'sjo') return q.lake.name;
   if (q.kind === 'ort') return q.city.name;
-  return q.kind === 'lan' ? q.county.name : q.county.city;
+  return q.kind === 'lan' ? countyName(q.county) : q.county.city;
 }

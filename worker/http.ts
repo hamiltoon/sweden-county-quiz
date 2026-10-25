@@ -1,4 +1,5 @@
 /** Gemensamma hjälpare för API:ts svar och förfrågningar. */
+import { msg } from './messages';
 
 export function json(body: unknown, status = 200, headers: Record<string, string> = {}): Response {
   return new Response(JSON.stringify(body), {
@@ -17,13 +18,13 @@ export function json(body: unknown, status = 200, headers: Record<string, string
  */
 export async function readJson(request: Request, maxBytes: number): Promise<{ body: unknown } | { error: Response }> {
   const declared = Number(request.headers.get('Content-Length') ?? 0);
-  if (declared > maxBytes) return { error: json({ error: 'För stor förfrågan.' }, 413) };
+  if (declared > maxBytes) return { error: json({ error: msg(request).tooLarge }, 413) };
   const text = await request.text();
-  if (text.length > maxBytes) return { error: json({ error: 'För stor förfrågan.' }, 413) };
+  if (text.length > maxBytes) return { error: json({ error: msg(request).tooLarge }, 413) };
   try {
     return { body: JSON.parse(text) };
   } catch {
-    return { error: json({ error: 'Ogiltig JSON.' }, 400) };
+    return { error: json({ error: msg(request).badJson }, 400) };
   }
 }
 
@@ -39,4 +40,14 @@ export function isCrossOrigin(request: Request, url: URL): boolean {
 
 export function clientIp(request: Request): string {
   return request.headers.get('CF-Connecting-IP') ?? 'okänd';
+}
+
+export function readCookie(request: Request, name: string): string | null {
+  const header = request.headers.get('Cookie');
+  if (!header) return null;
+  for (const part of header.split(';')) {
+    const [key, ...rest] = part.trim().split('=');
+    if (key === name) return rest.join('=') || null;
+  }
+  return null;
 }

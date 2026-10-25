@@ -9,6 +9,7 @@ import { LIVE_MAX_POINTS, LIVE_MIN_POINTS, LIVE_QUESTIONS, LIVE_QUESTION_MS, LIV
 import { SwedenMap, type MapClick } from '../map/map';
 import { el, clear } from '../ui/dom';
 import { Toast } from '../ui/toast';
+import { countyName, t } from '../i18n';
 import type { LiveConnection } from './connection';
 
 export interface LiveMaps {
@@ -53,7 +54,7 @@ export class LiveView {
     this.state = null;
     clear(this.screen);
     this.screen.className = 'screen screen-end';
-    const back = el('button', { class: 'btn btn-primary', type: 'button' }, 'Till start');
+    const back = el('button', { class: 'btn btn-primary', type: 'button' }, t().common.toStart);
     back.addEventListener('click', this.onLeave);
     this.screen.append(el('section', { class: 'end live-error' }, el('h2', {}, 'Live'), el('p', { class: 'lead' }, message), el('div', { class: 'btn-row' }, back)));
   }
@@ -97,7 +98,7 @@ export class LiveView {
     return state.players.find((p) => p.id === state.you);
   }
 
-  private leaveButton(label = 'Lämna rummet'): HTMLButtonElement {
+  private leaveButton(label = t().live.leave): HTMLButtonElement {
     const btn = el('button', { class: 'btn', type: 'button' }, label);
     btn.addEventListener('click', this.onLeave);
     return btn;
@@ -112,17 +113,17 @@ export class LiveView {
     const host = state.players.find((p) => p.id === state.hostId);
     const url = `${location.origin}/live/${state.code}`;
 
-    const share = el('button', { class: 'btn', type: 'button' }, 'Dela länk');
+    const share = el('button', { class: 'btn', type: 'button' }, t().live.share);
     const shareNote = el('p', { class: 'top-note', role: 'status' });
     share.addEventListener('click', () => void shareLink(url, state.code, shareNote));
 
     let action: HTMLElement;
     if (isHost) {
-      const start = el('button', { class: 'btn btn-primary', type: 'button' }, state.players.length > 1 ? 'Starta matchen' : 'Starta (bara du)');
+      const start = el('button', { class: 'btn btn-primary', type: 'button' }, state.players.length > 1 ? t().live.start : t().live.startAlone);
       start.addEventListener('click', () => this.conn()?.send({ type: 'start' }));
       action = start;
     } else {
-      action = el('p', { class: 'live-wait' }, `Väntar på att ${host?.name ?? 'värden'} startar …`);
+      action = el('p', { class: 'live-wait' }, t().live.waitingForHost(host?.name ?? null));
     }
 
     this.screen.append(
@@ -130,12 +131,12 @@ export class LiveView {
       el(
         'section',
         { class: 'end live-lobby' },
-        el('h2', {}, 'Live · Län'),
-        el('p', { class: 'lead' }, `${LIVE_QUESTIONS} frågor, ${LIVE_QUESTION_MS / 1000} sekunder och ett klick per fråga. Rätt svar ger ${LIVE_MIN_POINTS}–${LIVE_MAX_POINTS} poäng – ju snabbare, desto fler.`),
-        el('div', { class: 'live-code-card' }, el('span', { class: 'live-code-label' }, 'Rumskod'), el('span', { class: 'live-code' }, state.code), share),
+        el('h2', {}, t().live.lobbyTitle),
+        el('p', { class: 'lead' }, t().live.rules(LIVE_QUESTIONS, LIVE_QUESTION_MS / 1000, LIVE_MIN_POINTS, LIVE_MAX_POINTS)),
+        el('div', { class: 'live-code-card' }, el('span', { class: 'live-code-label' }, t().live.codeLabel), el('span', { class: 'live-code' }, state.code), share),
         shareNote,
-        el('h3', { class: 'live-heading' }, `Spelare (${state.players.length})`),
-        renderPlayers(state, (p) => (p.id === state.hostId ? 'Värd' : '')),
+        el('h3', { class: 'live-heading' }, t().live.players(state.players.length)),
+        renderPlayers(state, (p) => (p.id === state.hostId ? t().live.host : '')),
         el('div', { class: 'btn-row' }, action),
         el('div', { class: 'btn-row' }, this.leaveButton()),
       ),
@@ -152,12 +153,13 @@ export class LiveView {
     if (this.state !== state || !this.map || !this.game || !state.question) return;
     const q = state.question;
     const map = this.map;
-    const target = COUNTY_BY_CODE.get(q.target);
+    const county = COUNTY_BY_CODE.get(q.target);
+    const name = county ? countyName(county) : q.target;
     const me = this.me(state);
 
     this.game.progress.textContent = `${q.index + 1}/${q.total}`;
-    this.game.score.textContent = `${me?.score ?? 0} p`;
-    this.game.question.textContent = `Var ligger ${target?.name ?? q.target}?`;
+    this.game.score.textContent = t().common.points(me?.score ?? 0);
+    this.game.question.textContent = t().game.where(name);
 
     const newQuestion = q.index !== this.shownQuestion;
     const newPhase = newQuestion || state.phase !== this.shownPhase;
@@ -185,12 +187,12 @@ export class LiveView {
     map.clearHighlights();
     if (mine?.code && !mine.correct) map.highlight(mine.code, 'wrong');
     map.highlight(q.target, mine?.correct ? 'correct' : 'reveal');
-    if (target) map.setCountyResult(q.target, mine?.correct ? 'first' : 'missed');
+    if (county) map.setCountyResult(q.target, mine?.correct ? 'first' : 'missed');
     if (!mine?.correct) map.focusCounty(q.target);
-    const name = target?.name ?? q.target;
-    if (mine?.correct) this.toast?.show(`Rätt! +${mine.points} p`, 'ok', 0);
-    else if (mine?.code) this.toast?.show(`Fel – det var ${COUNTY_BY_CODE.get(mine.code)?.name ?? mine.code}. Här är ${name}.`, 'bad', 0);
-    else this.toast?.show(`Tiden tog slut. Här är ${name}.`, 'bad', 0);
+    const clicked = mine?.code ? COUNTY_BY_CODE.get(mine.code) : undefined;
+    if (mine?.correct) this.toast?.show(t().game.right(mine.points), 'ok', 0);
+    else if (mine?.code) this.toast?.show(t().game.wrongWasReveal(clicked ? countyName(clicked) : mine.code, name), 'bad', 0);
+    else this.toast?.show(t().live.timeUp(name), 'bad', 0);
     this.game.status.replaceChildren(renderStandings(state));
     this.runTimer(q.endsAt, LIVE_REVEAL_MS);
   }
@@ -198,10 +200,10 @@ export class LiveView {
   private async buildGame(): Promise<void> {
     clear(this.screen);
     this.screen.className = 'screen screen-game';
-    const question = el('h2', { class: 'question', 'aria-live': 'polite' }, 'Laddar kartan …');
+    const question = el('h2', { class: 'question', 'aria-live': 'polite' }, t().game.loadingMap);
     const progress = el('span', { class: 'hud-progress' }, '');
     const score = el('span', { class: 'hud-score' }, '');
-    const quit = el('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Lämna matchen', title: 'Lämna' }, '✕');
+    const quit = el('button', { class: 'icon-btn', type: 'button', 'aria-label': t().live.leaveMatch, title: t().live.leaveTitle }, '✕');
     quit.addEventListener('click', this.onLeave);
     const timerBar = el('div', { class: 'live-timer-bar' });
     const hud = el(
@@ -221,7 +223,7 @@ export class LiveView {
     try {
       maps = await this.maps;
     } catch {
-      if (mapEl.isConnected) this.showError('Kartan kunde inte laddas. Kontrollera uppkopplingen och försök igen.');
+      if (mapEl.isConnected) this.showError(t().common.mapFailed);
       return;
     }
     // Har spelaren lämnat medan kartan laddades finns det inget att rita på.
@@ -270,10 +272,10 @@ export class LiveView {
 
     let again: HTMLElement;
     if (isHost) {
-      again = el('button', { class: 'btn btn-primary', type: 'button' }, 'Spela igen');
+      again = el('button', { class: 'btn btn-primary', type: 'button' }, t().end.again);
       again.addEventListener('click', () => this.conn()?.send({ type: 'lobby' }));
     } else {
-      again = el('p', { class: 'live-wait' }, `${host?.name ?? 'Värden'} kan starta en ny match.`);
+      again = el('p', { class: 'live-wait' }, t().live.canRestart(host?.name ?? null));
     }
 
     this.screen.append(
@@ -281,8 +283,8 @@ export class LiveView {
       el(
         'section',
         { class: 'end live-done' },
-        el('h2', {}, mine?.place === 1 ? '🏆 Du vann!' : 'Matchen är slut'),
-        mine && ranked.length > 1 ? el('p', { class: 'lead' }, `Du kom på plats ${mine.place} av ${ranked.length} med ${mine.player.score} poäng.`) : null,
+        el('h2', {}, mine?.place === 1 ? t().live.won : t().live.over),
+        mine && ranked.length > 1 ? el('p', { class: 'lead' }, t().live.placed(mine.place, ranked.length, mine.player.score)) : null,
         el(
           'ol',
           { class: 'live-podium' },
@@ -292,12 +294,12 @@ export class LiveView {
               { class: player.id === state.you ? 'is-me' : '' },
               el('span', { class: 'live-place' }, MEDALS[place - 1] ?? `${place}`),
               el('span', { class: 'live-name' }, player.name),
-              el('span', { class: 'live-points' }, `${player.score} p`),
+              el('span', { class: 'live-points' }, t().common.points(player.score)),
             ),
           ),
         ),
         el('div', { class: 'btn-row' }, again),
-        el('div', { class: 'btn-row' }, this.leaveButton('Till start')),
+        el('div', { class: 'btn-row' }, this.leaveButton(t().common.toStart)),
       ),
     );
   }
@@ -317,8 +319,8 @@ function renderPlayers(state: LiveState, tag: (p: LivePlayer) => string): HTMLEl
       el(
         'li',
         { class: [p.id === state.you ? 'is-me' : '', p.connected ? '' : 'is-away'].join(' ').trim() },
-        el('span', { class: 'live-name' }, p.name, p.id === state.you ? ' (du)' : ''),
-        el('span', { class: 'live-tag' }, p.connected ? tag(p) : 'Borta'),
+        el('span', { class: 'live-name' }, p.name, p.id === state.you ? t().live.you : ''),
+        el('span', { class: 'live-tag' }, p.connected ? tag(p) : t().live.away),
       ),
     ),
   );
@@ -327,8 +329,8 @@ function renderPlayers(state: LiveState, tag: (p: LivePlayer) => string): HTMLEl
 function statusText(state: LiveState, answered: boolean): string {
   const present = state.players.filter((p) => p.connected);
   const done = present.filter((p) => p.answered || (p.id === state.you && answered)).length;
-  if (present.length <= 1) return answered ? 'Svar skickat.' : 'Klicka på rätt län.';
-  return `${answered ? 'Svar skickat · ' : ''}${done} av ${present.length} har svarat`;
+  if (present.length <= 1) return answered ? t().live.answerSent : t().live.clickCounty;
+  return t().live.answered(answered, done, present.length);
 }
 
 /** Ställningen efter en fråga: alla spelare med poängen för frågan. */
@@ -345,21 +347,21 @@ function renderStandings(state: LiveState): HTMLElement {
         el('span', { class: 'live-place' }, `${place}`),
         el('span', { class: 'live-name' }, player.name),
         el('span', { class: `live-delta ${a?.correct ? 'is-ok' : 'is-bad'}` }, a?.correct ? `+${a.points}` : a?.code ? '✗' : '–'),
-        el('span', { class: 'live-points' }, `${player.score} p`),
+        el('span', { class: 'live-points' }, t().common.points(player.score)),
       );
     }),
   );
 }
 
 async function shareLink(url: string, code: string, note: HTMLElement): Promise<void> {
-  const text = `Spela Sverigespelet live mot mig! Rumskod ${code}`;
+  const text = t().live.shareText(code);
   try {
     if (navigator.share) {
-      await navigator.share({ title: 'Sverigespelet live', text, url });
+      await navigator.share({ title: t().live.shareTitle, text, url });
       return;
     }
     await navigator.clipboard.writeText(url);
-    note.textContent = 'Länken är kopierad.';
+    note.textContent = t().live.copied;
   } catch (err) {
     // Avbruten delning är inget fel; annars visas länken så att den går att kopiera för hand.
     if ((err as Error)?.name !== 'AbortError') note.textContent = url;

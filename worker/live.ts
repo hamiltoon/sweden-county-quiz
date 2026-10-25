@@ -30,6 +30,8 @@ import {
   type LiveState,
 } from '../src/shared/live';
 import { clientIp, json } from './http';
+import { langOf, messages, msg } from './messages';
+import type { Lang } from '../src/shared/i18n';
 
 const PLAYER_ID_PATTERN = /^[A-Za-z0-9-]{8,64}$/;
 const MAX_MESSAGE_BYTES = 512;
@@ -45,6 +47,13 @@ interface StoredAnswer {
   code: string;
   correct: boolean;
   points: number;
+}
+
+/** Det som sparas med varje anslutning, så att rummet vet vem den tillhör även efter hibernering. */
+interface Attachment {
+  playerId: string;
+  /** Spelarens språk, för felmeddelanden. */
+  lang: Lang;
 }
 
 interface Room {
@@ -64,27 +73,28 @@ interface Room {
 
 /** Hanterar /api/live*. Returnerar null för andra sökvägar. */
 export async function handleLive(request: Request, env: Env, url: URL): Promise<Response | null> {
+  const m = msg(request);
   if (url.pathname === '/api/live') {
-    if (request.method !== 'POST') return json({ error: 'Metoden stöds inte.' }, 405, { Allow: 'POST' });
+    if (request.method !== 'POST') return json({ error: m.method }, 405, { Allow: 'POST' });
     const { success } = await env.SUBMIT_LIMITER.limit({ key: `live:${clientIp(request)}` });
-    if (!success) return json({ error: 'För många nya rum. Vänta en minut och försök igen.' }, 429);
+    if (!success) return json({ error: m.tooManyRooms }, 429);
     // Koden slumpas; i den osannolika händelsen att den redan används provas en ny.
     for (let attempt = 0; attempt < 5; attempt++) {
       const code = randomCode();
       const res = await env.LIVE_ROOM.getByName(code).fetch(`https://live/init?code=${code}`, { method: 'POST' });
       if (res.status === 201) return json({ code } satisfies LiveCreateResponse, 201);
     }
-    return json({ error: 'Kunde inte skapa ett rum just nu. Försök igen.' }, 503);
+    return json({ error: m.roomCreateFailed }, 503);
   }
 
   const match = /^\/api\/live\/([^/]+)\/ws$/.exec(url.pathname);
   if (!match) return null;
   const code = match[1].toUpperCase();
-  if (!LIVE_CODE_PATTERN.test(code)) return json({ error: 'Ogiltig rumskod.' }, 404);
-  if (request.headers.get('Upgrade') !== 'websocket') return json({ error: 'Förväntade WebSocket.' }, 426);
+  if (!LIVE_CODE_PATTERN.test(code)) return json({ error: m.badRoomCode }, 404);
+  if (request.headers.get('Upgrade') !== 'websocket') return json({ error: m.expectedWebSocket }, 426);
   // En WebSocket skickar alltid Origin; andra webbplatser får inte ansluta i spelarens namn.
   const origin = request.headers.get('Origin');
-  if (origin !== null && origin !== url.origin) return json({ error: 'Anrop från andra webbplatser godtas inte.' }, 403);
+  if (origin !== null && origin !== url.origin) return json({ error: m.crossOrigin }, 403);
   return env.LIVE_ROOM.getByName(code).fetch(new Request(`https://live/ws${url.search}`, request));
 }
 
@@ -115,7 +125,7 @@ export class LiveRoom extends DurableObject<Env> {
   async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
     if (url.pathname === '/init') return this.init(url.searchParams.get('code') ?? '');
-    return this.join(url);
+    return this.join(url, langOf(request));
   }
 
   private async init(code: string): Promise<Response> {
@@ -139,7 +149,8 @@ export class LiveRoom extends DurableObject<Env> {
     return new Response(null, { status: 201 });
   }
 
-  private async join(url: URL): Promise<Response> {
+  private async join(url: URL, lang: Lang): Promise<Response> {
+    const m = messages(lang);
     const [client, server] = Object.values(new WebSocketPair());
     const refuse = (message: string) => {
       server.accept();
@@ -149,15 +160,15 @@ export class LiveRoom extends DurableObject<Env> {
     };
 
     const room = this.room;
-    if (!room) return refuse('Rummet finns inte. Kontrollera koden.');
+    if (!room) return refuse(m.noRoom);
     const playerId = url.searchParams.get('player') ?? '';
     const name = normalizeName(url.searchParams.get('name'));
-    if (!PLAYER_ID_PATTERN.test(playerId)) return refuse('Ogiltig spelare.');
-    if (!name) return refuse('Skriv ett namn först.');
+    if (!PLAYER_ID_PATTERN.test(playerId)) return refuse(m.badPlayer);
+    if (!name) return refuse(m.writeName);
 
     let player = room.players.find((p) => p.id === playerId);
     if (!player) {
-      if (room.players.length >= LIVE_MAX_PLAYERS) return refuse(`Rummet är fullt (max ${LIVE_MAX_PLAYERS} spelare).`);
+      if (room.players.length >= LIVE_MAX_PLAYERS) return refuse(m.roomFull(LIVE_MAX_PLAYERS));
       player = { id: playerId, name: uniqueName(room, name, playerId), score: 0 };
       room.players.push(player);
     } else {
@@ -167,7 +178,7 @@ export class LiveRoom extends DurableObject<Env> {
     // Samma spelare i en annan flik eller efter en återanslutning: den gamla anslutningen stängs.
     for (const old of this.ctx.getWebSockets(playerId)) old.close(4001, 'Ansluten på nytt');
     this.ctx.acceptWebSocket(server, [playerId]);
-    server.serializeAttachment({ playerId });
+    server.serializeAttachment({ playerId, lang } satisfies Attachment);
 
     if (!room.hostId || !this.isConnected(room.hostId, server)) room.hostId = playerId;
     room.lastActive = Date.now();
@@ -179,7 +190,7 @@ export class LiveRoom extends DurableObject<Env> {
   async webSocketMessage(ws: WebSocket, raw: string | ArrayBuffer): Promise<void> {
     const room = this.room;
     if (!room || typeof raw !== 'string' || raw.length > MAX_MESSAGE_BYTES) return;
-    const { playerId } = ws.deserializeAttachment() as { playerId: string };
+    const { playerId, lang } = ws.deserializeAttachment() as Attachment;
     let msg: LiveClientMessage;
     try {
       msg = JSON.parse(raw) as LiveClientMessage;
@@ -189,7 +200,7 @@ export class LiveRoom extends DurableObject<Env> {
     room.lastActive = Date.now();
 
     if (msg.type === 'start') {
-      if (playerId !== room.hostId) return this.sendError(ws, 'Bara den som skapade rummet kan starta.');
+      if (playerId !== room.hostId) return this.sendError(ws, messages(lang).hostOnly);
       if (room.phase !== 'lobby' && room.phase !== 'done') return;
       for (const p of room.players) p.score = 0;
       room.questions = shuffled(COUNTIES)
