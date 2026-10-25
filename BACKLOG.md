@@ -45,17 +45,16 @@ Beslutat med John 2026-10-25. Det är kontrollen av resultatet som begränsar os
 
 | Status | Punkter |
 |---|---|
-| Pågår (utvecklaren) | PO-01b (kriterium 2–3 underkända av UX, rättas) |
-| Nästa | PO-29, sedan PO-14, och PO-15 och PO-16 med flera förslag parallellt |
+| Pågår (utvecklaren) | PO-29 |
+| Nästa | PO-14 (byggd, väntar på staging), PO-30, och PO-15 och PO-16 med flera förslag parallellt |
 | Väntar på UX-verifiering | – |
-| Underkänd, rättas | PO-01: kriterium 8 underkänt av UX, rättas i PO-01b |
 | Väntar på svar från John | – |
-| Klart | PO-06, PO-22 |
+| Klart | PO-01, PO-01b, PO-06, PO-22 |
 
 ## Backlog i prioritetsordning
 
 ### PO-01 Live: se allas klick och vem som var snabbast när svaret visas
-- **Prioritet:** P1. Driftsatt 2026-10-25 ([#22](https://github.com/hamiltoon/sweden-county-quiz/pull/22)). UX: 1–7, 9 och 10 godkända; 8 underkänt med 12 spelare (vyn räknas innan ställningen ritats, och ställningen tar halva skärmen). Rättas i PO-01b.
+- **Status:** ✅ Klar 2026-10-25 ([#22](https://github.com/hamiltoon/sweden-county-quiz/pull/22), rättad i [#25](https://github.com/hamiltoon/sweden-county-quiz/pull/25) och [#27](https://github.com/hamiltoon/sweden-county-quiz/pull/27)). UX har godkänt alla kriterier, kriterium 8, 12 och 13 efter PO-01b.
 - **Insats:** M (servern sparar klick och svarstid för alla svar; kartan ritar prickar med namn)
 - **Koppling:** IDEER.md "Göra live mer levande" 4 och 5
 - **Värde:** Det är i avslöjandet som snacket uppstår: "Du klickade ju i Norge!" I dag ser man bara sitt eget
@@ -83,8 +82,7 @@ Beslutat med John 2026-10-25. Det är kontrollen av resultatet som begränsar os
       läsa prickar och ställning. (Tillagt 2026-10-25.)
 
 ### PO-01b Live: avslöjandet håller med många spelare
-- **Prioritet:** P1, pågår. Driftsatt i [#25](https://github.com/hamiltoon/sweden-county-quiz/pull/25). UX: kriterium 1 och 4 godkända,
-  2 och 3 underkända; dessutom täcker toasten prickar i kanten när hela Sverige visas.
+- **Status:** ✅ Klar 2026-10-25 ([#25](https://github.com/hamiltoon/sweden-county-quiz/pull/25), [#27](https://github.com/hamiltoon/sweden-county-quiz/pull/27)). UX har godkänt alla fem kriterierna med 12 spelare på iPhone och Android 360.
 - **Insats:** S–M
 - **Koppling:** PO-01 kriterium 8, 12 och 13; UX-07
 - **Beslut (PO):** med fler än 5 spelare visar ställningen under avslöjandet topp 3, den egna raden och "… och N till".
@@ -252,6 +250,15 @@ Beslutat med John 2026-10-25. Det är kontrollen av resultatet som begränsar os
   2. Minikartan på slutskärmen visar också prickar.
   3. Blandat följer samma regel för residensstadsfrågor.
   4. Topplistan och tidigare resultat lämnas orörda.
+
+### PO-30 Live: målets namn syns ovanpå prickarna
+- **Prioritet:** P2
+- **Insats:** S
+- **Koppling:** UX-verifieringen av PO-01b (putsning)
+- **Värde:** När alla klickat nära rätt svar täcker prickarna målets namn ("Umeå", "Uddjaure"). Namnet är det man ska lära sig.
+- **Acceptanskriterier:**
+  1. Målets namn ritas ovanpå prickarna och deras namn, eller på den sida av målet där det finns minst prickar.
+  2. Med 12 prickar inom 30 km från målet går målets namn att läsa helt på iPhone 13 och Android 360.
 
 ### PO-02 Live: se vilka som har svarat medan frågan pågår
 - **Prioritet:** P2
@@ -482,5 +489,6 @@ Fynd från UX-specialisten (UX-01, UX-02 …) läggs in här med prioritet och k
 
 ## Klart
 
+- **PO-01 och PO-01b** Live: allas klick, snabbast och ett avslöjande som håller med 12 spelare. Driftsatt i #22, #25 och #27, godkänd av UX 2026-10-25.
 - **PO-22** Live: Starta matchen nåbar i lobbyn (UX-13, UX-14). Driftsatt i [#26](https://github.com/hamiltoon/sweden-county-quiz/pull/26), godkänd av UX 2026-10-25.
 - **PO-06** Startskärmen: Spela live först (UX-04). Driftsatt i [#23](https://github.com/hamiltoon/sweden-county-quiz/pull/23), godkänd av UX 2026-10-25.
