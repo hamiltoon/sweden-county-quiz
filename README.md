@@ -27,6 +27,21 @@ Under omgången fylls kartan: grönt för rätt direkt, gult för rätt efter fl
 
 I de andra lägena finns sjöarna kvar på kartan som riktmärken, utan namn. Klicken går igenom sjöarna till länen under. Poängfunktionen är utbytbar (`defaultScoring` i `src/game/config.ts`). Bästa resultat per läge sparas också i `localStorage` och visas på startskärmen.
 
+## Live
+
+**Spela live** på startskärmen: tävla mot kompisar i realtid. Den som skapar ett rum får en kod på fyra tecken (t.ex. `KXR4`) och en länk, `/live/KXR4`, att dela; de andra går med via länken eller koden. Värden startar matchen.
+
+- **Matchen:** 10 slumpade län. Alla får samma fråga samtidigt, med 12 sekunder och ett klick var. Rätt svar ger 5–10 poäng: 10 för ett svar direkt, färre ju längre man väntar. Frågan avslutas när alla har svarat eller tiden är ute.
+- **Efter varje fråga** visas rätt län, ens eget klick och ställningen med allas poäng för frågan. Efter sista frågan visas en pallplats, och värden kan starta en ny match.
+- **Servern bestämmer:** frågorna, tiden och poängen räknas på servern, så klockan i telefonen spelar ingen roll.
+- **Tappad uppkoppling:** spelet ansluter igen av sig självt, och en omladdning går rakt tillbaka in i rummet. Lämnar värden tar nästa spelare över.
+- Upp till 12 spelare per rum. Namnet behöver inte vara skyddat, och live-resultat räknas inte på topplistan. Ett rum som inte används på två timmar töms.
+
+Varje rum är ett [Durable Object](https://developers.cloudflare.com/durable-objects/) (`LiveRoom` i `worker/live.ts`) som spelarna är anslutna till med WebSocket. Rummet använder WebSocket-hibernering och alarm, så det kostar inget medan ingen gör något.
+
+- `POST /api/live` – skapa ett rum, svarar `{ code }` (begränsat per IP-adress).
+- `GET /api/live/:kod/ws?player=<id>&name=<namn>` – WebSocket in i rummet. Meddelandena finns i `src/shared/live.ts`.
+
 ## Topplista
 
 Skriv ett namn (på startskärmen eller efter en omgång) så sparas varje avslutad omgång på topplistan. Topplistan visar varje spelares bästa resultat per läge, topp 10. Fliken **Totalt** summerar varje spelares bästa resultat i alla sex lägena (max 354 poäng). Lika poäng ger delad placering, och den som kom dit först står överst.
@@ -111,18 +126,19 @@ Vite + TypeScript utan ramverk (vanilla DOM). Kartan ritas som SVG med [d3-geo](
 - `src/main.ts` – startar appen och kopplar ihop spel, karta och UI.
 - `src/data/` – länen med koder, namn, residensstäder och koordinater, landskapen, de andra städerna och de största sjöarna.
 - `src/game/` – spellogik: frågor, försök, poäng (`config.ts`), avståndsberäkning och lagring av rekord, namn och osända resultat.
-- `src/shared/` – topplistans regler och typer, delade av spelet och Worker-scriptet.
+- `src/shared/` – topplistans och live-lägets regler och typer, delade av spelet och Worker-scriptet.
 - `src/api/` – klienten för topplistans API, med kö för osända resultat, och för kontona (passkeys).
 - `src/map/` – SVG-kartan: projektion, zoom, klick, markeringar, sjöar, grannländer och minikartor.
+- `src/live/` – live-läget: anslutningen till rummet och skärmarna (lobby, frågor, ställning, pall).
 - `src/ui/` – start- och resultatskärm, topplista, DOM-hjälpare, toast.
 - `src/pwa.ts` – registrerar service workern i produktion.
 - `src/style.css` – stilar, mobile first, dark mode via `prefers-color-scheme`.
 - `public/` – kartdata, ikoner och `manifest.webmanifest`.
 - `scripts/` – bygger kartdata och ikoner.
 - `vite.config.ts` – Vite-konfig med ett litet plugin som genererar `sw.js` (precachar appen och kartdatan; API:t går alltid till nätet).
-- `worker/` – Worker-scriptet för `/api/*`: topplistan (`index.ts`), konton med passkeys (`auth.ts`), hjälpare och genererade typer.
+- `worker/` – Worker-scriptet för `/api/*`: topplistan (`index.ts`), konton med passkeys (`auth.ts`), live-rummen (`live.ts`), hjälpare och genererade typer.
 - `migrations/` – databasschemat för D1.
-- `wrangler.jsonc` – Cloudflare Workers-konfig: static assets, D1 och rate limiting.
+- `wrangler.jsonc` – Cloudflare Workers-konfig: static assets, D1, Durable Objects och rate limiting.
 
 ## Licens
 

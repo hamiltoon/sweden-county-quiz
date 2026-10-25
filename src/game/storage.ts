@@ -102,3 +102,52 @@ export function isMigrated(): boolean {
 export function markMigrated(): void {
   write(MIGRATED_KEY, true);
 }
+
+const LIVE_PLAYER_KEY = 'sverigespelet.liveplayer.v1';
+const LIVE_NAME_KEY = 'sverigespelet.livename.v1';
+let sessionLivePlayerId: string | null = null;
+
+/**
+ * Enhetens id i live-rummen, så att en återanslutning blir samma spelare. Går localStorage inte
+ * att använda gäller id:t så länge sidan är öppen.
+ */
+export function getLivePlayerId(): string {
+  const stored = read<string | null>(LIVE_PLAYER_KEY, null);
+  if (typeof stored === 'string' && /^[A-Za-z0-9-]{8,64}$/.test(stored)) return stored;
+  sessionLivePlayerId ??= crypto.randomUUID();
+  write(LIVE_PLAYER_KEY, JSON.stringify(sessionLivePlayerId));
+  return sessionLivePlayerId;
+}
+
+/** Namnet i live-rummen; förifyllt med topplistans namn första gången. */
+export function getLiveName(): string | null {
+  const stored = read<string | null>(LIVE_NAME_KEY, null);
+  return typeof stored === 'string' ? stored : getPlayerName();
+}
+
+export function saveLiveName(name: string): void {
+  write(LIVE_NAME_KEY, JSON.stringify(name));
+}
+
+const LIVE_ROOM_KEY = 'sverigespelet.liveroom.v1';
+
+/**
+ * Rummet den här fliken är med i, så att en omladdning går rakt tillbaka in. Sparas per flik
+ * (sessionStorage), så en delad länk i en ny flik visar ändå formuläret med namnet först.
+ */
+export function getCurrentLiveRoom(): string | null {
+  try {
+    return sessionStorage.getItem(LIVE_ROOM_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function setCurrentLiveRoom(code: string | null): void {
+  try {
+    if (code) sessionStorage.setItem(LIVE_ROOM_KEY, code);
+    else sessionStorage.removeItem(LIVE_ROOM_KEY);
+  } catch {
+    /* privat läge etc. – ignorera */
+  }
+}

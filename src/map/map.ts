@@ -34,7 +34,8 @@ export interface MapOptions {
   lakeMode?: boolean;
 }
 
-export type HighlightState = 'correct' | 'wrong' | 'reveal';
+/** `picked`: spelarens svar i live-läget, innan rätt svar visas. */
+export type HighlightState = 'correct' | 'wrong' | 'reveal' | 'picked';
 /** Hur det gick för en fråga: rätt direkt, rätt efter fler försök eller missad. */
 export type ResultState = 'first' | 'later' | 'missed';
 export type MarkerKind = 'correct' | 'wrong' | 'reveal';

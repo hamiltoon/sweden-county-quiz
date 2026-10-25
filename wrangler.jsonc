@@ -18,9 +18,14 @@
       "migrations_dir": "migrations"
     }
   ],
+  "durable_objects": {
+    // Ett objekt per live-rum (se worker/live.ts).
+    "bindings": [{ "name": "LIVE_ROOM", "class_name": "LiveRoom" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["LiveRoom"] }],
   "ratelimits": [
     {
-      // Begränsar hur ofta en IP-adress kan spara resultat.
+      // Begränsar hur ofta en IP-adress kan spara resultat och skapa live-rum.
       "name": "SUBMIT_LIMITER",
       "namespace_id": "1001",
       "simple": { "limit": 20, "period": 60 }
