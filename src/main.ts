@@ -253,8 +253,6 @@ async function showGame(mode: Mode): Promise<void> {
       // Städer längst norrut (Kiruna, Gällivare, Luleå …) ligger där toasten annars hamnar.
       toast.setPlacement(target.lat > NORTH_TOAST_LAT ? 'bottom' : 'top');
       const km = Math.round(outcome.distanceKm ?? 0);
-      // Klickade spelaren på en annan stad i spelet? Säg vilken, det är tydligare än bara avståndet.
-      const miss = outcome.closerTo ? `Det där är ${outcome.closerTo}, ${target.name} ligger ${km} km bort.` : `${km} km bort.`;
       if (outcome.correct) {
         map.addMarker(click.lon, click.lat, 'correct');
         map.addMarker(target.lon, target.lat, 'reveal', target.name);
@@ -263,14 +261,10 @@ async function showGame(mode: Mode): Promise<void> {
         map.addMarker(click.lon, click.lat, 'wrong');
         map.addMarker(target.lon, target.lat, 'reveal', target.name);
         map.focusPoint(target.lon, target.lat);
-        revealAndContinue(
-          outcome.closerTo ? `Fel – ${miss} Här ligger den.` : `Fel – ${km} km bort. Här ligger ${target.name}.`,
-          'bad',
-          CONFIG.revealMissMs,
-        );
+        revealAndContinue(`Fel – ${km} km bort. Här ligger ${target.name}.`, 'bad', CONFIG.revealMissMs);
       } else {
         map.addMarker(click.lon, click.lat, 'wrong');
-        toast.show(`${miss} ${attemptsText(outcome.attemptsLeft)}`, 'bad', CONFIG.toastMs);
+        toast.show(`${km} km bort. ${attemptsText(outcome.attemptsLeft)}`, 'bad', CONFIG.toastMs);
       }
     }
     score.textContent = `${game.score} p`;
