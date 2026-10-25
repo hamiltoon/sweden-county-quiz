@@ -6,6 +6,7 @@ import { feature, merge, mesh } from 'topojson-client';
 import type { Topology, GeometryCollection } from 'topojson-specification';
 import type { Feature, FeatureCollection, Geometry, MultiPolygon, Polygon } from 'geojson';
 import { t } from '../i18n';
+import { ensureResultPatterns } from './patterns';
 
 export interface CountyProps {
   code: string;
@@ -162,6 +163,7 @@ export class SwedenMap {
     topology: Topology,
     { objectName = 'lan', groupBy, lakes = null, neighbors = null, lakeMode = false }: MapOptions = {},
   ) {
+    ensureResultPatterns();
     const obj = topology.objects[objectName] as GeometryCollection<CountyProps>;
     if (!obj) throw new Error(`TopoJSON saknar objektet "${objectName}"`);
     this.collection = feature(topology, obj) as FeatureCollection<Geometry, CountyProps>;
