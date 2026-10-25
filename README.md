@@ -109,6 +109,7 @@ npm run deploy               # produktion: npm run build && wrangler deploy
 - **start:** Spela live syns utan scroll på iPhone 13 och en Android på 360 × 740.
 - **solo:** en hel omgång i vart och ett av de sju lägena, med rätt svar på varje fråga, fram till slutskärmen utan fel i sidan.
 - **live:** en match med 2 spelare (iPhone och Android, mörkt läge, engelska) och en med 12 (en webbläsare och 11 bottar via WebSocket, Blandat med alla sorter). Vid varje avslöjande ska rätt svar och allas prickar ligga i vyn och inte under rätt/fel-rutan, och den egna raden i ställningen ska synas helt.
+- **a11y:** rätt/fel-rutan har kontrast minst 4,5:1 och en ikon, axe-core hittar inga kontrastfel på spel- eller slutskärmen, och kartan och minikartan skiljer rätt direkt, fler försök och missat åt även med simulerad deuteranopi och protanopi (i ljust och mörkt läge).
 - **guard:** skyddsräcket nedan fungerar.
 
 Testerna körs samtidigt och tar ungefär en och en halv minut. Skärmbilder från varje steg hamnar i

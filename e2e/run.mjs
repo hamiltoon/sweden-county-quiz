@@ -2,7 +2,7 @@
  * Acceptanstesterna: `npm run test:e2e -- [adress]` (standard: staging).
  *
  *   --verbose   skriv ut alla kontroller, inte bara de som fallerar
- *   --only=a,b  kör bara vissa tester (start, solo, live, guard)
+ *   --only=a,b  kör bara vissa tester (start, solo, live, guard, a11y)
  *
  * Skärmbilderna hamnar i e2e-results/<tid>/<test>/. Mot produktionen stoppas allt som skulle
  * skriva på topplistan eller skapa passkeys (se lib.mjs).
@@ -13,8 +13,9 @@ import start from './start.mjs';
 import solo from './solo.mjs';
 import live from './live.mjs';
 import guard from './guard.mjs';
+import a11y from './a11y.mjs';
 
-const SUITES = { guard, start, solo, live };
+const SUITES = { guard, start, solo, live, a11y };
 const args = process.argv.slice(2);
 const base = (args.find((a) => /^https?:/.test(a)) ?? process.env.BASE ?? STAGING).replace(/\/?$/, '/');
 const only = args.find((a) => a.startsWith('--only='))?.slice(7).split(',');
