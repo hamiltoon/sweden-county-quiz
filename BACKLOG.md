@@ -25,6 +25,28 @@ Beslutat med John 2026-10-25. Det är kontrollen av resultatet som begränsar os
 3. **Flera förslag när lösningen är osäker.** Två eller tre agenter bygger varsin variant på staging, och UX testar och rekommenderar; PO väljer. John testar inte. Först ut: PO-15 och PO-16.
 4. **Agenter per uppgift, inte per område.** När 1 och 2 finns kan en kortlivad agent ta en uppgift i egen gren. Den nuvarande utvecklaren sätter ihop och driftsätter.
 
+## Kostnad
+
+John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
+
+- **Plan:** kontot har Workers Free; den enda betalprodukten är R2 med betalning efter förbrukning, och den används inte
+  av Sverigespelet. På Free kan Sverigespelet inte ge någon räkning. Når vi en dagsgräns slutar tjänsten svara tills
+  gränsen nollställs vid midnatt UTC.
+- **Förbrukning 2026-10-25,** en dag med mycket testning:
+
+  | Resurs | Använt | Dagsgräns (Free) |
+  |---|---|---|
+  | Worker-anrop | cirka 1 100 | 100 000 |
+  | Durable Objects-anrop | cirka 2 850 | 100 000 |
+  | D1, lästa rader | cirka 27 900 | 5 000 000 |
+  | D1, skrivna rader | cirka 230 | 100 000 |
+
+- **Regler:**
+  1. Ingen session uppgraderar planen, lägger till betalprodukter eller skapar nya Cloudflare-resurser utöver dem
+     PO-29 kräver (en staging-Worker och en staging-D1). Det beslutar John.
+  2. E2e-sviten körs vid driftsättning, inte i loopar eller på schema.
+  3. Når förbrukningen 25 % av en dagsgräns tar PO upp det med John.
+
 ## Så prioriterar vi
 
 - **Vilka som spelar:** främst John och de närmaste, t.ex. Erika, som tävlar mot varandra, oftast i live på mobilen.
