@@ -2,6 +2,8 @@ import './style.css';
 import type { Topology } from 'topojson-specification';
 import { Game, MODE_LABELS, type Mode } from './game/game';
 import { CONFIG } from './game/config';
+import { distanceToShapeKm } from './game/geo';
+import { LAKE_BY_ID, lakeRankText } from './data/lakes';
 import { saveBest } from './game/storage';
 import { SwedenMap, type MapClick } from './map/map';
 import { el, clear } from './ui/dom';
@@ -10,22 +12,33 @@ import { renderEnd, renderStart } from './ui/screens';
 import { registerServiceWorker } from './pwa';
 
 const screen = document.getElementById('screen') as HTMLElement;
-let topologyPromise: Promise<Topology> | null = null;
+const topologyPromises = new Map<string, Promise<Topology>>();
 
-function loadTopology(): Promise<Topology> {
-  topologyPromise ??= fetch('/data/lan.topo.json').then((r) => {
-    if (!r.ok) throw new Error(`Kunde inte läsa kartdata (${r.status})`);
-    return r.json() as Promise<Topology>;
-  });
-  return topologyPromise;
+/** Hämtar en kartfil en gång; ett misslyckat försök glöms så att nästa omgång försöker igen. */
+function loadTopology(url: string): Promise<Topology> {
+  let promise = topologyPromises.get(url);
+  if (!promise) {
+    promise = fetch(url).then((r) => {
+      if (!r.ok) throw new Error(`Kunde inte läsa kartdata ${url} (${r.status})`);
+      return r.json() as Promise<Topology>;
+    });
+    promise.catch(() => topologyPromises.delete(url));
+    topologyPromises.set(url, promise);
+  }
+  return promise;
 }
+
+const COUNTIES_URL = '/data/lan.topo.json';
+const LAKES_URL = '/data/sjoar.topo.json';
 
 function showStart(): void {
   clear(screen);
   screen.className = 'screen screen-start';
   screen.append(renderStart((mode) => void showGame(mode)));
   screen.append(renderFooter());
-  void loadTopology().catch(() => undefined); // förladda kartan i bakgrunden
+  // Förladda kartan i bakgrunden.
+  void loadTopology(COUNTIES_URL).catch(() => undefined);
+  void loadTopology(LAKES_URL).catch(() => undefined);
 }
 
 function renderFooter(): HTMLElement {
@@ -62,11 +75,22 @@ async function showGame(mode: Mode): Promise<void> {
   zoomCtrls.append(zoomIn, zoomOut, zoomReset);
   mapWrap.append(mapEl, zoomCtrls);
   screen.append(hud, mapWrap);
-  const toast = new Toast(mapWrap);
+  const lakeMode = mode === 'sjo';
+  // Sjöarna längst norrut (Torneträsk, Akkajaure) ligger där toasten annars hamnar.
+  const toast = new Toast(mapWrap, lakeMode ? 'bottom' : 'top');
 
   let topology: Topology;
+  let lakes: Topology | null = null;
   try {
-    topology = await loadTopology();
+    // Sjöarna krävs i sjöläget. I övriga lägen är de bara riktmärken, så kartan visas utan dem
+    // om de inte går att hämta.
+    const lakesPromise = lakeMode
+      ? loadTopology(LAKES_URL)
+      : loadTopology(LAKES_URL).catch((err: unknown) => {
+          console.warn(err);
+          return null;
+        });
+    [topology, lakes] = await Promise.all([loadTopology(COUNTIES_URL), lakesPromise]);
   } catch (err) {
     question.textContent = 'Kartan kunde inte laddas. Kontrollera uppkopplingen och försök igen.';
     console.error(err);
@@ -74,7 +98,7 @@ async function showGame(mode: Mode): Promise<void> {
     return;
   }
 
-  const map = new SwedenMap(mapEl, topology);
+  const map = new SwedenMap(mapEl, topology, { lakes, lakeMode });
   const game = new Game(mode);
   let locked = false;
   let timer: number | undefined;
@@ -132,7 +156,37 @@ async function showGame(mode: Mode): Promise<void> {
     const q = game.current;
     if (!q) return;
 
-    if (q.kind === 'lan') {
+    if (q.kind === 'sjo') {
+      const target = q.lake;
+      const outcome = game.answer({ kind: 'lake', id: click.lake });
+      const clicked = click.lake ? LAKE_BY_ID.get(click.lake) : undefined;
+      // Vid miss: säg vilken sjö det var, eller hur långt bort från rätt sjö klicket hamnade.
+      const missText = () => {
+        if (clicked) return `Fel, det var ${clicked.name}.`;
+        const shape = map.lakeGeometry(target.id);
+        const km = shape ? Math.round(distanceToShapeKm(shape, click.lat, click.lon)) : null;
+        return km === null ? 'Fel.' : `Fel – ${km} km bort.`;
+      };
+      if (outcome.correct) {
+        map.highlightLake(target.id, 'correct');
+        map.showLakeLabel(target.id);
+        revealAndContinue(`Rätt! ${lakeRankText(target)} · +${outcome.pointsAwarded} p`, 'ok');
+      } else if (outcome.finished) {
+        if (clicked) map.highlightLake(clicked.id, 'wrong');
+        else map.addMarker(click.lon, click.lat, 'wrong');
+        map.highlightLake(target.id, 'reveal');
+        map.showLakeLabel(target.id);
+        revealAndContinue(`${missText()} Här ligger ${target.name}.`, 'bad');
+      } else {
+        if (clicked) {
+          map.highlightLake(clicked.id, 'wrong');
+          window.setTimeout(() => map.unhighlightLake(clicked.id, 'wrong'), CONFIG.toastMs);
+        } else {
+          map.addMarker(click.lon, click.lat, 'wrong');
+        }
+        toast.show(`${missText()} ${attemptsText(outcome.attemptsLeft)}`, 'bad', CONFIG.toastMs);
+      }
+    } else if (q.kind === 'lan') {
       if (!click.code) {
         toast.show('Klicka på ett län', 'info', CONFIG.toastMs);
         return;

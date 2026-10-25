@@ -1,7 +1,7 @@
 {
   "name": "Sverigespelet – hitta län och städer",
   "short_name": "Sverigespelet",
-  "description": "Ett snabbt geografispel om Sveriges 21 län och residensstäder.",
+  "description": "Ett snabbt geografispel om Sveriges 21 län, residensstäder och största sjöar.",
   "lang": "sv",
   "start_url": "/",
   "scope": "/",
