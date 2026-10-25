@@ -5,6 +5,17 @@ En punkt är **klar** när den är driftsatt på produktion, UX har verifierat a
 
 Senast uppdaterad: 2026-10-25.
 
+## Riktning
+
+John, 2026-10-25:
+- **Vilka:** familj och kompisar det närmaste året, ingen bredare publik.
+- **Kärna:** att lära sig geografi. Tävlingen är det som gör att man spelar, lärandet är målet.
+- **Rytm:** vid tillfällen, när man ses. Ingen daglig vana att bygga.
+- **Efter live-paketet:** Utmana en kompis.
+
+Det betyder att live-kvällarna går först, att varje avslöjande ska lära ut något (var låg det rätta svaret, var
+klickade de andra) och att funktioner för daglig vana och bred publik väntar.
+
 ## Så prioriterar vi
 
 - **Vilka som spelar:** främst John och de närmaste, t.ex. Erika, som tävlar mot varandra, oftast i live på mobilen.
@@ -16,16 +27,16 @@ Senast uppdaterad: 2026-10-25.
 - **Insats:** S = högst en halv dag, M = en till två dagar, L = mer än så eller ny kartdata.
 - **Prioritet:** P0 = fel som stoppar spelet, åtgärdas direkt. P1 = nu. P2 = nästa. P3 = senare.
   Parkerad = inte nu, med motivering.
-- **Produktbeslut tar John:** poängregler, nya kategorier, allt som påverkar topplistan och ändringar som
-  syns stort. Sådana punkter är märkta **Beslut: John** och startar inte förrän han har svarat.
+- **Beslut:** PO prioriterar och tar produktbesluten (John, 2026-10-25). Till John går frågor om vart produkten
+  ska, och ändringar som påverkar den befintliga topplistan. Sådana punkter är märkta **Fråga till John**.
 
 ## Flöde
 
 | Status | Punkter |
 |---|---|
-| Pågår (utvecklaren) | PO-01 |
+| Pågår (utvecklaren) | PO-01, PO-06 |
 | Väntar på UX-verifiering | – |
-| Väntar på beslut av John | PO-06, PO-07, PO-08 |
+| Väntar på svar från John | – |
 | Klart | – |
 
 ## Backlog i prioritetsordning
@@ -53,6 +64,20 @@ Senast uppdaterad: 2026-10-25.
   9. Allt finns på svenska och engelska.
   10. Det fungerar lika bra för en spelare som ansluter igen mitt i avslöjandet.
   11. `npm run typecheck` går igenom och en hel match med två spelare är spelad på produktion efter driftsättning.
+
+### PO-06 Startskärmen: hitta Spela live direkt
+- **Prioritet:** P1, pågår (liten och oberoende av PO-01, så den går parallellt)
+- **Beslut (PO):** live-kortet flyttas upp direkt under rubriken.
+- **Insats:** S
+- **Koppling:** Eget fynd vid genomspelning på mobil (2026-10-25)
+- **Värde:** Live är det som spelas mest, men på en iPhone ligger knappen under sju lägeskort och syns först efter
+  mycket scrollning.
+- **Acceptanskriterier:**
+  1. På en mobil som iPhone 13 (390 × 844) och på en liten Android (360 × 740) syns hela "Spela live"-kortet utan att man scrollar.
+  2. Kortet ser ut som en huvudhandling och skiljer sig från lägeskorten, men tar inte mer än ungefär en fjärdedel av skärmhöjden på mobil.
+  3. På dator ligger det också före lägeskorten.
+  4. Lägeskorten, deras bästa resultat och topplistan fungerar som förut.
+  5. Svenska och engelska; tangentbordsordningen följer den nya ordningen.
 
 ### PO-02 Live: se vilka som har svarat medan frågan pågår
 - **Prioritet:** P2
@@ -93,6 +118,48 @@ Senast uppdaterad: 2026-10-25.
   3. Med inställningen "minska rörelse" i telefonen (`prefers-reduced-motion`) hoppar raderna direkt till sina platser.
   4. Svenska och engelska.
 
+### PO-10 Utmana en kompis
+- **Prioritet:** P2, först efter live-paketet (PO-02–PO-04)
+- **Insats:** M
+- **Koppling:** IDEER.md "Socialt"; Johns riktning 2026-10-25
+- **Värde:** Tävla och lära sig även när man inte ses: "Slå mina 52 poäng på län!". Efteråt ser båda var den andra
+  hade fel, så man lär sig av varandras missar.
+- **Motivering:** John valde den som nästa steg. Den kräver ingen ny topplista och använder befintliga lägen.
+- **Acceptanskriterier (utkast, skärps innan start):**
+  1. Efter en avslutad omgång i solospelet kan man dela en länk "Utmana en kompis" (dela-menyn på mobil, annars kopiera).
+  2. Den som öppnar länken spelar samma läge med exakt samma frågor i samma ordning, och ser vem som utmanar och vilket resultat som gäller.
+  3. Efter omgången visas båda resultaten sida vid sida, fråga för fråga, med var och en av dem hade fel.
+  4. Utmanaren kan se mottagarens resultat via samma länk efteråt.
+  5. Kräver inget konto. Utmaningar räknas inte på topplistan, så den påverkas inte.
+  6. Svenska och engelska.
+
+### PO-13 Öva på sina missar
+- **Prioritet:** P2, efter PO-10
+- **Insats:** M
+- **Koppling:** IDEER.md "Socialt" (statistik); Johns riktning 2026-10-25
+- **Värde:** Spelet ska framför allt lära ut geografi. Att få öva just på de län, städer och kommuner man missar
+  är det som gör en bättre över tid.
+- **Motivering:** Ligger närmast kärnan "lära sig", och kräver ingen server (resultaten kan sparas i telefonen).
+- **Acceptanskriterier (utkast, skärps innan start):**
+  1. Spelet minns per läge vilka frågor man har missat eller behövt flera försök på, på enheten.
+  2. På startskärmen finns "Öva på dina missar" för de lägen där man har missar, med antalet.
+  3. Övningsomgången ställer bara de frågorna, och en fråga som besvaras rätt direkt två gånger i rad försvinner ur listan.
+  4. Övningsomgångar sparas inte på topplistan och ändrar inte bästa resultat.
+  5. Svenska och engelska.
+
+### PO-07 Live: skiljetecken vid lika poäng
+- **Prioritet:** P2 (efter PO-13; billig när PO-01 sparar svarstiderna)
+- **Insats:** S
+- **Koppling:** IDEER.md, under live-listan
+- **Värde:** I dag delar spelare med lika poäng platsen. En klar vinnare känns bättre i en match mellan två.
+- **Beslut (PO):** vid lika poäng vinner den som har kortast sammanlagd svarstid på sina rätta svar.
+- **Acceptanskriterier:**
+  1. Ställningen efter varje fråga och pallen sorteras på poäng och sedan på sammanlagd svarstid för rätta svar.
+  2. Den som vinner på tid visar det, t.ex. "Avgjort på tid: 14,2 s mot 17,9 s".
+  3. Har båda exakt samma tid, eller inga rätta svar, delar de platsen som i dag.
+  4. Sorteringen görs på servern.
+  5. Svenska och engelska; regeln står kort i lobbyns regeltext.
+
 ### PO-05 Live: de sista sekunderna känns
 - **Prioritet:** P3
 - **Insats:** S
@@ -103,31 +170,17 @@ Senast uppdaterad: 2026-10-25.
   2. På telefoner som kan vibrera (Android) vibrerar den kort en gång per sekund under de tre sista, men bara om man inte har svarat än.
   3. Med "minska rörelse" pulserar inget.
 
-### PO-06 Startskärmen: hitta Spela live direkt
-- **Prioritet:** P2, **Beslut: John** (ändringen syns stort)
+### PO-08 Live: svit 🔥 (utan bonus)
+- **Prioritet:** P3
 - **Insats:** S
-- **Koppling:** Eget fynd vid genomspelning på mobil (2026-10-25)
-- **Värde:** Live är det som spelas mest, men på en iPhone ligger knappen under sju lägeskort och syns först efter
-  mycket scrollning.
-- **Förslag:** Lägg "Spela live" överst, direkt under rubriken, som ett tydligt eget kort.
-- **Acceptanskriterier:**
-  1. På en mobil som iPhone 13 syns "Spela live" utan att man behöver scrolla.
-  2. Lägeskorten och topplistan fungerar som förut.
-
-### PO-07 Live: skiljetecken vid lika poäng
-- **Prioritet:** P2, **Beslut: John** (poängregel)
-- **Insats:** S (efter PO-01, som sparar svarstiderna)
-- **Koppling:** IDEER.md, under live-listan
-- **Värde:** I dag delar spelare med lika poäng platsen. En klar vinnare känns bättre i en match mellan två.
-- **Förslag:** Vid lika poäng vinner den som har kortast sammanlagd svarstid på sina rätta svar.
-- **Acceptanskriterier:** skrivs när John har bestämt regeln.
-
-### PO-08 Live: svit 🔥 med bonus
-- **Prioritet:** P3, **Beslut: John** (poängregel: storleken på bonusen, eller bara visning utan bonus)
-- **Insats:** S–M
+- **Beslut (PO):** sviten visas men ger ingen bonus. Poängen är redan efter snabbhet; en bonus gör att den som
+  leder drar ifrån ännu mer, vilket gör matcher mellan två avgjorda för tidigt.
 - **Koppling:** IDEER.md "Göra live mer levande" 7
 - **Värde:** Belönar att hålla sig jämn, och ger något att jubla över mitt i matchen.
-- **Acceptanskriterier:** skrivs när John har bestämt om sviten ska ge poäng.
+- **Acceptanskriterier:**
+  1. Efter tre rätt i rad visas "🔥 3 i rad" vid spelarens namn i ställningen; siffran växer så länge sviten håller.
+  2. Ett fel eller ett uteblivet svar bryter sviten.
+  3. Poängen ändras inte.
 
 ### PO-09 Live: konfetti på pallen
 - **Prioritet:** P3
@@ -137,16 +190,6 @@ Senast uppdaterad: 2026-10-25.
   1. Vinnaren får konfetti när pallen visas; de andra ser den också.
   2. Ingen konfetti med "minska rörelse".
   3. Inget nytt externt bibliotek som gör spelet märkbart större (riktmärke: under 5 kB).
-
-### PO-10 Utmana en kompis
-- **Prioritet:** P3
-- **Insats:** M
-- **Koppling:** IDEER.md "Socialt"
-- **Värde:** Tävla mot varandra även när man inte spelar samtidigt: "Slå mina 52 poäng på län!". Det är den sociala
-  loopen som saknas mellan live-kvällarna.
-- **Motivering:** Bättre retention per insats än Dagens utmaning för en liten krets spelare: det kräver ingen ny
-  topplista och använder befintliga lägen.
-- **Acceptanskriterier:** skrivs när vi närmar oss den. Öppen fråga till John: ska utmaningar räknas på topplistan?
 
 ### PO-11 Live: ljud som går att stänga av
 - **Prioritet:** P3
@@ -158,20 +201,15 @@ Senast uppdaterad: 2026-10-25.
 - **Insats:** M
 - **Koppling:** IDEER.md "Göra live mer levande" 9
 
-### PO-13 Statistik och öva på sina missar
-- **Prioritet:** P3
-- **Insats:** M
-- **Koppling:** IDEER.md "Socialt"
-
 ## Parkerat
 
 | Idé | Varför inte nu |
 |---|---|
-| Dagens utmaning | Kräver en egen topplista och streak-logik (L). Ger mest värde med många spelare; för en liten krets ger Utmana en kompis (PO-10) mer. **Beslut: John** om topplistan. |
-| Nya kategorier: berg, öar, nationalparker, sevärdheter | Spelet har redan sju lägen. Vi gör live roligare innan vi gör det bredare. **Beslut: John** vilken kategori som kommer först. |
+| Dagens utmaning | Bygger en daglig vana för en bred publik, och spelet är för familj och kompisar som spelar när de ses. Kräver dessutom en egen topplista (L). |
+| Nya kategorier: berg, öar, nationalparker, sevärdheter | Spelet har redan sju lägen. Vi gör live roligare innan vi gör det bredare. |
 | Älvar | Kräver ny kartdata (L). |
-| Tidspoäng i solospelet | Ändrar poängen och därmed topplistan. **Beslut: John.** |
-| Finare poäng i live (500–1000 per fråga) | Poängregel, och ger lite utöver PO-07. **Beslut: John.** |
+| Tidspoäng i solospelet | Ändrar poängen på den befintliga topplistan, så gamla och nya resultat går inte att jämföra. **Fråga till John** om det blir aktuellt. |
+| Finare poäng i live (500–1000 per fråga) | Ger lite utöver PO-07 och gör inte matchen roligare i sig. |
 | Svårighetsnivå "Expert" och omvänt läge | Nya spelsätt; väntar tills live-paketet är klart. |
 
 ## UX-fynd
