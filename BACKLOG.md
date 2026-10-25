@@ -45,12 +45,12 @@ Beslutat med John 2026-10-25. Det är kontrollen av resultatet som begränsar os
 
 | Status | Punkter |
 |---|---|
-| Pågår (utvecklaren) | PO-01b, PO-22 |
+| Pågår (utvecklaren) | PO-01b (kriterium 2–3 underkända av UX, rättas) |
 | Nästa | PO-29, sedan PO-14, och PO-15 och PO-16 med flera förslag parallellt |
 | Väntar på UX-verifiering | – |
 | Underkänd, rättas | PO-01: kriterium 8 underkänt av UX, rättas i PO-01b |
 | Väntar på svar från John | – |
-| Klart | PO-06 |
+| Klart | PO-06, PO-22 |
 
 ## Backlog i prioritetsordning
 
@@ -83,7 +83,8 @@ Beslutat med John 2026-10-25. Det är kontrollen av resultatet som begränsar os
       läsa prickar och ställning. (Tillagt 2026-10-25.)
 
 ### PO-01b Live: avslöjandet håller med många spelare
-- **Prioritet:** P1, pågår
+- **Prioritet:** P1, pågår. Driftsatt i [#25](https://github.com/hamiltoon/sweden-county-quiz/pull/25). UX: kriterium 1 och 4 godkända,
+  2 och 3 underkända; dessutom täcker toasten prickar i kanten när hela Sverige visas.
 - **Insats:** S–M
 - **Koppling:** PO-01 kriterium 8, 12 och 13; UX-07
 - **Beslut (PO):** med fler än 5 spelare visar ställningen under avslöjandet topp 3, den egna raden och "… och N till".
@@ -220,7 +221,7 @@ Beslutat med John 2026-10-25. Det är kontrollen av resultatet som begränsar os
   3. Namnfältet är lika brett som knappen, och etiketten "Namn" hör ihop med fältet (skärmläsare och tryck på etiketten).
 
 ### PO-22 Live: värden når Starta matchen utan att scrolla
-- **Prioritet:** P1 (liten; tas direkt efter PO-06, eftersom lobbyn är nästa skärm i samma flöde)
+- **Status:** ✅ Klar 2026-10-25 ([#26](https://github.com/hamiltoon/sweden-county-quiz/pull/26)). UX har godkänt kriterierna på produktion.
 - **Insats:** S
 - **Koppling:** UX-13, UX-14
 - **Värde:** Värden trycker på Starta före varje match, men knappen ligger under QR-koden. Lobbyn tappar dessutom
@@ -460,8 +461,8 @@ Fynd från UX-specialisten (UX-01, UX-02 …) läggs in här med prioritet och k
 | UX-10 | Namnbyte lämnar gamla resultat | P3 | PO-21 |
 | UX-11 | Kartan går inte att spela med tangentbord/skärmläsare | Parkerad | – |
 | UX-12 | Residensstad: ifyllt län avslöjar de sista svaren | P2 | PO-28 |
-| UX-13 | Lobbyn tappar fokus | P2 | PO-22 |
-| UX-14 | Starta matchen under vecket | P2 | PO-22 |
+| UX-13 | Lobbyn tappar fokus | ✅ Klar | PO-22 |
+| UX-14 | Starta matchen under vecket | ✅ Klar | PO-22 |
 | UX-15 | Live-timern saknar siffror och 3–2–1 | P2 | PO-03 |
 | UX-16 | Live: klick i havet ignoreras tyst | P2 | PO-23 |
 | UX-17 | Live: sjömiss ger bara "Fel." | P2 | PO-23 |
@@ -481,4 +482,5 @@ Fynd från UX-specialisten (UX-01, UX-02 …) läggs in här med prioritet och k
 
 ## Klart
 
+- **PO-22** Live: Starta matchen nåbar i lobbyn (UX-13, UX-14). Driftsatt i [#26](https://github.com/hamiltoon/sweden-county-quiz/pull/26), godkänd av UX 2026-10-25.
 - **PO-06** Startskärmen: Spela live först (UX-04). Driftsatt i [#23](https://github.com/hamiltoon/sweden-county-quiz/pull/23), godkänd av UX 2026-10-25.
