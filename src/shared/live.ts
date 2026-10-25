@@ -17,8 +17,18 @@ export function isLiveMode(value: unknown): value is LiveMode {
   return typeof value === 'string' && (LIVE_MODES as readonly string[]).includes(value);
 }
 
-/** Vilken sorts fråga det är. Blandat består av län- och residensstadsfrågor. */
+/** Vilken sorts fråga det är. Blandat blandar de sorter värden valt (se LiveState.mix). */
 export type LiveQuestionKind = Exclude<LiveMode, 'blandat'>;
+export const LIVE_KINDS: readonly LiveQuestionKind[] = ['lan', 'landskap', 'kommun', 'stad', 'ort', 'sjo'];
+/** Det som blandas om värden inte valt något annat, samma som i det vanliga spelets Blandat. */
+export const DEFAULT_MIX: readonly LiveQuestionKind[] = ['lan', 'stad'];
+
+/** Giltiga sorter, utan dubbletter och i standardordning; null om ingen är giltig. */
+export function cleanMix(kinds: unknown): LiveQuestionKind[] | null {
+  if (!Array.isArray(kinds)) return null;
+  const mix = LIVE_KINDS.filter((k) => kinds.includes(k));
+  return mix.length ? mix : null;
+}
 
 /**
  * En fråga: `target` är länets, landskapets eller kommunens kod, länskoden för residensstaden,
@@ -81,6 +91,8 @@ export interface LiveAnswer {
 export interface LiveState {
   code: string;
   mode: LiveMode;
+  /** Sorterna som blandas i läget Blandat. */
+  mix: LiveQuestionKind[];
   phase: LivePhase;
   /** Den som kan starta matchen. Går vidare till nästa anslutna spelare om värden lämnar. */
   hostId: string | null;
@@ -109,6 +121,7 @@ export type LiveClientMessage =
   /** Ett område eller en sjö (`code`), eller en punkt på kartan (`lat`, `lon`). */
   | { type: 'answer'; question: number; code?: string; lat?: number; lon?: number }
   | { type: 'mode'; mode: LiveMode }
+  | { type: 'mix'; kinds: LiveQuestionKind[] }
   | { type: 'lobby' };
 
 export type LiveServerMessage = { type: 'state'; state: LiveState } | { type: 'error'; message: string; fatal: boolean };

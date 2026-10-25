@@ -1305,6 +1305,11 @@ a {
   color: var(--muted);
 }
 
+.live-mix .live-mode-note {
+  margin: 0 0 8px;
+  font-size: 0.9rem;
+}
+
 .live-heading {
   margin: 18px 0 8px;
   font-size: 0.95rem;
