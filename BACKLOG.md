@@ -22,7 +22,7 @@ Beslutat med John 2026-10-25. Det är kontrollen av resultatet som begränsar os
 
 1. **Körbara acceptanskriterier.** Där det går skrivs kriterierna så att de kan testas automatiskt, och testerna körs före varje driftsättning (PO-29).
 2. **Staging före produktion.** Varje ändring går först till en staging-miljö där UX verifierar. Produktion, där familjen spelar, får bara godkända ändringar.
-3. **Flera förslag när lösningen är osäker.** Två eller tre agenter bygger varsin variant på staging, och John eller UX väljer. Först ut: PO-15 och PO-16.
+3. **Flera förslag när lösningen är osäker.** Två eller tre agenter bygger varsin variant på staging, och UX testar och rekommenderar; PO väljer. John testar inte. Först ut: PO-15 och PO-16.
 4. **Agenter per uppgift, inte per område.** När 1 och 2 finns kan en kortlivad agent ta en uppgift i egen gren. Den nuvarande utvecklaren sätter ihop och driftsätter.
 
 ## Så prioriterar vi
@@ -152,7 +152,7 @@ Beslutat med John 2026-10-25. Det är kontrollen av resultatet som begränsar os
   6. axe-core hittar inga kontrastfel på spelskärmen eller slutskärmen.
 
 ### PO-15 Avslöjandet lär ut var rätt svar ligger
-- **Prioritet:** P1, efter PO-29. Byggs som två till tre varianter på staging som John eller UX väljer mellan.
+- **Prioritet:** P1, efter PO-29. Byggs som två till tre varianter på staging som UX testar och PO väljer mellan.
 - **Insats:** M
 - **Koppling:** UX-07, UX-18
 - **Värde:** Kärnan är att lära sig geografi. Efter en miss visas rätt svar i 2,4 sekunder, och det egna felklicket
@@ -169,7 +169,7 @@ Beslutat med John 2026-10-25. Det är kontrollen av resultatet som begränsar os
   7. Svenska och engelska.
 
 ### PO-16 Kommuner: kartan zoomar in på länet
-- **Prioritet:** P1, efter PO-29. Byggs som två till tre varianter på staging som John eller UX väljer mellan.
+- **Prioritet:** P1, efter PO-29. Byggs som två till tre varianter på staging som UX testar och PO väljer mellan.
 - **Insats:** M
 - **Koppling:** UX-01
 - **Värde:** 274 av 290 kommuner är mindre än ett finger på en iPhone, och zoomen nollställs vid varje fråga, så man
