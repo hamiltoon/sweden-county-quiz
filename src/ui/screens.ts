@@ -64,8 +64,9 @@ export function renderStart(onStart: (mode: Mode) => void, leaderboard?: HTMLEle
         el('p', { class: 'lead' }, t().start.lead),
       ),
     ),
-    el('div', { class: 'mode-list' }, ...buttons),
+    // Live är det man spelar när man ses, så det ligger först och syns utan att man scrollar.
     onLive ? renderLiveButton(onLive) : null,
+    el('div', { class: 'mode-list' }, ...buttons),
     el(
       'p',
       { class: 'rules' },
