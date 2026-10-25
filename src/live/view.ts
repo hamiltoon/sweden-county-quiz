@@ -11,6 +11,7 @@ import { el, clear } from '../ui/dom';
 import { Toast } from '../ui/toast';
 import { countyName, t } from '../i18n';
 import type { LiveConnection } from './connection';
+import { renderQr } from './qr';
 
 export interface LiveMaps {
   counties: Topology;
@@ -135,6 +136,8 @@ export class LiveView {
         el('p', { class: 'lead' }, t().live.rules(LIVE_QUESTIONS, LIVE_QUESTION_MS / 1000, LIVE_MIN_POINTS, LIVE_MAX_POINTS)),
         el('div', { class: 'live-code-card' }, el('span', { class: 'live-code-label' }, t().live.codeLabel), el('span', { class: 'live-code' }, state.code), share),
         shareNote,
+        // Kompisarna i samma rum skannar koden med kameran och hamnar direkt i formuläret för rummet.
+        el('figure', { class: 'live-qr' }, renderQr(url, t().live.qrLabel(state.code)), el('figcaption', {}, t().live.qrCaption)),
         el('h3', { class: 'live-heading' }, t().live.players(state.players.length)),
         renderPlayers(state, (p) => (p.id === state.hostId ? t().live.host : '')),
         el('div', { class: 'btn-row' }, action),
