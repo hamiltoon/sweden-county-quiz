@@ -1206,14 +1206,29 @@ a {
 }
 
 /* ---------- Live ---------- */
+/* Huvudhandlingen på startskärmen: först, och fylld med accentfärgen till skillnad från lägeskorten. */
 .mode-btn-live {
   width: 100%;
-  margin-top: 12px;
-  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  margin: 4px 0 16px;
+  min-height: 0;
+  background: var(--accent);
+  color: var(--accent-text);
 }
 
 .mode-btn-live .mode-icon {
-  color: var(--accent);
+  color: var(--accent-text);
+  background: color-mix(in srgb, var(--accent-text) 18%, transparent);
+}
+
+.mode-btn-live .mode-desc {
+  color: inherit;
+  opacity: 0.9;
+}
+
+@media (hover: hover) {
+  .mode-btn-live:hover {
+    border-color: var(--accent-text);
+  }
 }
 
 /* Spelarens svar i live-läget, innan rätt svar visas. */
