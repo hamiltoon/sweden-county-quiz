@@ -47,8 +47,17 @@ export function isPointKind(kind: LiveQuestionKind): kind is 'stad' | 'ort' {
 export const LIVE_QUESTIONS = 10;
 /** Tid att svara på en fråga. */
 export const LIVE_QUESTION_MS = 12_000;
-/** Hur länge rätt svar och ställningen visas innan nästa fråga. */
+/**
+ * Hur länge rätt svar, allas klick och ställningen visas innan nästa fråga: längre när det är
+ * många prickar och rader att läsa.
+ */
 export const LIVE_REVEAL_MS = 5_000;
+export const LIVE_REVEAL_LONG_MS = 7_000;
+export const LIVE_REVEAL_LONG_FROM_PLAYERS = 4;
+
+export function liveRevealMs(players: number): number {
+  return players >= LIVE_REVEAL_LONG_FROM_PLAYERS ? LIVE_REVEAL_LONG_MS : LIVE_REVEAL_MS;
+}
 export const LIVE_MAX_PLAYERS = 12;
 /** Ett rum utan aktivitet så här länge töms. */
 export const LIVE_IDLE_MS = 2 * 60 * 60 * 1000;

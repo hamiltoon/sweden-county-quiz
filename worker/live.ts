@@ -25,12 +25,12 @@ import {
   LIVE_MAX_PLAYERS,
   LIVE_QUESTIONS,
   LIVE_QUESTION_MS,
-  LIVE_REVEAL_MS,
   DEFAULT_MIX,
   cleanMix,
   isLiveMode,
   isPointKind,
   livePoints,
+  liveRevealMs,
   type LiveAnswer,
   type LiveClientMessage,
   type LiveCreateResponse,
@@ -418,7 +418,7 @@ export class LiveRoom extends DurableObject<Env> {
     const room = this.room!;
     for (const p of room.players) p.score += room.answers[p.id]?.points ?? 0;
     room.phase = 'reveal';
-    room.endsAt = Date.now() + LIVE_REVEAL_MS;
+    room.endsAt = Date.now() + liveRevealMs(room.players.length);
     await this.save();
     await this.ctx.storage.setAlarm(room.endsAt);
     this.broadcast();
