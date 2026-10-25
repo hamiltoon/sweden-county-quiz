@@ -6,7 +6,7 @@ Ett geografispel i webbläsaren om Sveriges 21 län och residensstäder. Klicka 
 
 ## Spela
 
-Spelet finns på **https://sverigespelet.REPLACE_ME.workers.dev**
+Spelet finns på **https://sverigespelet.hamiltoon.workers.dev**
 
 Källkod: [github.com/hamiltoon/sweden-county-quiz](https://github.com/hamiltoon/sweden-county-quiz)
 
