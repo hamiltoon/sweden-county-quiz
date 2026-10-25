@@ -24,7 +24,7 @@ import {
   type LiveQuestionKind,
   type LiveState,
 } from '../shared/live';
-import { SwedenMap, type MapClick, type ResultState } from '../map/map';
+import { SwedenMap, type MapClick, type PlayerPin, type ResultState } from '../map/map';
 import type { RegionSteps } from '../map/adjacency';
 import { regionsFor } from '../map/sources';
 import { el, clear } from '../ui/dom';
@@ -236,11 +236,15 @@ export class LiveView {
     map.clearHighlights();
     map.clearMarkers();
     this.reveal(gq, state.answers?.find((a) => a.playerId === state.you));
-    this.game.status.replaceChildren(renderStandings(state));
+    map.setPlayerPins(playerPins(state));
+    this.game.status.replaceChildren(...renderStandings(state));
     this.runTimer(q.endsAt, LIVE_REVEAL_MS);
   }
 
-  /** Visar rätt svar och mitt eget klick, och färgar kartan efter hur det gick. */
+  /**
+   * Visar rätt svar och färgar kartan efter hur det gick för mig. Allas klick (även mitt) ritas
+   * sedan som prickar med setPlayerPins().
+   */
   private reveal(q: Question, mine: LiveAnswer | undefined): void {
     const map = this.map!;
     const name = questionLabel(q);
@@ -249,7 +253,6 @@ export class LiveView {
 
     if (q.kind === 'stad' || q.kind === 'ort') {
       const target = targetPoint(q)!;
-      if (mine?.lat !== undefined && mine.lon !== undefined) map.addMarker(mine.lon, mine.lat, mine.correct ? 'correct' : 'wrong');
       map.addMarker(target.lon, target.lat, 'reveal', name);
       map.addResultDot(target.lon, target.lat, state);
       if (!mine?.correct) map.focusPoint(target.lon, target.lat);
@@ -261,7 +264,6 @@ export class LiveView {
 
     if (q.kind === 'sjo') {
       if (mine?.code && !mine.correct) map.highlightLake(mine.code, 'wrong');
-      else if (mine?.lat !== undefined && mine.lon !== undefined) map.addMarker(mine.lon, mine.lat, 'wrong');
       map.highlightLake(q.lake.id, mine?.correct ? 'correct' : 'reveal');
       map.showLakeLabel(q.lake.id);
       map.setLakeResult(q.lake.id, state);
@@ -365,11 +367,12 @@ export class LiveView {
     } else if (q.kind === 'sjo') {
       if (click.lake) this.map.highlightLake(click.lake, 'picked');
       else this.map.addMarker(click.lon, click.lat, 'picked');
-      send(click.lake ? { code: click.lake } : { lat: click.lat, lon: click.lon });
+      send(click.lake ? { code: click.lake, lat: click.lat, lon: click.lon } : { lat: click.lat, lon: click.lon });
     } else if (click.code) {
-      // Ett klick utanför alla områden (i havet) räknas inte.
+      // Ett klick utanför alla områden (i havet) räknas inte. Punkten skickas med, så att
+      // klicket kan visas för de andra när svaret avslöjas.
       this.map.highlight(click.code, 'picked');
-      send({ code: click.code });
+      send({ code: click.code, lat: click.lat, lon: click.lon });
     }
   }
 
@@ -526,10 +529,27 @@ function statusText(state: LiveState, answered: boolean): string {
   return t().live.answered(answered, done, present.length);
 }
 
-/** Ställningen efter en fråga: alla spelare med poängen för frågan. */
-function renderStandings(state: LiveState): HTMLElement {
+/** Allas klick på frågan; den som inte svarade (eller svarade från en äldre version) får ingen prick. */
+function playerPins(state: LiveState): PlayerPin[] {
+  const names = new Map(state.players.map((p) => [p.id, p.name]));
+  return (state.answers ?? []).flatMap((a) => {
+    const name = names.get(a.playerId);
+    if (a.lat === undefined || a.lon === undefined || name === undefined) return [];
+    return [{ lon: a.lon, lat: a.lat, name, correct: a.correct, mine: a.playerId === state.you }];
+  });
+}
+
+/**
+ * Ställningen efter en fråga: den snabbaste med rätt svar, och alla spelare med poängen för
+ * frågan. Den egna raden visar också den egna svarstiden.
+ */
+function renderStandings(state: LiveState): HTMLElement[] {
   const answers = new Map((state.answers ?? []).map((a) => [a.playerId, a]));
-  return el(
+  const fastest = (state.answers ?? [])
+    .filter((a) => a.correct && a.ms !== undefined)
+    .sort((a, b) => a.ms! - b.ms!)[0];
+  const fastestName = fastest && state.players.find((p) => p.id === fastest.playerId)?.name;
+  const list = el(
     'ol',
     { class: 'live-standings' },
     ...rank(state.players).map(({ player, place }) => {
@@ -540,11 +560,15 @@ function renderStandings(state: LiveState): HTMLElement {
         { class: player.id === state.you ? 'is-me' : '' },
         el('span', { class: 'live-place' }, `${place}`),
         el('span', { class: 'live-name' }, player.name),
+        player.id === state.you && a?.ms !== undefined
+          ? el('span', { class: 'live-time', title: t().live.yourTime(t().live.seconds(a.ms)) }, t().live.seconds(a.ms))
+          : null,
         el('span', { class: `live-delta ${a?.correct ? 'is-ok' : 'is-bad'}` }, a?.correct ? `+${a.points}` : answered ? '✗' : '–'),
         el('span', { class: 'live-points' }, t().common.points(player.score)),
       );
     }),
   );
+  return fastest && fastestName ? [el('p', { class: 'live-fastest' }, t().live.fastest(fastestName, t().live.seconds(fastest.ms!))), list] : [list];
 }
 
 async function shareLink(url: string, code: string, note: HTMLElement): Promise<void> {
