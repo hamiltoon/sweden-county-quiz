@@ -15,8 +15,8 @@ Det är en PWA, så det går att lägga till på hemskärmen och spela offline.
 ## Spellägen och poäng
 
 - **Län** – klicka på rätt län.
-- **Residensstad** – klicka där staden ligger (inom 40 km, `cityRadiusKm` i `src/game/config.ts`).
-- **Fler städer** – 20 slumpade av Sveriges 75 största städer som inte är residensstäder. Ett klick inom 30 km från staden ger poäng (`otherCityRadiusKm`).
+- **Residensstad** – klicka där staden ligger (inom 30 km, `cityRadiusKm` i `src/game/config.ts`).
+- **Fler städer** – 20 slumpade av Sveriges 75 största städer som inte är residensstäder. Ett klick inom 30 km från staden ger poäng, precis som för residensstäderna.
 - **Sjöar** – klicka på rätt sjö bland Sveriges tio största. Vid en miss på land visas hur långt bort klicket var.
 - **Blandat** – slumpar mellan län- och stadsfrågor.
 
