@@ -144,19 +144,27 @@ export class LiveView {
   // ---------- Lobby ----------
 
   private renderLobby(state: LiveState): void {
+    // Lobbyn ritas om vid varje ändring (någon går med, värden byter läge); fokus ska ligga kvar
+    // på samma knapp, så att den som använder tangentbord eller skärmläsare inte tappar platsen.
+    const focusKey = (document.activeElement as HTMLElement | null)?.closest<HTMLElement>('[data-focus-key]')?.dataset.focusKey;
+    const scrollTop = this.screen.scrollTop;
     clear(this.screen);
     this.screen.className = 'screen screen-end';
     const isHost = state.hostId === state.you;
     const host = state.players.find((p) => p.id === state.hostId);
     const url = `${location.origin}/live/${state.code}`;
 
-    const share = el('button', { class: 'btn', type: 'button' }, t().live.share);
+    const share = el('button', { class: 'btn', type: 'button', 'data-focus-key': 'share' }, t().live.share);
     const shareNote = el('p', { class: 'top-note', role: 'status' });
     share.addEventListener('click', () => void shareLink(url, state.code, shareNote));
 
     let action: HTMLElement;
     if (isHost) {
-      const start = el('button', { class: 'btn btn-primary', type: 'button' }, state.players.length > 1 ? t().live.start : t().live.startAlone);
+      const start = el(
+        'button',
+        { class: 'btn btn-primary', type: 'button', 'data-focus-key': 'start' },
+        state.players.length > 1 ? t().live.start : t().live.startAlone,
+      );
       start.addEventListener('click', () => this.conn()?.send({ type: 'start' }));
       action = start;
     } else {
@@ -182,10 +190,13 @@ export class LiveView {
         ),
         el('h3', { class: 'live-heading' }, t().live.players(state.players.length)),
         renderPlayers(state, (p) => (p.id === state.hostId ? t().live.host : '')),
-        el('div', { class: 'btn-row' }, action),
         el('div', { class: 'btn-row' }, this.leaveButton()),
+        // Starta matchen ligger kvar nederst på skärmen, så att värden når den utan att scrolla.
+        el('div', { class: 'btn-row live-lobby-action' }, action),
       ),
     );
+    this.screen.scrollTop = scrollTop;
+    if (focusKey) this.screen.querySelector<HTMLElement>(`[data-focus-key="${focusKey}"]`)?.focus({ preventScroll: true });
   }
 
   // ---------- Fråga och avslöjande ----------
@@ -477,7 +488,11 @@ function renderModePicker(
     return el('p', { class: 'live-mode-note' }, state.mode === 'blandat' ? t().live.modeIsMix(modeLabel(state.mode), mixNames) : t().live.modeIs(modeLabel(state.mode)));
   }
   const chips = LIVE_MODES.map((mode) => {
-    const chip = el('button', { class: 'live-mode-chip', type: 'button', 'data-mode': mode, 'aria-pressed': String(mode === state.mode) }, modeLabel(mode));
+    const chip = el(
+      'button',
+      { class: 'live-mode-chip', type: 'button', 'data-mode': mode, 'data-focus-key': `mode:${mode}`, 'aria-pressed': String(mode === state.mode) },
+      modeLabel(mode),
+    );
     chip.addEventListener('click', () => mode !== state.mode && onPick(mode));
     return chip;
   });
@@ -485,7 +500,11 @@ function renderModePicker(
   if (state.mode === 'blandat') {
     const kindChips = LIVE_KINDS.map((kind) => {
       const on = state.mix.includes(kind);
-      const chip = el('button', { class: 'live-mode-chip live-mix-chip', type: 'button', 'data-kind': kind, 'aria-pressed': String(on) }, modeLabel(kind));
+      const chip = el(
+        'button',
+        { class: 'live-mode-chip live-mix-chip', type: 'button', 'data-kind': kind, 'data-focus-key': `kind:${kind}`, 'aria-pressed': String(on) },
+        modeLabel(kind),
+      );
       // Minst en sort måste vara vald; den sista går inte att slå av.
       chip.addEventListener('click', () => {
         const next = on ? state.mix.filter((k) => k !== kind) : [...state.mix, kind];
