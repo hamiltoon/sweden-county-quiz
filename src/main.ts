@@ -430,7 +430,7 @@ function regionName(code: string): string {
 
 if (IS_STAGING) {
   // Överst på varje skärm; texten sätts (och byts med språket) av applyToDocument().
-  document.getElementById('app')?.prepend(el('div', { id: 'staging-banner', class: 'staging-banner', role: 'note' }));
+  document.getElementById('app')?.prepend(el('aside', { id: 'staging-banner', class: 'staging-banner', 'aria-label': 'Staging' }));
 }
 applyToDocument();
 // Byter spelaren språk (på startskärmen, eller för att kontot har ett annat språk sparat) ritas

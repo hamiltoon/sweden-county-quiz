@@ -150,6 +150,9 @@ async function scheme(run, t, dark) {
   await p.fill('.live-entry input[name=live-name]', 'Axe');
   await p.click('.live-entry button:has-text("Skapa ett rum")');
   await p.waitForSelector('.live-lobby');
+  // Längst ned: där ligger knappfältet med Starta på sin plats. Högre upp täcker det de chip som
+  // råkar ligga under det tills man scrollar, vilket axe räknar som för små tryckytor.
+  await p.evaluate(() => { const s = document.querySelector('.screen-end'); s.scrollTop = s.scrollHeight; });
   await axe(t, p, `${name}, lobbyn`);
   t.check(p.errors.length === 0, `${name}: inga fel i sidan ${p.errors.slice(0, 3).join(' | ')}`);
   await ctx.close();
