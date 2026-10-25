@@ -4,13 +4,13 @@ export const CONFIG = {
   maxAttempts: 3,
   /** Poäng per försök: index 0 = rätt på första försöket. */
   pointsByAttempt: [3, 2, 1] as readonly number[],
-  /** Hur nära (km) klicket måste vara staden i stadsläget. */
+  /** Hur nära (km) klicket måste vara staden, både residensstäderna och "Fler städer". */
   cityRadiusKm: 40,
   /**
-   * Läget "Fler städer": hur nära (km) klicket måste vara. Städerna ligger tätare än
-   * residensstäderna, så klicket måste också vara närmare rätt stad än någon annan stad i spelet.
+   * Läget "Fler städer": hamnar ett missat klick så här nära (km) en annan stad i spelet säger
+   * vi vilken ("Det där är Malmö"). Påverkar inte poängen.
    */
-  otherCityRadiusKm: 20,
+  otherCityHitKm: 6,
   /** Antal städer per omgång i läget "Fler städer" (slumpas ur hela listan). */
   otherCitiesPerRound: 20,
   /** Hur länge (ms) rätt svar visas efter en fråga innan nästa. */
