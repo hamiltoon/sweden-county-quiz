@@ -298,6 +298,13 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
   1. Målets namn ritas ovanpå prickarna och deras namn, eller på den sida av målet där det finns minst prickar.
   2. Med 12 prickar inom 30 km från målet går målets namn att läsa helt på iPhone 13 och Android 360.
 
+### PO-31 Lobbyn: fokus hamnar inte under Starta-fältet
+- **Prioritet:** P3 (tas med i nästa PR som rör lobbyn)
+- **Insats:** S (en rad CSS, `scroll-padding-bottom`)
+- **Koppling:** UX-fynd vid verifieringen av PO-29b (WCAG 2.4.11); följer av PO-22
+- **Acceptanskriterier:**
+  1. Med tangentbord på iPhone 13 hamnar inget fokuserat chip under det klistrade Starta-fältet.
+
 ### PO-02 Live: se vilka som har svarat medan frågan pågår
 - **Prioritet:** P2
 - **Insats:** S (servern skickar redan `answered` per spelare)
