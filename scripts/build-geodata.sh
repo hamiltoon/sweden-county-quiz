@@ -1,13 +1,16 @@
 #!/usr/bin/env bash
 # Bygger kartdatan i public/data/ (TopoJSON, WGS84):
-#   lan.topo.json   – Sveriges 21 län (objektet "lan")
-#   sjoar.topo.json – Sveriges tio största sjöar (objektet "sjoar")
+#   lan.topo.json     – Sveriges 21 län (objektet "lan")
+#   sjoar.topo.json   – Sveriges tio största sjöar (objektet "sjoar")
+#   grannar.topo.json – grannländerna runt Östersjön som bakgrund (objektet "grannar")
 #
 # Källa: Natural Earth 1:10m, version 5.x
 #   Län:   "Admin 1 – States, Provinces"
 #          https://github.com/nvkelso/natural-earth-vector/blob/master/geojson/ne_10m_admin_1_states_provinces.geojson
 #   Sjöar: "Lakes + Reservoirs"
 #          https://github.com/nvkelso/natural-earth-vector/blob/master/geojson/ne_10m_lakes.geojson
+#   Grannländer: "Admin 0 – Countries"
+#          https://github.com/nvkelso/natural-earth-vector/blob/master/geojson/ne_10m_admin_0_countries.geojson
 # Licens: public domain (ingen attribution krävs; "Made with Natural Earth" uppskattas).
 #   https://www.naturalearthdata.com/about/terms-of-use/
 #
@@ -19,7 +22,10 @@
 # inte av Natural Earths generaliserade geometri. Sjöarna väljs ut på Natural Earths
 # stabila ne_id, och id och svenskt namn sätts explicit.
 #
-# Användning: ./scripts/build-geodata.sh [admin1.geojson] [lakes.geojson]
+# Grannländer: klipps till området runt Sverige och förenklas till 20 % av punkterna. De är bara
+# bakgrund, så förenklingen syns inte, och kartan fyller ut små glipor mot svenska gränsen.
+#
+# Användning: ./scripts/build-geodata.sh [admin1.geojson] [lakes.geojson] [admin0.geojson]
 # Kräver: npx (mapshaper 0.7.98 hämtas med --yes), curl om indatafilerna inte anges.
 
 set -euo pipefail
@@ -28,6 +34,7 @@ cd "$(dirname "$0")/.."
 NE_BASE="https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson"
 ADMIN1_SRC="${1:-}"
 LAKES_SRC="${2:-}"
+ADMIN0_SRC="${3:-}"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
@@ -40,6 +47,11 @@ if [ -z "$LAKES_SRC" ]; then
   LAKES_SRC="$TMP/ne_10m_lakes.geojson"
   echo "Laddar ner $NE_BASE/ne_10m_lakes.geojson (ca 5 MB) ..."
   curl -sSL -o "$LAKES_SRC" "$NE_BASE/ne_10m_lakes.geojson"
+fi
+if [ -z "$ADMIN0_SRC" ]; then
+  ADMIN0_SRC="$TMP/ne_10m_admin_0_countries.geojson"
+  echo "Laddar ner $NE_BASE/ne_10m_admin_0_countries.geojson (ca 13 MB) ..."
+  curl -sSL -o "$ADMIN0_SRC" "$NE_BASE/ne_10m_admin_0_countries.geojson"
 fi
 
 mkdir -p public/data
@@ -77,10 +89,21 @@ npx --yes mapshaper@0.7.98 \
   -rename-layers sjoar \
   -o public/data/sjoar.topo.json format=topojson quantization=1e5
 
+npx --yes mapshaper@0.7.98 \
+  -i "$ADMIN0_SRC" \
+  -filter '["NOR","FIN","DNK","EST","LVA","LTU","RUS","DEU","POL","BLR"].indexOf(ADM0_A3) > -1' \
+  -clip bbox=-2,51,40,72 \
+  -simplify 20% keep-shapes \
+  -clean \
+  -each 'code = ADM0_A3' \
+  -filter-fields code \
+  -rename-layers grannar \
+  -o public/data/grannar.topo.json format=topojson quantization=1e5
+
 node -e '
 const t = JSON.parse(require("fs").readFileSync("public/data/sjoar.topo.json", "utf8"));
 const n = t.objects.sjoar.geometries.length;
 if (n !== 10) { console.error(`Förväntade 10 sjöar, fick ${n}`); process.exit(1); }
 '
 
-ls -la public/data/lan.topo.json public/data/sjoar.topo.json
+ls -la public/data/lan.topo.json public/data/sjoar.topo.json public/data/grannar.topo.json
