@@ -378,6 +378,18 @@ a {
   }
 }
 
+.county-hit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 12px;
+  vector-effect: non-scaling-stroke;
+  pointer-events: stroke;
+}
+
+.map-svg.is-zoomed .county-hit {
+  pointer-events: none;
+}
+
 .marker {
   pointer-events: none;
 }
@@ -441,17 +453,20 @@ a {
 }
 
 .hud .icon-btn {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   box-shadow: none;
   font-size: 1rem;
 }
 
 .toast {
   position: absolute;
-  left: 50%;
-  bottom: calc(16px + var(--safe-bottom));
-  transform: translate(-50%, 20px);
+  left: 12px;
+  right: 12px;
+  top: 12px;
+  width: fit-content;
+  margin: 0 auto;
+  transform: translateY(-12px);
   max-width: min(92%, 520px);
   padding: 10px 16px;
   border-radius: 999px;
@@ -469,7 +484,7 @@ a {
 
 .toast.is-visible {
   opacity: 1;
-  transform: translate(-50%, 0);
+  transform: translateY(0);
 }
 
 .toast-ok {

@@ -10,6 +10,8 @@ export const CONFIG = {
   revealMs: 1500,
   /** Hur länge (ms) en kort feedback-toast visas. */
   toastMs: 1200,
+  /** Klick tätare än så här (ms) ignoreras, så ett dubbeltryck inte kostar två försök. */
+  doubleTapGuardMs: 300,
 };
 
 /**

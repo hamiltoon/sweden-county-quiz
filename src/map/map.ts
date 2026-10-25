@@ -33,6 +33,8 @@ interface Marker {
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 10;
 const PADDING = 8;
+/** Län som är så små på skärmen att de får en extra osynlig träffyta. */
+const SMALL_COUNTIES: ReadonlySet<string> = new Set(['K', 'I']);
 
 /**
  * SVG-karta över Sveriges län med d3-geo-projektion och pinch-zoom/pan via d3-zoom.
@@ -42,6 +44,7 @@ export class SwedenMap {
   private readonly svg: Selection<SVGSVGElement, unknown, null, undefined>;
   private readonly root: Selection<SVGGElement, unknown, null, undefined>;
   private readonly countiesG: Selection<SVGGElement, unknown, null, undefined>;
+  private readonly hitG: Selection<SVGGElement, unknown, null, undefined>;
   private readonly markersG: Selection<SVGGElement, unknown, null, undefined>;
   private readonly zoomBehavior: ZoomBehavior<SVGSVGElement, unknown>;
   private readonly projection: GeoProjection;
@@ -78,6 +81,7 @@ export class SwedenMap {
       .attr('aria-label', 'Karta över Sveriges län');
     this.root = this.svg.append('g').attr('class', 'map-root');
     this.countiesG = this.root.append('g').attr('class', 'counties');
+    this.hitG = this.root.append('g').attr('class', 'county-hits');
     this.markersG = this.root.append('g').attr('class', 'markers');
 
     this.countiesG
@@ -85,9 +89,15 @@ export class SwedenMap {
       .data(this.features)
       .join('path')
       .attr('class', 'county')
-      .attr('data-code', (d) => d.properties.code)
-      .append('title')
-      .text((d) => d.properties.name);
+      .attr('data-code', (d) => d.properties.code);
+
+    // Osynliga "träffhalos" runt de minsta länen så de går att träffa med fingret utan zoom.
+    this.hitG
+      .selectAll('path')
+      .data(this.features.filter((d) => SMALL_COUNTIES.has(d.properties.code)))
+      .join('path')
+      .attr('class', 'county-hit')
+      .attr('data-code', (d) => d.properties.code);
 
     this.zoomBehavior = zoom<SVGSVGElement, unknown>()
       .scaleExtent([MIN_ZOOM, MAX_ZOOM])
@@ -123,6 +133,7 @@ export class SwedenMap {
       this.collection as GeoPermissibleObjects,
     );
     this.countiesG.selectAll<SVGPathElement, CountyFeature>('path').attr('d', (d) => this.path(d));
+    this.hitG.selectAll<SVGPathElement, CountyFeature>('path').attr('d', (d) => this.path(d));
     this.zoomBehavior.translateExtent([
       [0, 0],
       [w, h],
@@ -135,7 +146,7 @@ export class SwedenMap {
     const [x, y] = pointer(event, this.root.node());
     const lonLat = this.projection.invert?.([x, y]);
     if (!lonLat) return;
-    const target = (event.target as Element | null)?.closest?.('path.county') as SVGPathElement | null;
+    const target = (event.target as Element | null)?.closest?.('path[data-code]') as SVGPathElement | null;
     const code = target?.dataset.code ?? null;
     this.onClick({ code, lon: lonLat[0], lat: lonLat[1] });
   }

@@ -78,6 +78,7 @@ async function showGame(mode: Mode): Promise<void> {
   const game = new Game(mode);
   let locked = false;
   let timer: number | undefined;
+  let lastClickAt = 0;
 
   const updateHud = () => {
     progress.textContent = `${game.number}/${game.total}`;
@@ -124,6 +125,10 @@ async function showGame(mode: Mode): Promise<void> {
 
   map.onClick = (click: MapClick) => {
     if (locked) return;
+    // Oavsiktliga dubbeltryck ska inte kosta två försök.
+    const now = performance.now();
+    if (now - lastClickAt < CONFIG.doubleTapGuardMs) return;
+    lastClickAt = now;
     const q = game.current;
     if (!q) return;
 

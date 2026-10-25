@@ -39,7 +39,7 @@ export function renderStart(onStart: (mode: Mode) => void): HTMLElement {
     el(
       'p',
       { class: 'rules' },
-      `${CONFIG.pointsByAttempt.join(' / ')} poäng för rätt på första / andra / tredje försöket. Nypa för att zooma på kartan.`,
+      `${CONFIG.pointsByAttempt.join(' / ')} poäng för rätt på första / andra / tredje försöket. Nypa eller scrolla för att zooma på kartan.`,
     ),
   );
 }
