@@ -1,6 +1,6 @@
 # Sverigespelet
 
-Ett geografispel i webbläsaren om Sveriges 21 län, residensstäder, 75 andra städer och tio största sjöar. Klicka rätt på kartan, samla poäng och ta dig in på topplistan – fungerar lika bra på mobilen som på datorn.
+Ett geografispel i webbläsaren om Sveriges 21 län, 25 landskap, residensstäder, 75 andra städer och tio största sjöar. Klicka rätt på kartan, samla poäng och ta dig in på topplistan – fungerar lika bra på mobilen som på datorn.
 
 ![Sverigespelet](docs/screenshot.png)
 
@@ -15,12 +15,13 @@ Det är en PWA, så det går att lägga till på hemskärmen och spela offline.
 ## Spellägen och poäng
 
 - **Län** – klicka på rätt län.
+- **Landskap** – klicka på rätt landskap, alla 25.
 - **Residensstad** – klicka där staden ligger (inom 30 km, `cityRadiusKm` i `src/game/config.ts`).
 - **Fler städer** – 20 slumpade av Sveriges 75 största städer som inte är residensstäder. Ett klick inom 30 km från staden ger poäng, precis som för residensstäderna.
 - **Sjöar** – klicka på rätt sjö bland Sveriges tio största. Vid en miss på land visas hur långt bort klicket var.
 - **Blandat** – slumpar mellan län- och stadsfrågor.
 
-En omgång går igenom alla 21 län (alla tio sjöar, eller 20 av de andra städerna) i slumpad ordning. Rätt på första, andra eller tredje försöket ger 3, 2 respektive 1 poäng; därefter visas rätt svar och frågan ger 0 poäng (max 63 poäng per omgång, 60 för Fler städer, 30 i sjöläget).
+En omgång går igenom alla 21 län (alla 25 landskap, alla tio sjöar, eller 20 av de andra städerna) i slumpad ordning. Rätt på första, andra eller tredje försöket ger 3, 2 respektive 1 poäng; därefter visas rätt svar och frågan ger 0 poäng (max 63 poäng per omgång, 75 för Landskap, 60 för Fler städer, 30 i sjöläget).
 
 Under omgången fylls kartan: grönt för rätt direkt, gult för rätt efter fler försök och rött för missade. Det gör de sista frågorna lättare genom uteslutning; stäng av med `fillMapDuringRound` i `src/game/config.ts`. Vid en missad fråga zoomar kartan mjukt in på rätt svar. Slutskärmen visar poängen i en ring och en minikarta över hur varje fråga gick.
 
@@ -28,7 +29,7 @@ I de andra lägena finns sjöarna kvar på kartan som riktmärken, utan namn. Kl
 
 ## Topplista
 
-Skriv ett namn (på startskärmen eller efter en omgång) så sparas varje avslutad omgång på topplistan. Topplistan visar varje spelares bästa resultat per läge, topp 10. Fliken **Totalt** summerar varje spelares bästa resultat i alla fem lägena (max 279 poäng). Lika poäng ger delad placering, och den som kom dit först står överst.
+Skriv ett namn (på startskärmen eller efter en omgång) så sparas varje avslutad omgång på topplistan. Topplistan visar varje spelares bästa resultat per läge, topp 10. Fliken **Totalt** summerar varje spelares bästa resultat i alla sex lägena (max 354 poäng). Lika poäng ger delad placering, och den som kom dit först står överst.
 
 - **Tidigare resultat:** första gången man väljer namn laddas webbläsarens sparade rekord upp, ett per läge.
 - **Offline:** resultat som inte går att skicka läggs i en kö i `localStorage` och skickas nästa gång startskärmen visas. Varje resultat har ett eget id, så ett omförsök sparar aldrig dubbelt.
@@ -89,6 +90,8 @@ API:
 
 Natural Earth är public domain – ingen attribution krävs, men spelet länkar till källan i sidfoten. *Made with Natural Earth.*
 
+`public/data/landskap.topo.json` (ca 70 kB) innehåller Sveriges 25 landskap, byggda från [OpenStreetMap](https://www.openstreetmap.org/) (© OpenStreetMap-bidragsgivare, [ODbL](https://www.openstreetmap.org/copyright)) och klippta mot länskartans kust. 15 landskap finns som egna gränser i OSM. Öland och Härjedalen byggs av sina kommuner, Skåne, Blekinge, Halland, Gotland, Värmland, Dalarna och Jämtland av sina län, och Lappland är det som blir kvar av Norrbottens och Västerbottens län. Glipor mellan källorna går till det landskap som delar längst gräns med dem, så gränserna är på sina ställen ungefärliga. Bygg om med `./scripts/build-landskap.sh` (hämtar från OSM:s API; kräver python3 och npm). Detaljerna står i `scripts/landskap/compose.py`.
+
 Bygg om kartdatan (laddar ner källfilerna, ca 60 MB, och kör mapshaper via `npx`):
 
 ```sh
@@ -106,7 +109,7 @@ Ikonerna i `public/icons/` renderas från `icon.svg` med `node scripts/make-icon
 Vite + TypeScript utan ramverk (vanilla DOM). Kartan ritas som SVG med [d3-geo](https://github.com/d3/d3-geo) (transversal Mercator), [d3-zoom](https://github.com/d3/d3-zoom) för pinch-zoom/panorering och [topojson-client](https://github.com/topojson/topojson-client).
 
 - `src/main.ts` – startar appen och kopplar ihop spel, karta och UI.
-- `src/data/` – länen med koder, namn, residensstäder och koordinater, samt de största sjöarna.
+- `src/data/` – länen med koder, namn, residensstäder och koordinater, landskapen, de andra städerna och de största sjöarna.
 - `src/game/` – spellogik: frågor, försök, poäng (`config.ts`), avståndsberäkning och lagring av rekord, namn och osända resultat.
 - `src/shared/` – topplistans regler och typer, delade av spelet och Worker-scriptet.
 - `src/api/` – klienten för topplistans API, med kö för osända resultat, och för kontona (passkeys).
@@ -125,4 +128,4 @@ Vite + TypeScript utan ramverk (vanilla DOM). Kartan ritas som SVG med [d3-geo](
 
 MIT, se [LICENSE](LICENSE). © John Mårtensson.
 
-Kartdata från [Natural Earth](https://www.naturalearthdata.com/), public domain.
+Kartdata från [Natural Earth](https://www.naturalearthdata.com/), public domain. Landskapsgränserna © [OpenStreetMap](https://www.openstreetmap.org/copyright)-bidragsgivare, ODbL.

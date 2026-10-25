@@ -10,6 +10,7 @@ function serviceWorkerPlugin(): Plugin {
     '/index.html',
     '/manifest.webmanifest',
     '/data/lan.topo.json',
+    '/data/landskap.topo.json',
     '/data/sjoar.topo.json',
     '/data/grannar.topo.json',
     '/icons/icon.svg',

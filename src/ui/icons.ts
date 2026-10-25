@@ -4,6 +4,8 @@ import type { Mode } from '../game/game';
 const PATHS: Record<Mode, string> = {
   // Län: en vikt karta.
   lan: '<path d="M3 6.5l6-2.5 6 2.5 6-2.5v13.5l-6 2.5-6-2.5-6 2.5z"/><path d="M9 4v13.5"/><path d="M15 6.5V20"/>',
+  // Landskap: ett landskap med berg och sol.
+  landskap: '<path d="M2.5 19.5l6.5-10 4 6 2.5-3.5 6 7.5z"/><circle cx="17" cy="6.5" r="2"/>',
   // Fler städer: hus i olika höjd.
   ort: '<path d="M3 21h18"/><path d="M4.5 21V11l4-2.5V21"/><path d="M8.5 21V5l7 3v13"/><path d="M15.5 21v-8l4 2v6"/><path d="M11 10.5h2M11 14h2M11 17.5h2"/>',
   // En kartnål för residensstaden.
