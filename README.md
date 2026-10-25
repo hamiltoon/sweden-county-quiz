@@ -22,7 +22,7 @@ Alla texter finns i `src/i18n/sv.ts` och `src/i18n/en.ts` (samma nycklar, kontro
 
 - **Län** – klicka på rätt län.
 - **Landskap** – klicka på rätt landskap, alla 25.
-- **Kommuner** – 20 slumpade av Sveriges 290 kommuner. Frågan säger vilket län kommunen ligger i ("Var ligger Bjurholms kommun i Västerbottens län?"), och länsgränserna är tjockare på kartan. De minsta kommunerna, som Sundbyberg och Solna, kräver att man zoomar.
+- **Kommuner** – 20 slumpade av Sveriges 290 kommuner. Klickar man på fel kommun säger spelet hur många kommuner bort den var, räknat i gränser (öar kopplas till närmaste kommun på fastlandet). Frågan säger vilket län kommunen ligger i ("Var ligger Bjurholms kommun i Västerbottens län?"), och länsgränserna är tjockare på kartan. De minsta kommunerna, som Sundbyberg och Solna, kräver att man zoomar.
 - **Residensstad** – klicka där staden ligger (inom 30 km, `cityRadiusKm` i `src/game/config.ts`).
 - **Fler städer** – 20 slumpade av Sveriges 75 största städer som inte är residensstäder. Ett klick inom 30 km från staden ger poäng, precis som för residensstäderna.
 - **Sjöar** – klicka på rätt sjö bland Sveriges tio största. Vid en miss på land visas hur långt bort klicket var.
@@ -38,7 +38,7 @@ I de andra lägena finns sjöarna kvar på kartan som riktmärken, utan namn. Kl
 
 **Spela live** på startskärmen: tävla mot kompisar i realtid. Den som skapar ett rum får en kod på fyra tecken (t.ex. `KXR4`), en länk, `/live/KXR4`, att dela, och en QR-kod med samma länk som kompisarna kan skanna med mobilkameran; de andra går med via länken, QR-koden eller koden. QR-koden ritas i telefonen med [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) (MIT), så ingen tjänst på nätet ser länken. Värden startar matchen.
 
-- **Matchen:** 10 slumpade län. Alla får samma fråga samtidigt, med 12 sekunder och ett klick var. Rätt svar ger 5–10 poäng: 10 för ett svar direkt, färre ju längre man väntar. Frågan avslutas när alla har svarat eller tiden är ute.
+- **Matchen:** värden väljer läge i lobbyn – alla spelets lägen finns: län, landskap, kommuner, residensstäder, fler städer, sjöar och blandat. 10 slumpade frågor; alla får samma fråga samtidigt, med 12 sekunder och ett klick var. Städerna är rätt inom 30 km. Rätt svar ger 5–10 poäng: 10 för ett svar direkt, färre ju längre man väntar. Frågan avslutas när alla har svarat eller tiden är ute.
 - **Efter varje fråga** visas rätt län, ens eget klick och ställningen med allas poäng för frågan. Efter sista frågan visas en pallplats, och värden kan starta en ny match.
 - **Servern bestämmer:** frågorna, tiden och poängen räknas på servern, så klockan i telefonen spelar ingen roll.
 - **Tappad uppkoppling:** spelet ansluter igen av sig självt, och en omladdning går rakt tillbaka in i rummet. Lämnar värden tar nästa spelare över.

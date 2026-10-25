@@ -10,6 +10,12 @@
  */
 import { DurableObject } from 'cloudflare:workers';
 import { COUNTIES, COUNTY_BY_CODE } from '../src/data/counties';
+import { PROVINCES, PROVINCE_BY_CODE } from '../src/data/provinces';
+import { MUNICIPALITIES, MUNICIPALITY_BY_CODE } from '../src/data/municipalities';
+import { OTHER_CITIES } from '../src/data/cities';
+import { LAKES, LAKE_BY_ID } from '../src/data/lakes';
+import { CONFIG } from '../src/game/config';
+import { haversineKm } from '../src/game/geo';
 import { normalizeName } from '../src/shared/leaderboard';
 import {
   LIVE_CODE_ALPHABET,
@@ -20,12 +26,15 @@ import {
   LIVE_QUESTIONS,
   LIVE_QUESTION_MS,
   LIVE_REVEAL_MS,
+  isLiveMode,
+  isPointKind,
   livePoints,
   type LiveAnswer,
   type LiveClientMessage,
   type LiveCreateResponse,
   type LiveMode,
   type LivePhase,
+  type LiveQuestion,
   type LiveServerMessage,
   type LiveState,
 } from '../src/shared/live';
@@ -44,7 +53,10 @@ interface StoredPlayer {
 }
 
 interface StoredAnswer {
-  code: string;
+  code: string | null;
+  lat?: number;
+  lon?: number;
+  distanceKm?: number;
   correct: boolean;
   points: number;
 }
@@ -62,8 +74,8 @@ interface Room {
   phase: LivePhase;
   hostId: string | null;
   players: StoredPlayer[];
-  /** Länskoderna för matchens frågor, i ordning. */
-  questions: string[];
+  /** Matchens frågor, i ordning. */
+  questions: LiveQuestion[];
   index: number;
   questionStartedAt: number;
   endsAt: number;
@@ -110,6 +122,62 @@ function shuffled<T>(items: readonly T[]): T[] {
     [out[i], out[j]] = [out[j], out[i]];
   }
   return out;
+}
+
+const CITY_BY_NAME = new Map(OTHER_CITIES.map((c) => [c.name, c]));
+
+/** Frågorna för en match: tio slumpade ur lägets lista. Blandat slumpar län eller residensstad. */
+function buildQuestions(mode: LiveMode): LiveQuestion[] {
+  const pick = <T>(items: readonly T[], toQuestion: (item: T) => LiveQuestion) => shuffled(items).slice(0, LIVE_QUESTIONS).map(toQuestion);
+  switch (mode) {
+    case 'landskap':
+      return pick(PROVINCES, (p) => ({ kind: 'landskap', target: p.code }));
+    case 'kommun':
+      return pick(MUNICIPALITIES, (m) => ({ kind: 'kommun', target: m.code }));
+    case 'ort':
+      return pick(OTHER_CITIES, (c) => ({ kind: 'ort', target: c.name }));
+    case 'sjo':
+      return pick(LAKES, (l) => ({ kind: 'sjo', target: l.id }));
+    case 'stad':
+      return pick(COUNTIES, (c) => ({ kind: 'stad', target: c.code }));
+    case 'blandat':
+      return pick(COUNTIES, (c) => ({ kind: crypto.getRandomValues(new Uint8Array(1))[0] < 128 ? 'lan' : 'stad', target: c.code }));
+    default:
+      return pick(COUNTIES, (c) => ({ kind: 'lan', target: c.code }));
+  }
+}
+
+/** Var staden i en stadsfråga ligger. */
+function targetPoint(q: LiveQuestion): { lat: number; lon: number } | undefined {
+  return q.kind === 'stad' ? COUNTY_BY_CODE.get(q.target) : CITY_BY_NAME.get(q.target);
+}
+
+/** Finns området eller sjön i frågans kategori? */
+function isKnownCode(q: LiveQuestion, code: string): boolean {
+  if (q.kind === 'landskap') return PROVINCE_BY_CODE.has(code);
+  if (q.kind === 'kommun') return MUNICIPALITY_BY_CODE.has(code);
+  if (q.kind === 'sjo') return LAKE_BY_ID.has(code);
+  return COUNTY_BY_CODE.has(code);
+}
+
+const isCoordinate = (value: unknown, min: number, max: number): value is number =>
+  typeof value === 'number' && Number.isFinite(value) && value >= min && value <= max;
+
+/**
+ * Bedömer ett svar. Områden och sjöar är rätt om koden stämmer; städerna om klicket ligger inom
+ * CONFIG.cityRadiusKm. I sjöläget räknas ett klick på land som fel. Ogiltiga svar ger null.
+ */
+function judge(q: LiveQuestion, answer: { code?: unknown; lat?: unknown; lon?: unknown }): Omit<StoredAnswer, 'points'> | null {
+  const point = isCoordinate(answer.lat, 50, 75) && isCoordinate(answer.lon, -5, 40) ? { lat: answer.lat, lon: answer.lon } : null;
+  if (isPointKind(q.kind)) {
+    const target = targetPoint(q);
+    if (!point || !target) return null;
+    const km = haversineKm(point.lat, point.lon, target.lat, target.lon);
+    return { code: null, ...point, distanceKm: Math.round(km), correct: km <= CONFIG.cityRadiusKm };
+  }
+  if (typeof answer.code === 'string' && isKnownCode(q, answer.code)) return { code: answer.code, correct: answer.code === q.target };
+  if (q.kind === 'sjo' && point) return { code: null, ...point, correct: false };
+  return null;
 }
 
 export class LiveRoom extends DurableObject<Env> {
@@ -203,18 +271,21 @@ export class LiveRoom extends DurableObject<Env> {
       if (playerId !== room.hostId) return this.sendError(ws, messages(lang).hostOnly);
       if (room.phase !== 'lobby' && room.phase !== 'done') return;
       for (const p of room.players) p.score = 0;
-      room.questions = shuffled(COUNTIES)
-        .slice(0, LIVE_QUESTIONS)
-        .map((c) => c.code);
+      room.questions = buildQuestions(room.mode);
       room.index = 0;
       await this.startQuestion();
+    } else if (msg.type === 'mode') {
+      if (playerId !== room.hostId || (room.phase !== 'lobby' && room.phase !== 'done') || !isLiveMode(msg.mode)) return;
+      room.mode = msg.mode;
+      await this.save();
+      this.broadcast();
     } else if (msg.type === 'answer') {
       if (room.phase !== 'question' || msg.question !== room.index || room.answers[playerId]) return;
-      if (typeof msg.code !== 'string' || !COUNTY_BY_CODE.has(msg.code)) return;
       if (!room.players.some((p) => p.id === playerId)) return;
-      const correct = msg.code === room.questions[room.index];
-      const points = correct ? livePoints(Date.now() - room.questionStartedAt) : 0;
-      room.answers[playerId] = { code: msg.code, correct, points };
+      const judged = judge(room.questions[room.index], msg);
+      if (!judged) return;
+      const points = judged.correct ? livePoints(Date.now() - room.questionStartedAt) : 0;
+      room.answers[playerId] = { ...judged, points };
       if (this.everyoneAnswered()) await this.reveal();
       else {
         await this.save();
@@ -353,12 +424,14 @@ export class LiveRoom extends DurableObject<Env> {
       serverNow: now,
     };
     if (inRound) {
-      state.question = { index: room.index, total: room.questions.length, target: room.questions[room.index], endsAt: room.endsAt };
+      const q = room.questions[room.index];
+      state.question = { index: room.index, total: room.questions.length, kind: q.kind, target: q.target, endsAt: room.endsAt };
     }
     if (room.phase === 'reveal') {
-      state.answers = room.players.map(
-        (p): LiveAnswer => ({ playerId: p.id, code: room.answers[p.id]?.code ?? null, correct: room.answers[p.id]?.correct ?? false, points: room.answers[p.id]?.points ?? 0 }),
-      );
+      state.answers = room.players.map((p): LiveAnswer => {
+        const a = room.answers[p.id];
+        return a ? { playerId: p.id, ...a } : { playerId: p.id, code: null, correct: false, points: 0 };
+      });
     }
     return state;
   }

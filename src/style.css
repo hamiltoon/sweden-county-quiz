@@ -1069,6 +1069,16 @@ a {
   color: var(--reveal);
 }
 
+.marker-picked {
+  color: var(--accent);
+}
+
+.lake.is-picked {
+  fill: color-mix(in srgb, var(--accent) 45%, var(--lake));
+  stroke: var(--accent);
+  stroke-width: 2px;
+}
+
 .zoom-ctrls {
   position: absolute;
   right: calc(10px + var(--safe-right));
@@ -1265,6 +1275,34 @@ a {
   color: var(--muted);
   font-size: 0.9rem;
   text-align: center;
+}
+
+/* Lägesväljaren i live-lobbyn. */
+.live-mode-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.live-mode-chip {
+  min-height: 40px;
+  padding: 8px 14px;
+  border: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
+  border-radius: 999px;
+  background: var(--panel);
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+
+.live-mode-chip[aria-pressed='true'] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+
+.live-mode-note {
+  margin: 14px 0 0;
+  color: var(--muted);
 }
 
 .live-heading {

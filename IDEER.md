@@ -1,12 +1,25 @@
 # Idéer för Sverigespelet
 
 Saker vi har pratat om men inte byggt än, ungefär i den ordning vi tänkt ta dem.
-Klart: Landskap, Live-läget med Län, engelska och Kommuner (oktober 2026).
+Klart: Landskap, Live-läget med alla lägen och QR-kod, engelska och Kommuner (oktober 2026).
 
-## Nästa steg för live
+## Göra live mer levande
 
-- Fler kategorier i live: landskap, residensstäder (avstånd i stället för län) och sjöar.
-- Visa de andras klick på kartan när rätt svar avslöjas.
+Sparat till senare (oktober 2026). Förslag: börja med 1, 2, 4, 5 och 6 som ett paket.
+
+1. **Nedräkning 3–2–1** före varje fråga, med frågan stort i mitten.
+2. **Se de andra svara i realtid** – en rad med allas namn som tänds med ✓ när de klickar.
+3. **Tickande sista sekunder** – pulserande stapel, vibration (Android) och tick de sista tre sekunderna.
+4. **Allas klick på kartan** när svaret visas – en färgad prick med namn per spelare.
+5. **⚡ Snabbast** – "Anna 1,4 s" och den egna svarstiden.
+6. **Ställningen som rör sig** – raderna glider till sina nya platser, "Anna går om Erik!".
+7. **Svit** – "🔥 3 rätt i rad" med en liten bonus.
+8. **Ljud** (går att stänga av) – tick, rätt/fel och fanfar, syntetiserat i telefonen.
+9. **Emoji-reaktioner** – 👏 😂 😱 som flyger över allas skärmar.
+10. **Pallen med konfetti.**
+
+Också: skiljetecken vid lika poäng (kortast sammanlagd svarstid vinner), eller finare poäng
+(t.ex. 500–1000 per fråga).
 
 ## Fler kategorier
 

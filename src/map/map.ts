@@ -44,7 +44,8 @@ export interface MapOptions {
 export type HighlightState = 'correct' | 'wrong' | 'reveal' | 'picked';
 /** Hur det gick för en fråga: rätt direkt, rätt efter fler försök eller missad. */
 export type ResultState = 'first' | 'later' | 'missed';
-export type MarkerKind = 'correct' | 'wrong' | 'reveal';
+/** `picked`: spelarens klick i live-läget, innan rätt svar visas. */
+export type MarkerKind = 'correct' | 'wrong' | 'reveal' | 'picked';
 
 export interface MapClick {
   /** Länskod som träffades, eller null om klicket hamnade utanför alla län (eller på en sjö i sjöläget). */

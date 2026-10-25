@@ -10,6 +10,8 @@ import { MUNICIPALITY_BY_CODE } from './data/municipalities';
 import { getCurrentLiveRoom, getLiveName, getLivePlayerId, saveBest, saveLiveName, setCurrentLiveRoom } from './game/storage';
 import { SwedenMap, type MapClick, type ResultState } from './map/map';
 import { renderMiniMap } from './map/minimap';
+import { regionSteps } from './map/adjacency';
+import { COUNTIES_URL, LAKES_URL, NEIGHBORS_URL, regionsFor } from './map/sources';
 import { el, clear } from './ui/dom';
 import { Toast } from './ui/toast';
 import { renderEnd, renderRecapLegend, renderStart } from './ui/screens';
@@ -19,6 +21,7 @@ import { registerServiceWorker } from './pwa';
 import { createRoom, LiveConnection } from './live/connection';
 import { renderLiveEntry } from './live/entry';
 import { LiveView, type LiveMaps } from './live/view';
+import type { LiveMode } from './shared/live';
 import { applyToDocument, countyName, municipalityName, onLangChange, provinceName, t } from './i18n';
 import { adoptAccountLanguage } from './api/account';
 
@@ -42,11 +45,6 @@ function loadTopology(url: string): Promise<Topology> {
 /** Svar norr om den här breddgraden hamnar under toasten om den ligger överst. */
 const NORTH_TOAST_LAT = 64.5;
 
-const COUNTIES_URL = '/data/lan.topo.json';
-const PROVINCES_URL = '/data/landskap.topo.json';
-const MUNICIPALITIES_URL = '/data/kommuner.topo.json';
-const LAKES_URL = '/data/sjoar.topo.json';
-const NEIGHBORS_URL = '/data/grannar.topo.json';
 
 /** Hämtar en kartfil som bara är dekoration; utan den visas kartan ändå. */
 function loadOptional(url: string): Promise<Topology | null> {
@@ -100,16 +98,33 @@ function showLive(code?: string): void {
   );
 }
 
+/** Kartan för en livematch i ett visst läge (samma kartor som det vanliga spelet). */
+async function loadLiveMaps(mode: LiveMode): Promise<LiveMaps> {
+  const source = regionsFor(mode);
+  const lakeMode = mode === 'sjo';
+  const [regions, lakes, neighbors] = await Promise.all([
+    loadTopology(source.url),
+    lakeMode ? loadTopology(LAKES_URL) : loadOptional(LAKES_URL),
+    loadOptional(NEIGHBORS_URL),
+  ]);
+  return {
+    regions,
+    objectName: source.objectName,
+    groupBy: source.groupBy,
+    lakes,
+    neighbors,
+    lakeMode,
+    steps: mode === 'kommun' ? regionSteps(regions, source.objectName) : null,
+  };
+}
+
 function joinLive(code: string, name: string): void {
   saveLiveName(name);
   setCurrentLiveRoom(code);
   // Adressen blir rummets länk, så att en omladdning går tillbaka in i rummet.
   history.replaceState(null, '', `/live/${code}`);
-  const maps: Promise<LiveMaps> = Promise.all([loadTopology(COUNTIES_URL), loadOptional(LAKES_URL), loadOptional(NEIGHBORS_URL)]).then(
-    ([counties, lakes, neighbors]) => ({ counties, lakes, neighbors }),
-  );
   let conn: LiveConnection | null = null;
-  const view = new LiveView(screen, () => conn, maps, () => {
+  const view = new LiveView(screen, () => conn, loadLiveMaps, () => {
     conn?.close();
     view.destroy();
     goHome();
@@ -164,14 +179,7 @@ async function showGame(mode: Mode): Promise<void> {
   // Sjöarna längst norrut (Torneträsk, Akkajaure) ligger där toasten annars hamnar.
   const toast = new Toast(mapWrap, lakeMode ? 'bottom' : 'top');
 
-  // Landskaps- och kommunläget ritar landskapen eller kommunerna i stället för länen; resten av
-  // kartan är densamma. På kommunkartan ritas länsgränserna tjockare, som stöd.
-  const regions =
-    mode === 'landskap'
-      ? { url: PROVINCES_URL, objectName: 'landskap' }
-      : mode === 'kommun'
-        ? { url: MUNICIPALITIES_URL, objectName: 'kommuner', groupBy: 'county' }
-        : { url: COUNTIES_URL, objectName: 'lan' };
+  const regions = regionsFor(mode);
   let topology: Topology;
   let lakes: Topology | null = null;
   let neighbors: Topology | null = null;
@@ -188,6 +196,8 @@ async function showGame(mode: Mode): Promise<void> {
   }
 
   const map = new SwedenMap(mapEl, topology, { objectName: regions.objectName, groupBy: regions.groupBy, lakes, neighbors, lakeMode });
+  // Kommunläget: vid fel kommun säger vi hur många kommuner bort den var.
+  const steps = mode === 'kommun' ? regionSteps(topology, regions.objectName) : null;
   const game = new Game(mode);
   let locked = false;
   let timer: number | undefined;
@@ -319,12 +329,19 @@ async function showGame(mode: Mode): Promise<void> {
         map.highlight(click.code, 'wrong');
         map.highlight(target.code, 'reveal');
         map.focusCounty(target.code);
-        revealAndContinue(t().game.wrongWasReveal(regionName(click.code), target.name), 'bad', CONFIG.revealMissMs);
+        const away = steps?.(click.code, target.code);
+        revealAndContinue(
+          away ? t().game.wrongWasAwayReveal(regionName(click.code), t().game.municipalitiesAway(away), target.name) : t().game.wrongWasReveal(regionName(click.code), target.name),
+          'bad',
+          CONFIG.revealMissMs,
+        );
       } else {
         map.highlight(click.code, 'wrong');
         // Ta inte bort markeringen om frågan hunnit avslutas; då ska felklicket synas med svaret.
         window.setTimeout(() => !locked && map.unhighlight(click.code!, 'wrong'), CONFIG.toastMs);
-        toast.show(`${t().game.wrongWas(regionName(click.code))} ${attemptsText(outcome.attemptsLeft)}`, 'bad', CONFIG.toastMs);
+        const away = steps?.(click.code, target.code);
+        const wrong = away ? t().game.wrongWasAway(regionName(click.code), t().game.municipalitiesAway(away)) : t().game.wrongWas(regionName(click.code));
+        toast.show(`${wrong} ${attemptsText(outcome.attemptsLeft)}`, 'bad', CONFIG.toastMs);
       }
     } else {
       // Residensstad eller en av de andra städerna: samma klick, olika mål.
