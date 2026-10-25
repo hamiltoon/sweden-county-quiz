@@ -137,12 +137,13 @@ export class Game {
     } else if (q.kind === 'sjo') {
       correct = guess.kind === 'lake' && guess.id === q.lake.id;
     } else if (q.kind === 'ort' && guess.kind === 'point') {
-      // Rätt om klicket är nära staden och inte närmare någon annan stad i spelet.
       distanceKm = haversineKm(guess.lat, guess.lon, q.city.lat, q.city.lon);
-      const nearest = nearestPlace(guess.lat, guess.lon);
-      const isTarget = nearest.place.name === q.city.name;
-      correct = distanceKm <= CONFIG.otherCityRadiusKm && isTarget;
-      if (!isTarget && nearest.distanceKm <= CONFIG.otherCityRadiusKm) closerTo = nearest.place.name;
+      correct = distanceKm <= CONFIG.cityRadiusKm;
+      if (!correct) {
+        // Klickade spelaren på en annan stad i spelet? Då säger vi vilken.
+        const nearest = nearestPlace(guess.lat, guess.lon);
+        if (nearest.place.name !== q.city.name && nearest.distanceKm <= CONFIG.otherCityHitKm) closerTo = nearest.place.name;
+      }
     } else if (q.kind === 'stad' && guess.kind === 'point') {
       distanceKm = haversineKm(guess.lat, guess.lon, q.county.lat, q.county.lon);
       correct = distanceKm <= CONFIG.cityRadiusKm;

@@ -19,7 +19,7 @@ export function renderStart(onStart: (mode: Mode) => void, leaderboard?: HTMLEle
     { mode: 'stad', desc: `Klicka där staden ligger (inom ${CONFIG.cityRadiusKm} km).` },
     {
       mode: 'ort',
-      desc: `${CONFIG.otherCitiesPerRound} av Sveriges ${OTHER_CITIES.length} största städer som inte är residensstäder. Klicka inom ${CONFIG.otherCityRadiusKm} km.`,
+      desc: `${CONFIG.otherCitiesPerRound} av Sveriges ${OTHER_CITIES.length} största städer som inte är residensstäder. Klicka inom ${CONFIG.cityRadiusKm} km.`,
     },
     { mode: 'sjo', desc: `Klicka på rätt sjö bland Sveriges ${LAKES.length} största.` },
     { mode: 'blandat', desc: 'Slumpar mellan län och städer.' },
