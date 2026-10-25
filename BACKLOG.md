@@ -102,7 +102,7 @@ klickade de andra) och att funktioner för daglig vana och bred publik väntar.
 ### PO-15 Avslöjandet lär ut var rätt svar ligger
 - **Prioritet:** P1
 - **Insats:** M
-- **Koppling:** UX-07
+- **Koppling:** UX-07, UX-18
 - **Värde:** Kärnan är att lära sig geografi. Efter en miss visas rätt svar i 2,4 sekunder, och det egna felklicket
   hamnar ofta utanför bilden. Man hinner inte se var man hade fel eller var det rätta låg.
 - **Motivering:** Gör varje miss till något man lär sig av.
@@ -113,7 +113,8 @@ klickade de andra) och att funktioner för daglig vana och bred publik väntar.
      minst 4 sekunder om man inte rör något. Rätt svar på första försöket går vidare lika snabbt som i dag.
   4. Det fungerar i alla lägen, också städerna och sjöarna.
   5. Live påverkas inte (där styr servern tiden; PO-01 visar klicken).
-  6. Svenska och engelska.
+  6. Med "minska rörelse" (`prefers-reduced-motion`) hoppar kartan direkt till vyn utan zoomanimation (UX-18).
+  7. Svenska och engelska.
 
 ### PO-16 Kommuner: kartan zoomar in på länet
 - **Prioritet:** P1
@@ -135,12 +136,13 @@ klickade de andra) och att funktioner för daglig vana och bred publik väntar.
 ### PO-17 Slutskärmen: Spela igen utan att scrolla
 - **Prioritet:** P2
 - **Insats:** S
-- **Koppling:** UX-05
+- **Koppling:** UX-05, UX-29
 - **Värde:** "En gång till" ska vara ett tryck. I dag ligger knappen under vecket, på Android 360 px två skärmhöjder ner.
 - **Acceptanskriterier:**
   1. På iPhone 13 och Android 360 px syns "Spela igen" och "Byt läge" utan att man scrollar, också med namnformulär och topplista.
   2. Poängen och minikartan syns fortfarande först.
   3. Knapparna täcker inget innehåll som inte går att scrolla fram.
+  4. "Nytt bästa resultat!" visas inte på den allra första omgången i ett läge (UX-29).
 
 ### PO-18 Namn: säg direkt om namnet är skyddat
 - **Prioritet:** P2
@@ -166,6 +168,27 @@ klickade de andra) och att funktioner för daglig vana och bred publik väntar.
   2. Det går att byta språk på sidan.
   3. Namnfältet är lika brett som knappen, och etiketten "Namn" hör ihop med fältet (skärmläsare och tryck på etiketten).
 
+### PO-22 Live: värden når Starta matchen utan att scrolla
+- **Prioritet:** P2
+- **Insats:** S
+- **Koppling:** UX-13, UX-14
+- **Värde:** Värden trycker på Starta före varje match, men knappen ligger under QR-koden. Lobbyn tappar dessutom
+  fokus när värden byter läge.
+- **Acceptanskriterier:**
+  1. På iPhone 13 och Android 360 px når värden "Starta matchen" utan att scrolla, t.ex. med en knapp som ligger kvar nederst.
+  2. QR-koden och koden syns fortfarande för den som ska gå med.
+  3. Efter att värden valt läge eller blandning ligger fokus kvar på det valda chipet.
+
+### PO-23 Live: samma hjälp vid miss som i solospelet
+- **Prioritet:** P2
+- **Insats:** S
+- **Koppling:** UX-16, UX-17
+- **Värde:** I solospelet lär man sig av "250 km bort" och av tipset när man klickar i havet. I live får man bara "Fel." eller ingenting.
+- **Acceptanskriterier:**
+  1. En miss på land i en sjöfråga i live visar hur långt bort klicket var, som i solospelet.
+  2. Ett klick i havet på en område-fråga i live ger samma tips som i solospelet och räknas inte som svar.
+  3. Svenska och engelska.
+
 ### PO-02 Live: se vilka som har svarat medan frågan pågår
 - **Prioritet:** P2
 - **Insats:** S (servern skickar redan `answered` per spelare)
@@ -182,7 +205,7 @@ klickade de andra) och att funktioner för daglig vana och bred publik väntar.
 ### PO-03 Live: nedräkning 3–2–1 före varje fråga
 - **Prioritet:** P2
 - **Insats:** M (servern behöver en kort fas före frågan så att klockan startar lika för alla)
-- **Koppling:** IDEER.md "Göra live mer levande" 1
+- **Koppling:** IDEER.md "Göra live mer levande" 1, UX-15
 - **Värde:** Alla hinner läsa frågan och lägga fingret redo, så det blir rättvist och spännande. Det gör också att
   den som läser långsamt eller har en dålig uppkoppling inte förlorar poäng i onödan.
 - **Motivering:** Gör poängen efter snabbhet rättvisare och ger rytm i matchen. Kräver ändring i servern, därför efter PO-02.
@@ -191,7 +214,9 @@ klickade de andra) och att funktioner för daglig vana och bred publik väntar.
   2. Det går inte att klicka på kartan under nedräkningen, och de 12 sekunderna och poängen räknas först när den är slut.
   3. Nedräkningen styrs av servern, så att den slutar samtidigt för alla oavsett klockan i telefonen.
   4. En spelare som ansluter igen under nedräkningen hamnar rätt i den.
-  5. Svenska och engelska.
+  5. Under frågan visas sekunderna som är kvar som siffror bredvid stapeln (UX-15).
+  6. Stapeln under avslöjandet förklarar sig, t.ex. "Nästa fråga om 4 s".
+  7. Svenska och engelska.
 
 ### PO-04 Live: ställningen rör sig och berättar vem som gick om vem
 - **Prioritet:** P2
@@ -305,6 +330,42 @@ klickade de andra) och att funktioner för daglig vana och bred publik väntar.
   1. Formuläret för namnbyte säger att de gamla resultaten ligger kvar under det gamla namnet.
   2. Att flytta resultaten till det nya namnet ändrar topplistan och är en **fråga till John**; den byggs inte nu.
 
+### PO-24 Första besöket: rätt texter på rätt plats
+- **Prioritet:** P3
+- **Insats:** S
+- **Koppling:** UX-19, UX-20
+- **Acceptanskriterier:**
+  1. Poängregeln och zoomtipset står före lägeskorten, eller i lägets kort.
+  2. "Inget resultat ännu" upprepas inte sju gånger; kort utan resultat visar inget eller något kortare.
+  3. Kommuner har ett zoomtips.
+  4. Uppmaningen är neutral, t.ex. "Välj"/"Pick" i stället för "Klicka" på mobil och "Tap" på dator.
+
+### PO-25 Tillgänglighet: tryckytor, flikar, rubriker och mörkt läge
+- **Prioritet:** P3
+- **Insats:** M
+- **Koppling:** UX-24, UX-25, UX-26, UX-30
+- **Acceptanskriterier:**
+  1. Språkknappar, flikar, chip, "Byt namn" och "Logga in" har tryckytor på minst 44 × 44 px.
+  2. Topplistans flikar följer flik-mönstret (tabpanel, piltangenter) och ryms på högst två rader på mobil.
+  3. Varje skärm har en h1 och fokus flyttas till skärmens rubrik vid skärmbyte.
+  4. I mörkt läge skiljer sig sjöar från land och land från hav med kontrast minst 3:1.
+
+### PO-26 Startskärmen: passkey tar mindre plats
+- **Prioritet:** P3
+- **Insats:** S
+- **Koppling:** UX-27
+- **Acceptanskriterier:**
+  1. Passkey-knappen är en sekundär handling och tar inte över startskärmen.
+  2. "Logga ut" tömmer inte det lokala namnet, eller säger tydligt att det gör det.
+
+### PO-27 Offline: Kommuner fungerar utan nät
+- **Prioritet:** P3
+- **Insats:** S
+- **Koppling:** UX-22
+- **Acceptanskriterier:**
+  1. Kommunkartan förcachas av service workern, så att Kommuner fungerar offline även om läget aldrig spelats online.
+  2. Om kartan ändå inte går att ladda finns knappen "Försök igen".
+
 ## Parkerat
 
 | Idé | Varför inte nu |
@@ -314,7 +375,10 @@ klickade de andra) och att funktioner för daglig vana och bred publik väntar.
 | Älvar | Kräver ny kartdata (L). |
 | Tidspoäng i solospelet | Ändrar poängen på den befintliga topplistan, så gamla och nya resultat går inte att jämföra. **Fråga till John** om det blir aktuellt. |
 | Finare poäng i live (500–1000 per fråga) | Ger lite utöver PO-07 och gör inte matchen roligare i sig. |
-| Svårighetsnivå "Expert" och omvänt läge | Nya spelsätt; väntar tills live-paketet är klart. |
+| Svårighetsnivå "Expert" och omvänt läge | Nya spelsätt; väntar tills live-paketet är klart. Omvänt läge (flerval) skulle också ge ett sätt att spela utan att peka på kartan (UX-11). |
+| Spela kartan med tangentbord och skärmläsare (UX-11) | Stort arbete (L) för ingen i dagens spelarkrets. Tas upp om spelet ska nå fler, troligast via omvänt läge. |
+| Residensstad: prick i stället för ifyllt län (UX-12) | Gör läget svårare än det har varit, så nya resultat går inte att jämföra med gamla på topplistan. **Fråga till John.** |
+| Bredare layout på dator (UX-21), liggande mobil (UX-23), klippkant i grannkartan (UX-28) | Spelet spelas på mobil i stående läge; liten nytta för spelarna i dag. |
 
 ## UX-fynd
 
@@ -332,7 +396,26 @@ Fynd från UX-specialisten (UX-01, UX-02 …) läggs in här med prioritet och k
 | UX-08 | Inbjudningssidan förklarar inget | P2 | PO-19 |
 | UX-09 | ✕ avslutar utan bekräftelse | P3 | PO-20 |
 | UX-10 | Namnbyte lämnar gamla resultat | P3 | PO-21 |
-| UX-11–30 | Kommer | – | – |
+| UX-11 | Kartan går inte att spela med tangentbord/skärmläsare | Parkerad | – |
+| UX-12 | Residensstad: ifyllt län avslöjar de sista svaren | Parkerad, fråga till John | – |
+| UX-13 | Lobbyn tappar fokus | P2 | PO-22 |
+| UX-14 | Starta matchen under vecket | P2 | PO-22 |
+| UX-15 | Live-timern saknar siffror och 3–2–1 | P2 | PO-03 |
+| UX-16 | Live: klick i havet ignoreras tyst | P2 | PO-23 |
+| UX-17 | Live: sjömiss ger bara "Fel." | P2 | PO-23 |
+| UX-18 | Avslöjandets zoom ignorerar minska rörelse | P1 | PO-15 |
+| UX-19 | "Klicka"/"Tap" på fel enhet | P3 | PO-24 |
+| UX-20 | Första besöket: texter i fel ordning | P3 | PO-24 |
+| UX-21 | Smal kolumn på dator | Parkerad | – |
+| UX-22 | Kommunkartan inte förcachad offline | P3 | PO-27 |
+| UX-23 | Liggande mobil: HUD tar för mycket | Parkerad | – |
+| UX-24 | Mörkt läge: sjöar och land för lika | P3 | PO-25 |
+| UX-25 | Tryckytor under 44 px | P3 | PO-25 |
+| UX-26 | Topplistans flikar | P3 | PO-25 |
+| UX-27 | Passkey-knappen tar över startskärmen | P3 | PO-26 |
+| UX-28 | Klippkant i grannkartan | Parkerad | – |
+| UX-29 | "Nytt bästa resultat!" på första omgången | P2 | PO-17 |
+| UX-30 | Fokus vid skärmbyte, h1 saknas | P3 | PO-25 |
 
 ## Klart
 
