@@ -4,10 +4,8 @@ export const CONFIG = {
   maxAttempts: 3,
   /** Poäng per försök: index 0 = rätt på första försöket. */
   pointsByAttempt: [3, 2, 1] as readonly number[],
-  /** Hur nära (km) klicket måste vara staden i stadsläget. */
-  cityRadiusKm: 40,
-  /** Läget "Fler städer": hur nära (km) klicket måste vara. Städerna ligger tätare, så lite snävare. */
-  otherCityRadiusKm: 30,
+  /** Hur nära (km) klicket måste vara staden, både residensstäderna och "Fler städer". */
+  cityRadiusKm: 30,
   /** Antal städer per omgång i läget "Fler städer" (slumpas ur hela listan). */
   otherCitiesPerRound: 20,
   /** Hur länge (ms) rätt svar visas efter en fråga innan nästa. */

@@ -114,7 +114,7 @@ export class Game {
       correct = guess.kind === 'lake' && guess.id === q.lake.id;
     } else if (q.kind === 'ort' && guess.kind === 'point') {
       distanceKm = haversineKm(guess.lat, guess.lon, q.city.lat, q.city.lon);
-      correct = distanceKm <= CONFIG.otherCityRadiusKm;
+      correct = distanceKm <= CONFIG.cityRadiusKm;
     } else if (q.kind === 'stad' && guess.kind === 'point') {
       distanceKm = haversineKm(guess.lat, guess.lon, q.county.lat, q.county.lon);
       correct = distanceKm <= CONFIG.cityRadiusKm;
