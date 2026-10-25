@@ -67,11 +67,11 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
 
 | Status | Punkter |
 |---|---|
-| Pågår (utvecklaren) | PO-14 (på staging), PO-29b |
-| Nästa | PO-30, och PO-15 och PO-16 med flera förslag parallellt |
+| Pågår (utvecklaren) | PO-14 + PO-29b till produktion (#30), sedan PO-16 i varianter |
+| Nästa | PO-15 i varianter, PO-30 |
 | Väntar på UX-verifiering | – |
 | Väntar på svar från John | – |
-| Klart | PO-01, PO-01b, PO-06, PO-22, PO-29 (kriterium 1–7) |
+| Klart | PO-01, PO-01b, PO-06, PO-22, PO-29; godkända och på väg ut: PO-14, PO-29b |
 
 ## Backlog i prioritetsordning
 
@@ -143,7 +143,7 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
      börjar med "[Staging]". Produktion visar ingen banderoll. (Tillagt 2026-10-25: John förväxlade staging med produktion.)
 
 ### PO-29b Staging-banderoll och stramare tester
-- **Prioritet:** P1, före PO-14 i produktion
+- **Status:** ✅ Godkänd 2026-10-25 på staging (PO kontrollerade banderollen; övrigt via e2e, 324/324 kontroller). Går ut med #30.
 - **Insats:** S
 - **Koppling:** PO-29 kriterium 8; UX förslag vid verifieringen av PO-29
 - **Status för PO-29:** kriterium 1–7 godkända av UX 2026-10-25 ([#29](https://github.com/hamiltoon/sweden-county-quiz/pull/29)). 276 kontroller på 92 s.
@@ -171,7 +171,7 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
   5. Svenska och engelska; tangentbordsordningen följer den nya ordningen.
 
 ### PO-14 Rätt och fel syns för alla
-- **Prioritet:** P1, nästa när PO-06 är klar
+- **Status:** ✅ Godkänd av UX på staging 2026-10-25 (kontrast 6,2 och 6,6:1; går att skilja med deuteranopi/protanopi; axe 0 fel). Går ut med [#30](https://github.com/hamiltoon/sweden-county-quiz/pull/30).
 - **Insats:** S–M
 - **Koppling:** UX-02, UX-03
 - **Värde:** Rätt/fel-rutan är spelets viktigaste återkoppling, men vit text på grönt har kontrasten 3,45:1 (2,31:1 i
@@ -495,8 +495,8 @@ Fynd från UX-specialisten (UX-01, UX-02 …) läggs in här med prioritet och k
 | UX-id | Fynd | Prioritet | PO-punkt |
 |---|---|---|---|
 | UX-01 | Kommuner: målen för små, zoomen nollställs | P1 | PO-16 |
-| UX-02 | Rätt/fel-rutan har för låg kontrast | P1 | PO-14 |
-| UX-03 | Rött mot grönt är enda skillnaden | P1 | PO-14 |
+| UX-02 | Rätt/fel-rutan har för låg kontrast | ✅ Godkänd | PO-14 |
+| UX-03 | Rött mot grönt är enda skillnaden | ✅ Godkänd | PO-14 |
 | UX-04 | Spela live under vecket | ✅ Klar | PO-06 |
 | UX-05 | Spela igen under vecket | P2 | PO-17 |
 | UX-06 | Skyddat namn avvisas först efter en omgång | P2 | PO-18 |
@@ -527,6 +527,8 @@ Fynd från UX-specialisten (UX-01, UX-02 …) läggs in här med prioritet och k
 
 ## Klart
 
+- **PO-14 och PO-29b** Rätt och fel syns för alla (UX-02, UX-03); staging-banderoll och stramare tester. Godkända 2026-10-25, i [#30](https://github.com/hamiltoon/sweden-county-quiz/pull/30).
+- **PO-29** Staging och automatiska acceptanstester. Mergad i [#29](https://github.com/hamiltoon/sweden-county-quiz/pull/29), godkänd av UX 2026-10-25.
 - **PO-01 och PO-01b** Live: allas klick, snabbast och ett avslöjande som håller med 12 spelare. Driftsatt i #22, #25 och #27, godkänd av UX 2026-10-25.
 - **PO-22** Live: Starta matchen nåbar i lobbyn (UX-13, UX-14). Driftsatt i [#26](https://github.com/hamiltoon/sweden-county-quiz/pull/26), godkänd av UX 2026-10-25.
 - **PO-06** Startskärmen: Spela live först (UX-04). Driftsatt i [#23](https://github.com/hamiltoon/sweden-county-quiz/pull/23), godkänd av UX 2026-10-25.
