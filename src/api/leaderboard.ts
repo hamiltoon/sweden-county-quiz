@@ -8,7 +8,7 @@ import {
   MAX_RESULTS_PER_SUBMIT,
   isLeaderboardMode,
   normalizeName,
-  type LeaderboardMode,
+  type LeaderboardView,
   type ScoreSubmission,
   type SubmitResponse,
   type TopResponse,
@@ -55,7 +55,7 @@ async function request<T>(input: string, init?: RequestInit): Promise<T> {
   return body;
 }
 
-export function fetchTop(mode: LeaderboardMode, limit = 10): Promise<TopResponse> {
+export function fetchTop(mode: LeaderboardView, limit = 10): Promise<TopResponse> {
   return request<TopResponse>(`${API}?mode=${encodeURIComponent(mode)}&limit=${limit}`);
 }
 

@@ -366,10 +366,9 @@ a {
 
 .top-tabs {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
-  overflow-x: auto;
   margin-bottom: 8px;
-  scrollbar-width: none;
 }
 
 .top-tab {
@@ -440,6 +439,12 @@ a {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.top-modes {
+  color: var(--muted);
+  font-weight: 400;
+  font-size: 0.85rem;
 }
 
 .top-score {
