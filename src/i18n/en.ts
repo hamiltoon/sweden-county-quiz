@@ -199,6 +199,7 @@ export const en: Messages = {
     seconds: (ms) => `${(ms / 1000).toFixed(1)} s`,
     fastest: (name, time) => `⚡ Fastest: ${name} ${time}`,
     yourTime: (time) => `Your answer time ${time}`,
+    andMore: (n) => `… and ${n} more`,
     won: '🏆 You won!',
     over: 'The match is over',
     placed: (place, total, score) => `You came ${ordinal(place)} of ${total} with ${score} points.`,

@@ -29,6 +29,11 @@ export class Toast {
     this.placement = placement;
   }
 
+  /** Var rutan ligger på skärmen, eller null om den är dold. */
+  bounds(): DOMRect | null {
+    return this.node.classList.contains('is-visible') ? this.node.getBoundingClientRect() : null;
+  }
+
   hide(): void {
     window.clearTimeout(this.timer);
     this.node.classList.remove('is-visible');

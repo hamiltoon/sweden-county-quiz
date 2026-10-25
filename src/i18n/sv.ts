@@ -199,6 +199,7 @@ export const sv = {
     seconds: (ms: number) => `${(ms / 1000).toFixed(1).replace('.', ',')} s`,
     fastest: (name: string, time: string) => `⚡ Snabbast: ${name} ${time}`,
     yourTime: (time: string) => `Din svarstid ${time}`,
+    andMore: (n: number) => `… och ${n} till`,
     won: '🏆 Du vann!',
     over: 'Matchen är slut',
     placed: (place: number, total: number, score: number) => `Du kom på plats ${place} av ${total} med ${score} poäng.`,

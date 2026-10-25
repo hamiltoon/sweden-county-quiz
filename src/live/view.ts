@@ -253,7 +253,7 @@ export class LiveView {
     const pins = playerPins(state);
     map.setPlayerPins(pins);
     // Rätt svar och allas klick i samma vy, så att man ser var det låg och var de andra klickade.
-    map.fitView(pins, revealTarget(gq));
+    map.fitView(pins, revealTarget(gq), this.toastPadding());
     this.runTimer(q.endsAt, liveRevealMs(state.players.length));
   }
 
@@ -387,6 +387,18 @@ export class LiveView {
       this.map.highlight(click.code, 'picked');
       send({ code: click.code, lat: click.lat, lon: click.lon });
     }
+  }
+
+  /** Hur mycket av kartan överst eller nederst som rätt/fel-rutan täcker, med lite luft. */
+  private toastPadding(): { top?: number; bottom?: number } {
+    const box = this.toast?.bounds();
+    const mapBox = this.game?.mapWrap.querySelector('.map')?.getBoundingClientRect();
+    if (!box || !mapBox) return {};
+    // Rutan glider in 12 px; räkna med där den hamnar.
+    const margin = 18;
+    return box.top - mapBox.top < mapBox.height / 2
+      ? { top: Math.max(0, box.bottom - mapBox.top + margin) }
+      : { bottom: Math.max(0, mapBox.bottom - box.top + margin) };
   }
 
   /** Nedräkningsstapeln: full vid frågans början, tom när tiden är ute. */
@@ -567,9 +579,14 @@ function playerPins(state: LiveState): PlayerPin[] {
   });
 }
 
+/** Med fler spelare än så visas bara topp 3 och den egna raden under avslöjandet; alla syns på pallen. */
+const STANDINGS_ALL_UP_TO = 5;
+const STANDINGS_TOP = 3;
+
 /**
- * Ställningen efter en fråga: den snabbaste med rätt svar, och alla spelare med poängen för
- * frågan. Den egna raden visar också den egna svarstiden.
+ * Ställningen efter en fråga: den snabbaste med rätt svar, och spelarna med poängen för frågan.
+ * Med många spelare visas topp 3, den egna raden och hur många fler det finns, så att kartan får
+ * plats. Den egna raden visar också den egna svarstiden.
  */
 function renderStandings(state: LiveState): HTMLElement[] {
   const answers = new Map((state.answers ?? []).map((a) => [a.playerId, a]));
@@ -577,10 +594,16 @@ function renderStandings(state: LiveState): HTMLElement[] {
     .filter((a) => a.correct && a.ms !== undefined)
     .sort((a, b) => a.ms! - b.ms!)[0];
   const fastestName = fastest && state.players.find((p) => p.id === fastest.playerId)?.name;
+  const ranked = rank(state.players);
+  const shown =
+    ranked.length <= STANDINGS_ALL_UP_TO
+      ? ranked
+      : ranked.filter((r, i) => i < STANDINGS_TOP || r.player.id === state.you);
+  const hidden = ranked.length - shown.length;
   const list = el(
     'ol',
     { class: 'live-standings' },
-    ...rank(state.players).map(({ player, place }) => {
+    ...shown.map(({ player, place }) => {
       const a = answers.get(player.id);
       const answered = a && (a.code !== null || a.lat !== undefined);
       return el(
@@ -595,6 +618,7 @@ function renderStandings(state: LiveState): HTMLElement[] {
         el('span', { class: 'live-points' }, t().common.points(player.score)),
       );
     }),
+    hidden > 0 ? el('li', { class: 'live-more' }, t().live.andMore(hidden)) : null,
   );
   return fastest && fastestName ? [el('p', { class: 'live-fastest' }, t().live.fastest(fastestName, t().live.seconds(fastest.ms!))), list] : [list];
 }
