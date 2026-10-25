@@ -1,20 +1,22 @@
 import { COUNTIES, type County } from '../data/counties';
+import { LAKES, type Lake } from '../data/lakes';
 import { CONFIG, defaultScoring, type ScoringFn } from './config';
 import { haversineKm, shuffle } from './geo';
 
-export type Mode = 'lan' | 'stad' | 'blandat';
-export type QuestionKind = 'lan' | 'stad';
+export type Mode = 'lan' | 'stad' | 'sjo' | 'blandat';
 
 export const MODE_LABELS: Record<Mode, string> = {
   lan: 'Län',
   stad: 'Residensstad',
+  sjo: 'Sjöar',
   blandat: 'Blandat',
 };
 
-export interface Question {
-  kind: QuestionKind;
-  county: County;
-}
+export type Question =
+  | { kind: 'lan' | 'stad'; county: County }
+  | { kind: 'sjo'; lake: Lake };
+
+export type QuestionKind = Question['kind'];
 
 export interface QuestionResult {
   question: Question;
@@ -23,9 +25,10 @@ export interface QuestionResult {
   solved: boolean;
 }
 
-/** Ett svar från spelaren: antingen ett klickat län eller en klickad punkt. */
+/** Ett svar från spelaren: ett klickat län, en klickad sjö eller en klickad punkt. */
 export type Guess =
   | { kind: 'county'; code: string | null }
+  | { kind: 'lake'; id: string | null }
   | { kind: 'point'; lat: number; lon: number };
 
 export interface AnswerOutcome {
@@ -61,10 +64,10 @@ export class Game {
   private readonly scoring: ScoringFn;
   score = 0;
 
-  constructor(mode: Mode, scoring: ScoringFn = defaultScoring, order: readonly County[] = shuffle(COUNTIES)) {
+  constructor(mode: Mode, scoring: ScoringFn = defaultScoring, questions: readonly Question[] = buildQuestions(mode)) {
     this.mode = mode;
     this.scoring = scoring;
-    this.questions = order.map((county) => ({ kind: pickKind(mode), county }));
+    this.questions = questions;
   }
 
   get current(): Question | null {
@@ -75,7 +78,7 @@ export class Game {
     return this.questions.length;
   }
 
-  /** 1-baserat nummer på aktuell fråga (för "7/21"). */
+  /** 1-baserat nummer på aktuell fråga (för "7/21" eller "3/10"). */
   get number(): number {
     return Math.min(this.index + 1, this.total);
   }
@@ -91,8 +94,7 @@ export class Game {
   /** Formulerar frågetexten. */
   prompt(): string {
     const q = this.current;
-    if (!q) return '';
-    return q.kind === 'lan' ? `Var ligger ${q.county.name}?` : `Var ligger ${q.county.city}?`;
+    return q ? `Var ligger ${questionLabel(q)}?` : '';
   }
 
   answer(guess: Guess): AnswerOutcome {
@@ -104,6 +106,8 @@ export class Game {
 
     if (q.kind === 'lan') {
       correct = guess.kind === 'county' && guess.code === q.county.code;
+    } else if (q.kind === 'sjo') {
+      correct = guess.kind === 'lake' && guess.id === q.lake.id;
     } else if (guess.kind === 'point') {
       distanceKm = haversineKm(guess.lat, guess.lon, q.county.lat, q.county.lon);
       correct = distanceKm <= CONFIG.cityRadiusKm;
@@ -157,7 +161,19 @@ export class Game {
   }
 }
 
-function pickKind(mode: Mode): QuestionKind {
+/** Frågorna för en omgång i slumpad ordning: alla 21 län, eller alla sjöar i sjöläget. */
+export function buildQuestions(mode: Mode): Question[] {
+  if (mode === 'sjo') return shuffle(LAKES).map((lake) => ({ kind: 'sjo', lake }));
+  return shuffle(COUNTIES).map((county) => ({ kind: pickCountyKind(mode), county }));
+}
+
+function pickCountyKind(mode: Exclude<Mode, 'sjo'>): 'lan' | 'stad' {
   if (mode === 'blandat') return Math.random() < 0.5 ? 'lan' : 'stad';
   return mode;
+}
+
+/** Det frågan gäller: länets namn, stadens namn eller sjöns namn. */
+export function questionLabel(q: Question): string {
+  if (q.kind === 'sjo') return q.lake.name;
+  return q.kind === 'lan' ? q.county.name : q.county.city;
 }

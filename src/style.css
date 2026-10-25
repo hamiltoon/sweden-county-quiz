@@ -10,6 +10,10 @@
   --land: #f6efe0;
   --land-hover: #ffe3a3;
   --border: #7a8ca3;
+  --lake: #a8cbec;
+  --lake-border: #5d8fbf;
+  --lake-hover: #7fb2e3;
+  --lake-label: #1f4f7f;
   --ok: #1e9e5a;
   --bad: #d64545;
   --reveal: #2b7fd6;
@@ -33,6 +37,10 @@
     --land: #2a3447;
     --land-hover: #4a5a78;
     --border: #6f819c;
+    --lake: #1d3a5e;
+    --lake-border: #4a76a8;
+    --lake-hover: #2c5a8f;
+    --lake-label: #a9cdf5;
     --ok: #2fc271;
     --bad: #ef5e5e;
     --reveal: #62a5ff;
@@ -349,8 +357,12 @@ a {
 }
 
 @media (hover: hover) {
-  .map-svg:not(.is-locked) .county:hover {
+  .map-svg:not(.is-locked):not(.is-lake-mode) .county:hover {
     fill: var(--land-hover);
+  }
+
+  .map-svg.is-lake-mode:not(.is-locked) .lake:hover {
+    fill: var(--lake-hover);
   }
 }
 
@@ -388,6 +400,66 @@ a {
 
 .map-svg.is-zoomed .county-hit {
   pointer-events: none;
+}
+
+/* Sjöar: riktmärken som klicken går igenom, utom i sjöläget där de är svaren. */
+.lake {
+  fill: var(--lake);
+  stroke: var(--lake-border);
+  stroke-width: 0.6px;
+  vector-effect: non-scaling-stroke;
+  stroke-linejoin: round;
+  pointer-events: none;
+  transition: fill 0.12s ease;
+}
+
+.map-svg.is-lake-mode .lake {
+  pointer-events: fill;
+}
+
+.lake.is-correct {
+  fill: var(--ok);
+}
+
+.lake.is-wrong {
+  fill: var(--bad);
+}
+
+.lake.is-reveal {
+  fill: var(--reveal);
+  stroke: var(--reveal);
+  stroke-width: 1.5px;
+  animation: pulse 0.9s ease-in-out infinite alternate;
+}
+
+.lake-hit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 14px;
+  vector-effect: non-scaling-stroke;
+  stroke-linejoin: round;
+  pointer-events: stroke;
+}
+
+.lake-label {
+  fill: var(--lake-label);
+  font-style: italic;
+  font-weight: 600;
+  dominant-baseline: central;
+  paint-order: stroke;
+  stroke: var(--land);
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+.lake-label.is-shown {
+  fill: var(--text);
+  stroke: var(--panel);
+  font-weight: 700;
+}
+
+.lake-label.is-hidden {
+  display: none;
 }
 
 .marker {
@@ -463,10 +535,8 @@ a {
   position: absolute;
   left: 12px;
   right: 12px;
-  top: 12px;
   width: fit-content;
   margin: 0 auto;
-  transform: translateY(-12px);
   max-width: min(92%, 520px);
   padding: 10px 16px;
   border-radius: 999px;
@@ -480,6 +550,18 @@ a {
   z-index: 3;
   text-align: center;
   font-size: 0.95rem;
+}
+
+.toast-top {
+  top: 12px;
+  transform: translateY(-12px);
+}
+
+/* Nederst: lämna plats åt zoomknapparna till höger. */
+.toast-bottom {
+  bottom: calc(16px + var(--safe-bottom));
+  right: calc(10px + 44px + 12px + var(--safe-right));
+  transform: translateY(12px);
 }
 
 .toast.is-visible {

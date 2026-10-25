@@ -18,3 +18,26 @@ export function shuffle<T>(items: readonly T[]): T[] {
   }
   return arr;
 }
+
+/**
+ * Ungefärligt avstånd (km) från en punkt till närmaste hörn i en polygons kontur.
+ * Hörnen i 1:10m-data ligger tätt, så felet är litet jämfört med avstånden som visas.
+ * Ger 0 om geometrin saknar koordinater.
+ */
+export function distanceToShapeKm(
+  geometry: { type: 'Polygon'; coordinates: number[][][] } | { type: 'MultiPolygon'; coordinates: number[][][][] },
+  lat: number,
+  lon: number,
+): number {
+  const polygons = geometry.type === 'Polygon' ? [geometry.coordinates] : geometry.coordinates;
+  let best = Infinity;
+  for (const polygon of polygons) {
+    for (const ring of polygon) {
+      for (const [pLon, pLat] of ring) {
+        const d = haversineKm(lat, lon, pLat, pLon);
+        if (d < best) best = d;
+      }
+    }
+  }
+  return Number.isFinite(best) ? best : 0;
+}

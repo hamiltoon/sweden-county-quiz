@@ -1,5 +1,6 @@
 import { el } from './dom';
-import { MODE_LABELS, type Mode, type Summary } from '../game/game';
+import { MODE_LABELS, questionLabel, type Mode, type Question, type Summary } from '../game/game';
+import { LAKES } from '../data/lakes';
 import { getBest } from '../game/storage';
 import { CONFIG } from '../game/config';
 
@@ -9,6 +10,7 @@ export function renderStart(onStart: (mode: Mode) => void): HTMLElement {
   const modes: { mode: Mode; desc: string }[] = [
     { mode: 'lan', desc: 'Klicka på rätt län.' },
     { mode: 'stad', desc: `Klicka där staden ligger (inom ${CONFIG.cityRadiusKm} km).` },
+    { mode: 'sjo', desc: `Klicka på rätt sjö bland Sveriges ${LAKES.length} största.` },
     { mode: 'blandat', desc: 'Slumpar mellan län och städer.' },
   ];
 
@@ -33,7 +35,7 @@ export function renderStart(onStart: (mode: Mode) => void): HTMLElement {
       'header',
       { class: 'start-header' },
       el('h1', {}, 'Sverigespelet'),
-      el('p', { class: 'lead' }, 'Hitta Sveriges 21 län och residensstäder på kartan. Välj läge och starta.'),
+      el('p', { class: 'lead' }, 'Hitta Sveriges 21 län, residensstäder och största sjöar på kartan. Välj läge och starta.'),
     ),
     el('div', { class: 'mode-list' }, ...buttons),
     el(
@@ -61,11 +63,7 @@ export function renderEnd(summary: Summary, isNewBest: boolean, onAgain: () => v
               el(
                 'li',
                 {},
-                el(
-                  'span',
-                  {},
-                  r.question.kind === 'lan' ? r.question.county.name : `${r.question.county.city} (${r.question.county.name})`,
-                ),
+                el('span', {}, resultLabel(r.question)),
                 el('span', { class: 'pts' }, `${r.points} p`),
               ),
             ),
@@ -95,4 +93,9 @@ export function renderEnd(summary: Summary, isNewBest: boolean, onAgain: () => v
     missed.length + shaky.length === 0 ? el('p', { class: 'perfect' }, 'Felfritt – alla rätt på första försöket!') : null,
     el('div', { class: 'btn-row' }, again, menu),
   );
+}
+
+/** Namnet i resultatlistan; städer får länet inom parentes. */
+function resultLabel(q: Question): string {
+  return q.kind === 'stad' ? `${q.county.city} (${q.county.name})` : questionLabel(q);
 }

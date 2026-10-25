@@ -1,10 +1,10 @@
-import { geoPath, geoTransverseMercator, type GeoPermissibleObjects, type GeoProjection } from 'd3-geo';
+import { geoArea, geoCentroid, geoPath, geoTransverseMercator, type GeoPermissibleObjects, type GeoProjection } from 'd3-geo';
 import { pointer, select, type Selection } from 'd3-selection';
 import 'd3-transition';
-import { zoom, zoomIdentity, type D3ZoomEvent, type ZoomBehavior } from 'd3-zoom';
+import { zoom, zoomIdentity, type D3ZoomEvent, type ZoomBehavior, type ZoomTransform } from 'd3-zoom';
 import { feature } from 'topojson-client';
 import type { Topology, GeometryCollection } from 'topojson-specification';
-import type { Feature, FeatureCollection, Geometry } from 'geojson';
+import type { Feature, FeatureCollection, Geometry, MultiPolygon, Polygon } from 'geojson';
 
 export interface CountyProps {
   code: string;
@@ -13,12 +13,33 @@ export interface CountyProps {
 
 export type CountyFeature = Feature<Geometry, CountyProps>;
 
+export interface LakeProps {
+  id: string;
+  name: string;
+}
+
+export type LakeFeature = Feature<Polygon | MultiPolygon, LakeProps>;
+
+export interface MapOptions {
+  /** Namnet på länsobjektet i topologin. */
+  objectName?: string;
+  /** Topologi med objektet "sjoar". Utan den ritas inga sjöar. */
+  lakes?: Topology | null;
+  /**
+   * Sjöläge: sjöarna går att klicka på och namnen döljs tills de visas med showLakeLabel().
+   * Annars är sjöarna bara riktmärken: namnen syns men klicken går igenom till länen.
+   */
+  lakeMode?: boolean;
+}
+
 export type HighlightState = 'correct' | 'wrong' | 'reveal';
 export type MarkerKind = 'correct' | 'wrong' | 'reveal';
 
 export interface MapClick {
-  /** Länskod som träffades, eller null om klicket hamnade utanför alla län. */
+  /** Länskod som träffades, eller null om klicket hamnade utanför alla län (eller på en sjö i sjöläget). */
   code: string | null;
+  /** Sjö-id som träffades (bara i sjöläget), annars null. */
+  lake: string | null;
   lon: number;
   lat: number;
 }
@@ -35,6 +56,18 @@ const MAX_ZOOM = 10;
 const PADDING = 8;
 /** Län som är så små på skärmen att de får en extra osynlig träffyta. */
 const SMALL_COUNTIES: ReadonlySet<string> = new Set(['K', 'I']);
+/** Teckenstorlek och konturbredd (px på skärmen) för sjönamnen. */
+const LAKE_LABEL_PX = 11;
+const LAKE_LABEL_HALO_PX = 2.5;
+
+interface Box {
+  x0: number;
+  y0: number;
+  x1: number;
+  y1: number;
+}
+
+const overlaps = (a: Box, b: Box): boolean => a.x0 < b.x1 && a.x1 > b.x0 && a.y0 < b.y1 && a.y1 > b.y0;
 
 /**
  * SVG-karta över Sveriges län med d3-geo-projektion och pinch-zoom/pan via d3-zoom.
@@ -45,16 +78,22 @@ export class SwedenMap {
   private readonly root: Selection<SVGGElement, unknown, null, undefined>;
   private readonly countiesG: Selection<SVGGElement, unknown, null, undefined>;
   private readonly hitG: Selection<SVGGElement, unknown, null, undefined>;
+  private readonly lakeHitG: Selection<SVGGElement, unknown, null, undefined>;
+  private readonly lakesG: Selection<SVGGElement, unknown, null, undefined>;
+  private readonly lakeLabelsG: Selection<SVGGElement, unknown, null, undefined>;
   private readonly markersG: Selection<SVGGElement, unknown, null, undefined>;
   private readonly zoomBehavior: ZoomBehavior<SVGSVGElement, unknown>;
   private readonly projection: GeoProjection;
   private readonly path = geoPath();
   private readonly features: CountyFeature[];
   private readonly collection: FeatureCollection<Geometry, CountyProps>;
+  private readonly lakeFeatures: LakeFeature[];
+  private readonly lakeMode: boolean;
   private markers: Marker[] = [];
   private width = 0;
   private height = 0;
   private k = 1;
+  private transform: ZoomTransform = zoomIdentity;
   private interactive = true;
   private readonly resizeObserver: ResizeObserver;
 
@@ -63,12 +102,18 @@ export class SwedenMap {
   constructor(
     private readonly container: HTMLElement,
     topology: Topology,
-    objectName = 'lan',
+    { objectName = 'lan', lakes = null, lakeMode = false }: MapOptions = {},
   ) {
     const obj = topology.objects[objectName] as GeometryCollection<CountyProps>;
     if (!obj) throw new Error(`TopoJSON saknar objektet "${objectName}"`);
     this.collection = feature(topology, obj) as FeatureCollection<Geometry, CountyProps>;
     this.features = this.collection.features;
+    const lakeObj = lakes?.objects.sjoar as GeometryCollection<LakeProps> | undefined;
+    if (lakes && !lakeObj) throw new Error('TopoJSON saknar objektet "sjoar"');
+    // Största sjön först: den ordningen avgör vilka namn som får plats när kartan är trång.
+    this.lakeFeatures = lakes && lakeObj ? ((feature(lakes, lakeObj) as FeatureCollection).features as LakeFeature[]) : [];
+    this.lakeFeatures.sort((a, b) => geoArea(b) - geoArea(a));
+    this.lakeMode = lakeMode;
 
     // Transversal Mercator centrerad på lon 15°E passar ett avlångt land som Sverige bra.
     this.projection = geoTransverseMercator().rotate([-15, 0]);
@@ -77,11 +122,17 @@ export class SwedenMap {
     this.svg = select(container)
       .append('svg')
       .attr('class', 'map-svg')
+      .classed('is-lake-mode', lakeMode)
       .attr('role', 'img')
-      .attr('aria-label', 'Karta över Sveriges län');
+      .attr('aria-label', this.lakeFeatures.length ? 'Karta över Sveriges län och största sjöar' : 'Karta över Sveriges län');
     this.root = this.svg.append('g').attr('class', 'map-root');
     this.countiesG = this.root.append('g').attr('class', 'counties');
     this.hitG = this.root.append('g').attr('class', 'county-hits');
+    // Sjöarnas träffytor ligger under själva sjöarna, så att ett klick inne i en sjö alltid
+    // träffar den sjön och aldrig grannsjöns träffyta.
+    this.lakeHitG = this.root.append('g').attr('class', 'lake-hits');
+    this.lakesG = this.root.append('g').attr('class', 'lakes');
+    this.lakeLabelsG = this.root.append('g').attr('class', 'lake-labels');
     this.markersG = this.root.append('g').attr('class', 'markers');
 
     this.countiesG
@@ -99,14 +150,41 @@ export class SwedenMap {
       .attr('class', 'county-hit')
       .attr('data-code', (d) => d.properties.code);
 
+    this.lakesG
+      .selectAll('path')
+      .data(this.lakeFeatures)
+      .join('path')
+      .attr('class', 'lake')
+      .attr('data-lake', (d) => d.properties.id);
+
+    // Osynliga träffhalos runt sjöarna i sjöläget: smala sjöar som Hjälmaren är svåra att träffa annars.
+    if (lakeMode) {
+      this.lakeHitG
+        .selectAll('path')
+        .data(this.lakeFeatures)
+        .join('path')
+        .attr('class', 'lake-hit')
+        .attr('data-lake', (d) => d.properties.id);
+    }
+
+    this.lakeLabelsG
+      .selectAll('text')
+      .data(this.lakeFeatures)
+      .join('text')
+      .attr('class', 'lake-label')
+      .attr('data-lake', (d) => d.properties.id)
+      .text((d) => d.properties.name);
+
     this.zoomBehavior = zoom<SVGSVGElement, unknown>()
       .scaleExtent([MIN_ZOOM, MAX_ZOOM])
       .filter((event: Event) => this.interactive && defaultZoomFilter(event))
       .on('zoom', (event: D3ZoomEvent<SVGSVGElement, unknown>) => {
         this.k = event.transform.k;
+        this.transform = event.transform;
         this.root.attr('transform', event.transform.toString());
         this.svg.classed('is-zoomed', this.k > 1.01);
         this.renderMarkers();
+        this.renderLakeLabels();
       });
 
     this.svg.call(this.zoomBehavior).on('dblclick.zoom', null);
@@ -134,11 +212,14 @@ export class SwedenMap {
     );
     this.countiesG.selectAll<SVGPathElement, CountyFeature>('path').attr('d', (d) => this.path(d));
     this.hitG.selectAll<SVGPathElement, CountyFeature>('path').attr('d', (d) => this.path(d));
+    this.lakesG.selectAll<SVGPathElement, LakeFeature>('path').attr('d', (d) => this.path(d));
+    this.lakeHitG.selectAll<SVGPathElement, LakeFeature>('path').attr('d', (d) => this.path(d));
     this.zoomBehavior.translateExtent([
       [0, 0],
       [w, h],
     ]);
     this.renderMarkers();
+    this.renderLakeLabels();
   }
 
   private handleClick(event: MouseEvent): void {
@@ -146,9 +227,10 @@ export class SwedenMap {
     const [x, y] = pointer(event, this.root.node());
     const lonLat = this.projection.invert?.([x, y]);
     if (!lonLat) return;
-    const target = (event.target as Element | null)?.closest?.('path[data-code]') as SVGPathElement | null;
+    const target = (event.target as Element | null)?.closest?.('path[data-code], path[data-lake]') as SVGPathElement | null;
     const code = target?.dataset.code ?? null;
-    this.onClick({ code, lon: lonLat[0], lat: lonLat[1] });
+    const lake = this.lakeMode ? (target?.dataset.lake ?? null) : null;
+    this.onClick({ code, lake, lon: lonLat[0], lat: lonLat[1] });
   }
 
   setInteractive(on: boolean): void {
@@ -174,6 +256,38 @@ export class SwedenMap {
 
   clearHighlights(): void {
     this.countiesG.selectAll('path').attr('class', 'county');
+    this.lakesG.selectAll('path').attr('class', 'lake');
+    this.lakeLabelsG.selectAll('text').classed('is-shown', false);
+    this.renderLakeLabels();
+  }
+
+  highlightLake(id: string, state: HighlightState): void {
+    this.lakesG
+      .selectAll<SVGPathElement, LakeFeature>('path')
+      .filter((d) => d.properties.id === id)
+      .classed(`is-${state}`, true)
+      .raise();
+  }
+
+  unhighlightLake(id: string, state: HighlightState): void {
+    this.lakesG
+      .selectAll<SVGPathElement, LakeFeature>('path')
+      .filter((d) => d.properties.id === id)
+      .classed(`is-${state}`, false);
+  }
+
+  /** Visar en sjös namn även i sjöläget (där namnen annars är dolda). */
+  showLakeLabel(id: string): void {
+    this.lakeLabelsG
+      .selectAll<SVGTextElement, LakeFeature>('text')
+      .filter((d) => d.properties.id === id)
+      .classed('is-shown', true);
+    this.renderLakeLabels();
+  }
+
+  /** Sjöns geometri (WGS84), t.ex. för att räkna avstånd till den. */
+  lakeGeometry(id: string): Polygon | MultiPolygon | null {
+    return this.lakeFeatures.find((d) => d.properties.id === id)?.geometry ?? null;
   }
 
   addMarker(lon: number, lat: number, kind: MarkerKind, label?: string): void {
@@ -211,6 +325,76 @@ export class SwedenMap {
       .attr('y', -18 / k)
       .attr('font-size', 14 / k)
       .text((d) => d.label ?? '');
+  }
+
+  /**
+   * Placerar sjönamnen med konstant skärmstorlek. Varje namn hamnar inne i sjön om det får plats
+   * där, annars bredvid (höger, vänster, under, över), på första stället som inte täcker en annan
+   * sjö, inte krockar med ett namn som redan placerats och syns i vyn. Så hamnar inget namn så att
+   * det ser ut att höra till grannsjön, och små sjöar döljs inte av sitt eget namn.
+   *
+   * Som riktmärken placeras namnen i storleksordning; de som inte får plats döljs tills man zoomar.
+   * I sjöläget visas bara de namn som slagits på med showLakeLabel().
+   */
+  private renderLakeLabels(): void {
+    const k = this.k;
+    const fontSize = LAKE_LABEL_PX / k;
+    const gap = 3 / k;
+    const halfH = fontSize * 0.7;
+    const t = this.transform;
+    const view: Box = { x0: -t.x / k, y0: -t.y / k, x1: (this.width - t.x) / k, y1: (this.height - t.y) / k };
+    const lakeBoxes = new Map<string, Box>(
+      this.lakeFeatures.map((d) => {
+        const [[x0, y0], [x1, y1]] = this.path.bounds(d);
+        return [d.properties.id, { x0, y0, x1, y1 }];
+      }),
+    );
+    const placed: Box[] = [];
+    const labels = this.lakeLabelsG.selectAll<SVGTextElement, LakeFeature>('text');
+    // Konturen sätts här och inte i CSS, så att den håller samma skärmbredd vid zoom.
+    labels.attr('font-size', fontSize).style('stroke-width', `${LAKE_LABEL_HALO_PX / k}px`);
+    labels.each((d, i, nodes) => {
+      const node = nodes[i];
+      const id = d.properties.id;
+      const visible = !this.lakeMode || node.classList.contains('is-shown');
+      if (!visible) {
+        node.classList.add('is-hidden');
+        return;
+      }
+      // Uppskattad textbredd i kartans koordinater (samma enhet som path.bounds).
+      const w = d.properties.name.length * fontSize * 0.62 + 4 / k;
+      const own = lakeBoxes.get(id)!;
+      const [cx, cy] = this.projection(geoCentroid(d)) ?? [(own.x0 + own.x1) / 2, (own.y0 + own.y1) / 2];
+      const fitsInside = own.x1 - own.x0 >= w && own.y1 - own.y0 >= 2 * halfH;
+      const candidates: { x: number; y: number; anchor: 'start' | 'middle' | 'end'; box: Box; inside?: boolean }[] = [];
+      const at = (x: number, y: number, anchor: 'start' | 'middle' | 'end', inside = false) => {
+        const x0 = anchor === 'start' ? x : anchor === 'end' ? x - w : x - w / 2;
+        candidates.push({ x, y, anchor, inside, box: { x0, x1: x0 + w, y0: y - halfH, y1: y + halfH } });
+      };
+      if (fitsInside) at(cx, cy, 'middle', true);
+      at(own.x1 + gap, cy, 'start');
+      at(own.x0 - gap, cy, 'end');
+      at(cx, own.y1 + halfH + gap, 'middle');
+      at(cx, own.y0 - halfH - gap, 'middle');
+
+      const free = (c: (typeof candidates)[number]) =>
+        c.box.x0 >= view.x0 &&
+        c.box.x1 <= view.x1 &&
+        c.box.y0 >= view.y0 &&
+        c.box.y1 <= view.y1 &&
+        !placed.some((b) => overlaps(c.box, b)) &&
+        ![...lakeBoxes].some(([other, b]) => other !== id && overlaps(c.box, b)) &&
+        (c.inside || !overlaps(c.box, own));
+      let choice = candidates.find(free);
+      // Ett namn som visar ett svar i sjöläget ska alltid synas, även om det inte finns en helt fri plats.
+      if (!choice && this.lakeMode) choice = candidates.find((c) => c.inside) ?? candidates[0];
+      node.classList.toggle('is-hidden', !choice);
+      if (!choice) return;
+      node.setAttribute('x', String(choice.x));
+      node.setAttribute('y', String(choice.y));
+      node.style.textAnchor = choice.anchor;
+      placed.push(choice.box);
+    });
   }
 
   resetZoom(duration = 350): void {
