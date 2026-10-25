@@ -36,16 +36,17 @@ klickade de andra) och att funktioner för daglig vana och bred publik väntar.
 
 | Status | Punkter |
 |---|---|
-| Pågår (utvecklaren) | PO-06, sedan PO-01b (kriterium 12–13 i PO-01) |
+| Pågår (utvecklaren) | PO-01b |
 | Nästa | PO-22, PO-14, PO-15, PO-16 |
-| Väntar på UX-verifiering | PO-01 (kriterium 1–11, driftsatt i #22) |
+| Väntar på UX-verifiering | PO-06 (driftsatt i #23) |
+| Underkänd, rättas | PO-01: kriterium 8 underkänt av UX, rättas i PO-01b |
 | Väntar på svar från John | – |
 | Klart | – |
 
 ## Backlog i prioritetsordning
 
 ### PO-01 Live: se allas klick och vem som var snabbast när svaret visas
-- **Prioritet:** P1. Kriterium 1–11 driftsatta 2026-10-25 ([#22](https://github.com/hamiltoon/sweden-county-quiz/pull/22)), väntar på UX. Kriterium 12–13 görs som PO-01b.
+- **Prioritet:** P1. Driftsatt 2026-10-25 ([#22](https://github.com/hamiltoon/sweden-county-quiz/pull/22)). UX: 1–7, 9 och 10 godkända; 8 underkänt med 12 spelare (vyn räknas innan ställningen ritats, och ställningen tar halva skärmen). Rättas i PO-01b.
 - **Insats:** M (servern sparar klick och svarstid för alla svar; kartan ritar prickar med namn)
 - **Koppling:** IDEER.md "Göra live mer levande" 4 och 5
 - **Värde:** Det är i avslöjandet som snacket uppstår: "Du klickade ju i Norge!" I dag ser man bara sitt eget
@@ -72,8 +73,22 @@ klickade de andra) och att funktioner för daglig vana och bred publik väntar.
   13. Avslöjandet visas i 5 sekunder med upp till tre spelare och i 7 sekunder med fyra eller fler, så att man hinner
       läsa prickar och ställning. (Tillagt 2026-10-25.)
 
+### PO-01b Live: avslöjandet håller med många spelare
+- **Prioritet:** P1, pågår
+- **Insats:** S–M
+- **Koppling:** PO-01 kriterium 8, 12 och 13; UX-07
+- **Beslut (PO):** med fler än 5 spelare visar ställningen under avslöjandet topp 3, den egna raden och "… och N till".
+  Hela listan visas på pallen.
+- **Acceptanskriterier:**
+  1. Vyn räknas ut efter att ställningen och snabbast-raden har ritats, så att kartan inte flyttar sig efteråt. Från
+     första bildrutan syns rätt svar och allas prickar; ligger ett klick mycket långt bort visas hela Sverige.
+  2. Ställningen följer regeln ovan och tar högst ungefär en tredjedel av skärmhöjden på iPhone 13 och Android 360 med 12 spelare.
+  3. Den egna raden syns alltid helt.
+  4. Avslöjandet varar 5 s med upp till 3 spelare och 7 s med 4 eller fler.
+  5. Testat med 12 spelare i län, residensstad, sjöar och kommuner, på båda skärmstorlekarna.
+
 ### PO-06 Startskärmen: hitta Spela live direkt
-- **Prioritet:** P1, pågår (liten och oberoende av PO-01, så den går parallellt)
+- **Prioritet:** P1. Driftsatt 2026-10-25 ([#23](https://github.com/hamiltoon/sweden-county-quiz/pull/23)), väntar på UX.
 - **Beslut (PO):** live-kortet flyttas upp direkt under rubriken.
 - **Insats:** S
 - **Koppling:** UX-04; eget fynd vid genomspelning på mobil (2026-10-25)
