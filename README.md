@@ -34,6 +34,16 @@ Skriv ett namn (på startskärmen eller efter en omgång) så sparas varje avslu
 - **Rimlighetskontroll:** servern godtar bara poäng som går att få i läget och som stämmer med andelen rätt. Den kan inte bevisa att en omgång faktiskt spelats, så topplistan bygger på förtroende.
 - **Integritet:** namnet visas öppet för alla. IP-adressen används bara för att begränsa antalet sparningar (20 per minut) och sparas inte.
 
+### Skydda namnet med passkey
+
+Vem som helst kan spela med ett namn utan konto. Den som vill kan skydda sitt namn med en passkey (Face ID, Touch ID, skärmlåset eller en säkerhetsnyckel): då kan bara den som är inloggad spara resultat under namnet, och samma passkey loggar in på andra enheter (passkeys synkas via iCloud-nyckelringen eller Googles lösenordshanterare).
+
+- Inga lösenord, ingen e-post. Servern sparar bara passkeyns publika nyckel.
+- Inloggningen är en slumpad token i en `HttpOnly`-, `Secure`-, `SameSite=Strict`-cookie som gäller i 180 dagar; databasen har bara en hash av den. Spelets JavaScript kan inte läsa den.
+- Ett skyddat namn kan inte tas av någon annan. Försöker någon spara under det utan att vara inloggad avvisas resultatet, och det ligger kvar i kön tills hen loggar in eller byter namn.
+- POST-anrop från andra webbplatser avvisas (kontroll av `Origin`), så inloggningen kan inte missbrukas via någon annans sida.
+- WebAuthn sköts av [SimpleWebAuthn](https://simplewebauthn.dev/) (`@simplewebauthn/server` i Workern, `@simplewebauthn/browser` i spelet). Relying Party är värdnamnet sidan körs på, så det fungerar både lokalt (`http://localhost:8787`) och i produktion.
+
 ## Kör lokalt
 
 ```sh
@@ -57,12 +67,16 @@ npm run deploy               # npm run build && wrangler deploy
 
 Sajten deployas till Cloudflare Workers. `wrangler.jsonc` pekar ut `dist/` som static assets med `not_found_handling: "single-page-application"` (SPA-fallback till `index.html`). Bara `/api/*` går till Worker-scriptet i `worker/index.ts` (`run_worker_first`); allt annat serveras direkt som filer.
 
-Topplistan ligger i D1-databasen `sverigespelet` (tabellen `scores`, se `migrations/`). Antalet sparningar per IP-adress begränsas med Workers rate limiting (`SUBMIT_LIMITER`). Kör `npx wrangler types worker/worker-configuration.d.ts` efter ändringar i `wrangler.jsonc`.
+Topplistan och kontona ligger i D1-databasen `sverigespelet` (tabellerna `scores`, `players`, `passkeys`, `sessions` och `auth_challenges`, se `migrations/`). Antalet sparningar per IP-adress begränsas med Workers rate limiting (`SUBMIT_LIMITER`). Kör `npx wrangler types worker/worker-configuration.d.ts` efter ändringar i `wrangler.jsonc`.
 
 API:
 
 - `GET /api/scores?mode=lan&limit=10` – bästa resultat per spelare i ett läge (`lan`, `stad`, `sjo`, `blandat`), eller `mode=total` för summan av varje spelares bästa resultat i alla lägen.
-- `POST /api/scores` med `{ "name": "...", "results": [{ "id", "mode", "score", "percent", "playedAt" }] }` – sparar upp till tio resultat och svarar med spelarens placering per läge och totalt.
+- `POST /api/scores` med `{ "name": "...", "results": [{ "id", "mode", "score", "percent", "playedAt" }] }` – sparar upp till tio resultat och svarar med spelarens placering per läge och totalt. Inloggad spelare sparar alltid under kontots namn.
+- `GET /api/me` – inloggad spelare (`{ "name": null }` om ingen).
+- `POST /api/passkey/register/options` och `.../register/verify` – skydda ett namn med en ny passkey (eller lägg till en passkey till det egna kontot).
+- `POST /api/passkey/login/options` och `.../login/verify` – logga in med en befintlig passkey.
+- `POST /api/logout` – logga ut den här enheten.
 
 ## Kartdata
 
@@ -92,7 +106,7 @@ Vite + TypeScript utan ramverk (vanilla DOM). Kartan ritas som SVG med [d3-geo](
 - `src/data/` – länen med koder, namn, residensstäder och koordinater, samt de största sjöarna.
 - `src/game/` – spellogik: frågor, försök, poäng (`config.ts`), avståndsberäkning och lagring av rekord, namn och osända resultat.
 - `src/shared/` – topplistans regler och typer, delade av spelet och Worker-scriptet.
-- `src/api/` – klienten för topplistans API, med kö för osända resultat.
+- `src/api/` – klienten för topplistans API, med kö för osända resultat, och för kontona (passkeys).
 - `src/map/` – SVG-kartan: projektion, zoom, klick, markeringar, sjöar, grannländer och minikartor.
 - `src/ui/` – start- och resultatskärm, topplista, DOM-hjälpare, toast.
 - `src/pwa.ts` – registrerar service workern i produktion.
@@ -100,7 +114,7 @@ Vite + TypeScript utan ramverk (vanilla DOM). Kartan ritas som SVG med [d3-geo](
 - `public/` – kartdata, ikoner och `manifest.webmanifest`.
 - `scripts/` – bygger kartdata och ikoner.
 - `vite.config.ts` – Vite-konfig med ett litet plugin som genererar `sw.js` (precachar appen och kartdatan; API:t går alltid till nätet).
-- `worker/` – Worker-scriptet för `/api/*` (topplistan) och genererade typer.
+- `worker/` – Worker-scriptet för `/api/*`: topplistan (`index.ts`), konton med passkeys (`auth.ts`), hjälpare och genererade typer.
 - `migrations/` – databasschemat för D1.
 - `wrangler.jsonc` – Cloudflare Workers-konfig: static assets, D1 och rate limiting.
 

@@ -10,6 +10,7 @@ import {
   type SubmitResponse,
 } from '../shared/leaderboard';
 import { fetchTop, flushPending, queueResult, setPlayerName } from '../api/leaderboard';
+import { fetchMe, loginWithPasskey, logout, protectName, supportsPasskeys } from '../api/account';
 import { getPlayerName } from '../game/storage';
 
 const sameName = (a: string, b: string | null) => b !== null && a.toLocaleLowerCase('sv') === b.toLocaleLowerCase('sv');
@@ -133,13 +134,63 @@ export function renderStartLeaderboard(): HTMLElement {
     return tab;
   });
 
+  // Inloggad spelare (skyddat namn), eller null. Hämtas från servern när skärmen visas.
+  let account: string | null = null;
+  const passkeys = supportsPasskeys();
+
+  const note = (text: string, isError = false) => {
+    status.textContent = text;
+    status.classList.toggle('is-error', isError);
+  };
+
+  /** Kör en passkey-åtgärd med knappen avstängd under tiden och visar resultat eller fel. */
+  const runAccountAction = async (button: HTMLButtonElement, action: () => Promise<string>, done: (name: string) => string) => {
+    button.disabled = true;
+    note('');
+    try {
+      const name = await action();
+      account = name;
+      showPlayer();
+      note(done(name));
+      await sync(true);
+    } catch (err) {
+      note(err instanceof Error ? err.message : 'Något gick fel.', true);
+      button.disabled = false;
+    }
+  };
+
+  const loginLink = (text: string) => {
+    const btn = el('button', { class: 'link-btn', type: 'button' }, text);
+    btn.addEventListener('click', () =>
+      void runAccountAction(btn, loginWithPasskey, (name) => `Inloggad som ${name}.`),
+    );
+    return btn;
+  };
+
   const showPlayer = () => {
     clear(playerRow);
     const name = getPlayerName();
-    if (!name) {
-      playerRow.append(renderNameForm('Skriv ditt namn för att komma med på topplistan.', 'Spara', onNameSaved));
+
+    if (account) {
+      const out = el('button', { class: 'link-btn', type: 'button' }, 'Logga ut');
+      out.addEventListener('click', async () => {
+        out.disabled = true;
+        await logout();
+        account = null;
+        showPlayer();
+        note('Utloggad på den här enheten.');
+        await list.load(selected);
+      });
+      playerRow.append(el('p', { class: 'player-name' }, '🔒 Inloggad som ', el('strong', {}, account), ' · ', out));
       return;
     }
+
+    if (!name) {
+      playerRow.append(renderNameForm('Skriv ditt namn för att komma med på topplistan.', 'Spara', onNameSaved));
+      if (passkeys) playerRow.append(el('p', { class: 'account-hint' }, 'Har du skyddat ditt namn med en passkey? ', loginLink('Logga in')));
+      return;
+    }
+
     const change = el('button', { class: 'link-btn', type: 'button' }, 'Byt namn');
     change.addEventListener('click', () => {
       clear(playerRow);
@@ -147,25 +198,53 @@ export function renderStartLeaderboard(): HTMLElement {
       playerRow.querySelector('input')?.focus();
     });
     playerRow.append(el('p', { class: 'player-name' }, 'Du spelar som ', el('strong', {}, name), ' · ', change));
+
+    if (passkeys) {
+      const protect = el('button', { class: 'btn passkey-btn', type: 'button' }, '🔒 Skydda namnet med passkey');
+      protect.addEventListener('click', () =>
+        void runAccountAction(
+          protect,
+          () => protectName(name),
+          (n) => `Namnet ${n} är skyddat. Logga in med samma passkey på dina andra enheter.`,
+        ),
+      );
+      playerRow.append(
+        protect,
+        el(
+          'p',
+          { class: 'account-hint' },
+          `Med Face ID, Touch ID eller skärmlåset. Då kan ingen annan spara som ${name}, och du kan logga in på andra enheter. Inget lösenord, ingen e-post. Redan skyddat? `,
+          loginLink('Logga in'),
+        ),
+      );
+    }
   };
 
   const sync = async (announce: boolean) => {
     try {
       const res = await flushPending();
       if (announce && res && res.saved > 0) {
-        status.textContent =
-          res.saved === 1 ? 'Ditt tidigare resultat har lagts till på topplistan.' : `Dina ${res.saved} tidigare resultat har lagts till på topplistan.`;
+        note(res.saved === 1 ? 'Ditt tidigare resultat har lagts till på topplistan.' : `Dina ${res.saved} tidigare resultat har lagts till på topplistan.`);
       }
     } catch (err) {
-      if (announce) status.textContent = `${err instanceof Error ? err.message : 'Kunde inte spara.'} Resultaten skickas nästa gång.`;
+      if (announce) note(`${err instanceof Error ? err.message : 'Kunde inte spara.'} Resultaten skickas nästa gång.`, true);
     }
     await list.load(selected);
   };
 
   function onNameSaved(): void {
+    note('');
     showPlayer();
     void sync(true);
   }
+
+  // Är enheten inloggad på ett konto? Då är det kontots namn som gäller här.
+  void fetchMe().then((name) => {
+    if (!name) return;
+    account = name;
+    if (getPlayerName() !== name) setPlayerName(name);
+    showPlayer();
+  });
 
   showPlayer();
   void sync(false);
@@ -198,6 +277,7 @@ export function renderEndLeaderboard(mode: Mode, result: ScoreSubmission): HTMLE
       status.textContent = `Sparat som ${name}.${res ? rankText(res.ranks, mode) : ''}`;
     } catch (err) {
       status.textContent = `${err instanceof Error ? err.message : 'Kunde inte spara.'} Resultatet skickas nästa gång.`;
+      status.classList.add('is-error');
     }
     await list.load(mode);
   };

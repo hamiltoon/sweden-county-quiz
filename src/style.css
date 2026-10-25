@@ -552,6 +552,26 @@ a {
   display: none;
 }
 
+.top-note.is-error {
+  color: var(--bad);
+}
+
+.passkey-btn {
+  width: 100%;
+  margin-bottom: 6px;
+}
+
+.passkey-btn:disabled {
+  opacity: 0.6;
+}
+
+.account-hint {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
 .top-tabs {
   display: flex;
   flex-wrap: wrap;

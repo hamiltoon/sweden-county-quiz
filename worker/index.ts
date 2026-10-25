@@ -1,10 +1,14 @@
 /**
- * Sverigespelets API: topplistan. Allt utom /api/* serveras direkt som statiska filer
- * (se run_worker_first i wrangler.jsonc), så den här koden körs bara för API-anropen.
+ * Sverigespelets API: topplistan och frivilliga konton med passkeys. Allt utom /api/* serveras
+ * direkt som statiska filer (se run_worker_first i wrangler.jsonc), så den här koden körs bara
+ * för API-anropen.
  *
  *   GET  /api/scores?mode=lan&limit=10    → bästa resultat per spelare i ett läge
  *   GET  /api/scores?mode=total&limit=10  → summan av varje spelares bästa resultat i alla lägen
  *   POST /api/scores                       → spara ett eller flera avslutade resultat
+ *   /api/me, /api/logout, /api/passkey/*   → konton, se auth.ts
+ *
+ * Ett namn som skyddats med en passkey kan bara användas av den som är inloggad på det kontot.
  */
 import {
   MAX_RESULTS_PER_SUBMIT,
@@ -25,6 +29,8 @@ import {
 import { COUNTIES } from '../src/data/counties';
 import { LAKES } from '../src/data/lakes';
 import { CONFIG } from '../src/game/config';
+import { handleAuth, nameKeyOf, protectedPlayer, sessionPlayer } from './auth';
+import { clientIp, isCrossOrigin, json, readJson } from './http';
 
 const MAX_BODY_BYTES = 4096;
 /** Resultat från före spelets första version, eller långt fram i tiden, är inte äkta. */
@@ -36,6 +42,11 @@ export default {
   async fetch(request, env): Promise<Response> {
     const url = new URL(request.url);
     try {
+      if (request.method === 'POST' && isCrossOrigin(request, url)) {
+        return json({ error: 'Anrop från andra webbplatser godtas inte.' }, 403);
+      }
+      const auth = await handleAuth(request, env, url);
+      if (auth) return auth;
       if (url.pathname === '/api/scores') {
         if (request.method === 'GET') return await getTop(url, env);
         if (request.method === 'POST') return await submit(request, env);
@@ -102,25 +113,28 @@ async function getTop(url: URL, env: Env): Promise<Response> {
 }
 
 async function submit(request: Request, env: Env): Promise<Response> {
-  const ip = request.headers.get('CF-Connecting-IP') ?? 'okänd';
-  const { success } = await env.SUBMIT_LIMITER.limit({ key: ip });
+  const { success } = await env.SUBMIT_LIMITER.limit({ key: clientIp(request) });
   if (!success) return json({ error: 'För många försök. Vänta en minut och försök igen.' }, 429);
 
-  const declared = Number(request.headers.get('Content-Length') ?? 0);
-  if (declared > MAX_BODY_BYTES) return json({ error: 'För stor förfrågan.' }, 413);
-  const text = await request.text();
-  if (text.length > MAX_BODY_BYTES) return json({ error: 'För stor förfrågan.' }, 413);
-  let body: unknown;
-  try {
-    body = JSON.parse(text);
-  } catch {
-    return json({ error: 'Ogiltig JSON.' }, 400);
-  }
-
-  const parsed = parseSubmit(body);
+  const read = await readJson(request, MAX_BODY_BYTES);
+  if ('error' in read) return read.error;
+  const parsed = parseSubmit(read.body);
   if ('error' in parsed) return json({ error: parsed.error }, 400);
-  const { name, results } = parsed;
-  const nameKey = name.toLocaleLowerCase('sv');
+  const { results } = parsed;
+
+  // Inloggad: resultaten sparas alltid under kontots namn. Annars får bara namn som ingen
+  // skyddat med en passkey användas.
+  const account = await sessionPlayer(request, env);
+  let name = parsed.name;
+  if (account) {
+    name = account.name;
+  } else {
+    const owner = await protectedPlayer(env, nameKeyOf(name));
+    if (owner) {
+      return json({ error: `Namnet ${owner.name} är skyddat. Logga in med din passkey eller välj ett annat namn.` }, 403);
+    }
+  }
+  const nameKey = nameKeyOf(name);
 
   const inserts = results.map((r) =>
     env.DB.prepare(
@@ -212,15 +226,4 @@ function isConsistent(mode: LeaderboardMode, score: number, percent: number): bo
   const minPoints = Math.min(...CONFIG.pointsByAttempt);
   const maxPoints = Math.max(...CONFIG.pointsByAttempt);
   return score >= solved * minPoints && score <= solved * maxPoints;
-}
-
-function json(body: unknown, status = 200, headers: Record<string, string> = {}): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: {
-      'Content-Type': 'application/json; charset=utf-8',
-      'Cache-Control': 'no-store',
-      ...headers,
-    },
-  });
 }
