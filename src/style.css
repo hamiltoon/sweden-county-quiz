@@ -1527,6 +1527,12 @@ a {
   border-radius: 10px;
 }
 
+.live-standings li.live-more {
+  padding: 2px 8px 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
 .live-delta {
   flex: none;
   min-width: 2.4em;
