@@ -66,6 +66,13 @@ export interface PlayerPin {
   mine: boolean;
 }
 
+/** Rätt svar som fitView() ska rymma: ett område, en sjö eller en punkt. */
+export interface FitTarget {
+  code?: string;
+  lake?: string;
+  point?: { lon: number; lat: number };
+}
+
 interface Marker {
   lon: number;
   lat: number;
@@ -82,6 +89,9 @@ const SMALL_COUNTIES: ReadonlySet<string> = new Set(['K', 'I', 'blekinge', 'olan
 const REVEAL_FILL = 0.35;
 const REVEAL_MAX_ZOOM = 4;
 const REVEAL_MIN_ZOOM = 1.3;
+/** fitView(): hur mycket av vyn allt ska fylla (namnen bredvid prickarna behöver plats), och minsta yta. */
+const FIT_FILL = 0.7;
+const FIT_MIN_SHARE = 0.25;
 /** Teckenstorlek och konturbredd (px på skärmen) för sjönamnen. */
 const LAKE_LABEL_PX = 11;
 const LAKE_LABEL_HALO_PX = 2.5;
@@ -659,6 +669,37 @@ export class SwedenMap {
   focusPoint(lon: number, lat: number, k = 3, duration = 500): void {
     const p = this.projection([lon, lat]);
     if (p) this.focusOn(p[0], p[1], k, duration);
+  }
+
+  /**
+   * Zoomar så att alla punkterna och rätt svar syns samtidigt. Ryms de bara i hela kartan, eller
+   * fyller de redan det mesta av den, visas hela kartan. Utgångsvyn rymmer alltid alla klick,
+   * eftersom man inte kan panorera utanför den.
+   */
+  fitView(points: { lon: number; lat: number }[], target: FitTarget, duration = 500): void {
+    const xy = [...points, ...(target.point ? [target.point] : [])].map((p) => this.projection([p.lon, p.lat]) ?? [0, 0]);
+    const boxes: Box[] = xy.map(([x, y]) => ({ x0: x, y0: y, x1: x, y1: y }));
+    const area = target.code
+      ? this.features.find((d) => d.properties.code === target.code)
+      : target.lake
+        ? this.lakeFeatures.find((d) => d.properties.id === target.lake)
+        : undefined;
+    if (area) {
+      const [[x0, y0], [x1, y1]] = this.path.bounds(area);
+      boxes.push({ x0, y0, x1, y1 });
+    }
+    if (!boxes.length) return;
+    const x0 = Math.min(...boxes.map((b) => b.x0));
+    const y0 = Math.min(...boxes.map((b) => b.y0));
+    const x1 = Math.max(...boxes.map((b) => b.x1));
+    const y1 = Math.max(...boxes.map((b) => b.y1));
+    const share = Math.max((x1 - x0) / this.width, (y1 - y0) / this.height, FIT_MIN_SHARE);
+    const k = Math.min(REVEAL_MAX_ZOOM, FIT_FILL / share);
+    if (k < REVEAL_MIN_ZOOM) {
+      if (this.isTransformed) this.resetZoom(duration);
+      return;
+    }
+    this.focusOn((x0 + x1) / 2, (y0 + y1) / 2, k, duration);
   }
 
   private focusBounds([[x0, y0], [x1, y1]]: [[number, number], [number, number]], duration: number): void {

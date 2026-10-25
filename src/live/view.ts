@@ -16,15 +16,15 @@ import {
   LIVE_MODES,
   LIVE_QUESTIONS,
   LIVE_QUESTION_MS,
-  LIVE_REVEAL_MS,
   isPointKind,
+  liveRevealMs,
   type LiveAnswer,
   type LiveMode,
   type LivePlayer,
   type LiveQuestionKind,
   type LiveState,
 } from '../shared/live';
-import { SwedenMap, type MapClick, type PlayerPin, type ResultState } from '../map/map';
+import { SwedenMap, type FitTarget, type MapClick, type PlayerPin, type ResultState } from '../map/map';
 import type { RegionSteps } from '../map/adjacency';
 import { regionsFor } from '../map/sources';
 import { el, clear } from '../ui/dom';
@@ -235,10 +235,15 @@ export class LiveView {
     if (!newPhase || !gq) return;
     map.clearHighlights();
     map.clearMarkers();
-    this.reveal(gq, state.answers?.find((a) => a.playerId === state.you));
-    map.setPlayerPins(playerPins(state));
+    // Ställningen först: den gör kartan lägre, och kartan måste ha sin nya storlek innan den zoomar.
     this.game.status.replaceChildren(...renderStandings(state));
-    this.runTimer(q.endsAt, LIVE_REVEAL_MS);
+    map.resize();
+    this.reveal(gq, state.answers?.find((a) => a.playerId === state.you));
+    const pins = playerPins(state);
+    map.setPlayerPins(pins);
+    // Rätt svar och allas klick i samma vy, så att man ser var det låg och var de andra klickade.
+    map.fitView(pins, revealTarget(gq));
+    this.runTimer(q.endsAt, liveRevealMs(state.players.length));
   }
 
   /**
@@ -255,7 +260,6 @@ export class LiveView {
       const target = targetPoint(q)!;
       map.addMarker(target.lon, target.lat, 'reveal', name);
       map.addResultDot(target.lon, target.lat, state);
-      if (!mine?.correct) map.focusPoint(target.lon, target.lat);
       if (mine?.correct) show(t().game.rightCity(mine.distanceKm ?? 0, name, mine.points), true);
       else if (mine?.distanceKm !== undefined) show(t().game.missReveal(t().game.wrongKm(mine.distanceKm), name), false);
       else show(t().live.timeUp(name), false);
@@ -267,7 +271,6 @@ export class LiveView {
       map.highlightLake(q.lake.id, mine?.correct ? 'correct' : 'reveal');
       map.showLakeLabel(q.lake.id);
       map.setLakeResult(q.lake.id, state);
-      if (!mine?.correct) map.focusLake(q.lake.id);
       if (mine?.correct) show(t().game.rightLake(t().game.lakeRank(q.lake.rank), mine.points), true);
       else if (mine?.code) show(t().game.wrongWasReveal(LAKE_BY_ID.get(mine.code)?.name ?? mine.code, name), false);
       else if (mine?.lat !== undefined) show(t().game.missReveal(t().game.wrong, name), false);
@@ -280,7 +283,6 @@ export class LiveView {
     if (mine?.code && !mine.correct) map.highlight(mine.code, 'wrong');
     map.highlight(target, mine?.correct ? 'correct' : 'reveal');
     map.setCountyResult(target, state);
-    if (!mine?.correct) map.focusCounty(target);
     if (mine?.correct) show(t().game.right(mine.points), true);
     else if (mine?.code) {
       const away = this.maps?.steps?.(mine.code, target);
@@ -441,6 +443,13 @@ function targetPoint(q: Question): { lat: number; lon: number } | undefined {
   if (q.kind === 'ort') return q.city;
   if (q.kind === 'stad') return q.county;
   return undefined;
+}
+
+/** Rätt svar som kartan ska rymma när svaret visas. */
+function revealTarget(q: Question): FitTarget {
+  if (q.kind === 'stad' || q.kind === 'ort') return { point: targetPoint(q) };
+  if (q.kind === 'sjo') return { lake: q.lake.id };
+  return { code: q.kind === 'landskap' ? q.province.code : q.kind === 'kommun' ? q.municipality.code : q.county.code };
 }
 
 /** Namnet på ett klickat län, landskap eller kommun. */
