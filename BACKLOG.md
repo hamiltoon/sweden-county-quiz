@@ -76,7 +76,7 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
 
 | Status | Punkter |
 |---|---|
-| Pågår (utvecklaren) | PO-23 till produktion, PO-40 |
+| Pågår (utvecklaren) | PO-23 + PO-40 till produktion (#39), sedan PO-02 |
 | Nästa | Live-paketet: PO-02, PO-03, PO-04 |
 | Väntar på UX-verifiering | – |
 | Väntar på svar från John | – |
@@ -401,7 +401,7 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
 - **Koppling:** UX vid PO-33 (sidan är cirka 8 000 px lång)
 
 ### PO-40 Minnesregler, omgång 2
-- **Prioritet:** P1, efter PO-23 (liten)
+- **Status:** ✅ Godkänd 2026-10-26 via e2e (regler 41/41); går ut med PO-23 i [#39](https://github.com/hamiltoon/sweden-county-quiz/pull/39). Tipset i Fler städer kommer från lägets egna regler tills en tankeregel finns.
 - **Insats:** S
 - **Koppling:** PO-33; regler från kreativ ledare, faktagranskade av PO: `docs/minnesregler-omgang2.json`
 - **Värde:** Regler för residensstäder som saknade dem (Visby, Karlstad, Västerås/Uppsala, Linköping, Jönköping,
