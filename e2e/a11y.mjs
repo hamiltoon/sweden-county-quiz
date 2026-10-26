@@ -172,9 +172,11 @@ async function checkToast(t, p, label, icon) {
 /**
  * PO-16 krav 8c: i mörkt läge skiljer sig länet i en kommunfråga från den nedtonade omgivningen
  * med minst 3:1. Omgivningens färg är dess fyllning med sin opacitet ovanpå havet.
+ * I båda lägena har länsgränsen minst 3:1 mot länet och mot omgivningen.
  */
-async function kommunCountyContrast(run, t) {
-  const ctx = await context(run, 'android', { dark: true });
+async function kommunCountyContrast(run, t, dark) {
+  const name = dark ? 'mörkt' : 'ljust';
+  const ctx = await context(run, 'android', { dark });
   const p = await page(ctx);
   await p.goto(url(run));
   await p.click('.mode-btn[data-mode="kommun"]');
@@ -195,12 +197,14 @@ async function kommunCountyContrast(run, t) {
   const over = (top, a, bottom) => top.map((c, i) => Math.round(c * a + bottom[i] * (1 - a)));
   const behind = over(colors.outside, colors.opacity, colors.sea);
   const ratio = contrast(colors.inside, behind);
-  t.check(ratio >= 3, `mörkt, kommuner: länet mot omgivningen ${ratio.toFixed(2)}:1 (länet rgb(${colors.inside}), omgivningen rgb(${behind}))`);
+  // Fyllningen behöver nå 3:1 bara i mörkt läge; i ljust läge räcker kulörskillnaden (UX).
+  if (dark) t.check(ratio >= 3, `mörkt, kommuner: länet mot omgivningen ${ratio.toFixed(2)}:1 (länet rgb(${colors.inside}), omgivningen rgb(${behind}))`);
+  else t.note(`ljust, kommuner: länet mot omgivningen ${ratio.toFixed(2)}:1 (kulörskillnad, godkänd av UX)`);
   // Länsgränsen mot båda sidor (WCAG 1.4.11): gränsen ritas halvgenomskinlig ovanpå respektive fyllning.
   const toInside = contrast(over(colors.border, colors.borderOpacity, colors.inside), colors.inside);
   const toOutside = contrast(over(colors.border, colors.borderOpacity, behind), behind);
-  t.check(toInside >= 3 && toOutside >= 3, `mörkt, kommuner: länsgränsen ${toInside.toFixed(2)}:1 mot länet och ${toOutside.toFixed(2)}:1 mot omgivningen`);
-  await t.shot(p, 'morkt-kommun-lan');
+  t.check(toInside >= 3 && toOutside >= 3, `${name}, kommuner: länsgränsen ${toInside.toFixed(2)}:1 mot länet och ${toOutside.toFixed(2)}:1 mot omgivningen`);
+  await t.shot(p, `${dark ? 'morkt' : 'ljust'}-kommun-lan`);
   await ctx.close();
 }
 
@@ -208,7 +212,7 @@ export default async function a11y(run) {
   const t = new Suite(run, 'a11y');
   await Promise.all([
     ...[false, true].map((dark) => scheme(run, t, dark).catch((e) => t.check(false, `${dark ? 'mörkt' : 'ljust'}: ${e.message.split('\n')[0]}`))),
-    kommunCountyContrast(run, t).catch((e) => t.check(false, `mörkt, kommuner: ${e.message.split('\n')[0]}`)),
+    ...[false, true].map((dark) => kommunCountyContrast(run, t, dark).catch((e) => t.check(false, `${dark ? 'mörkt' : 'ljust'}, kommuner: ${e.message.split('\n')[0]}`))),
   ]);
   return t;
 }
