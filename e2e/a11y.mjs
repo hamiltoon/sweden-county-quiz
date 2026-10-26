@@ -123,8 +123,9 @@ async function scheme(run, t, dark) {
       const fill = await p.$eval('path.county[data-result="missed"]', (el) => getComputedStyle(el).fill);
       t.check(/hatch-missed/.test(fill), `${name}: missade län har streck`);
       checkDistinct(t, `${name}, kartan`, {
-        first: await rgbOf(p, 'path.county[data-result="first"]', 'fill'),
-        later: await rgbOf(p, 'path.county[data-result="later"]', 'fill'),
+        // Inte ett län som just nu är markerat som klickat (is-wrong/is-correct har egna färger).
+        first: await rgbOf(p, 'path.county[data-result="first"]:not(.is-wrong):not(.is-correct)', 'fill'),
+        later: await rgbOf(p, 'path.county[data-result="later"]:not(.is-wrong):not(.is-correct)', 'fill'),
         missed: await rgbOf(p, '#hatch-missed .hatch-bg', 'fill'),
       });
       await t.shot(p, `${name}-kartan`);

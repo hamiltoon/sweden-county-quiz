@@ -262,11 +262,13 @@ async function showGame(mode: Mode): Promise<void> {
       finishRound();
       return;
     }
-    // Kommunfrågan säger vilket län kommunen ligger i, så kartan zoomar in på länet (PO-16).
+    // Frågan först: den kan få fler eller färre rader och ändra kartans höjd, och kartan måste ha
+    // sin nya storlek innan den zoomar. Kommunfrågan säger vilket län kommunen ligger i, så kartan
+    // zoomar in på länet (PO-16).
+    updateHud();
     const q = game.current;
     if (q?.kind === 'kommun') map.focusGroup(q.municipality.county);
     else if (map.isTransformed) map.resetZoom();
-    updateHud();
     locked = false;
     map.setInteractive(true);
   };
