@@ -8,6 +8,7 @@
  *   POST /api/scores                       → spara ett eller flera avslutade resultat
  *   /api/me, /api/logout, /api/passkey/*   → konton, se auth.ts
  *   /api/live, /api/live/:kod/ws           → live-läget, se live.ts
+ *   /api/mnemonics, /api/mnemonics/*       → minnesreglerna, se mnemonics.ts
  *
  * Ett namn som skyddats med en passkey kan bara användas av den som är inloggad på det kontot.
  */
@@ -32,6 +33,7 @@ import { CONFIG } from '../src/game/config';
 import { handleAuth, nameKeyOf, protectedPlayer, sessionPlayer } from './auth';
 import { clientIp, isCrossOrigin, json, readJson } from './http';
 import { handleLive } from './live';
+import { handleMnemonics } from './mnemonics';
 import { msg, type ServerMessages } from './messages';
 
 export { LiveRoom } from './live';
@@ -53,6 +55,8 @@ export default {
       if (auth) return auth;
       const live = await handleLive(request, env, url);
       if (live) return live;
+      const mnemonics = await handleMnemonics(request, env, url);
+      if (mnemonics) return mnemonics;
       if (url.pathname === '/api/scores') {
         if (request.method === 'GET') return await getTop(request, url, env);
         if (request.method === 'POST') return await submit(request, env);

@@ -45,6 +45,11 @@ const sv = {
   badPlayer: 'Ogiltig spelare.',
   roomFull: (max: number) => `Rummet är fullt (max ${max} spelare).`,
   hostOnly: 'Bara den som skapade rummet kan starta.',
+  badRule: 'Okänd minnesregel.',
+  badDevice: 'Ogiltig enhet.',
+  badVote: 'Ogiltig röst.',
+  noText: 'Skriv något först.',
+  badKind: 'Ogiltig sorts förslag.',
 };
 
 export type ServerMessages = typeof sv;
@@ -89,6 +94,11 @@ const en: ServerMessages = {
   badPlayer: 'Invalid player.',
   roomFull: (max) => `The room is full (max ${max} players).`,
   hostOnly: 'Only the player who created the room can start.',
+  badRule: 'Unknown memory rule.',
+  badDevice: 'Invalid device.',
+  badVote: 'Invalid vote.',
+  noText: 'Write something first.',
+  badKind: 'Invalid kind of suggestion.',
 };
 
 export function langOf(request: Request): Lang {

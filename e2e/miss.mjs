@@ -11,7 +11,7 @@
  */
 import { MUNICIPALITIES } from '../src/data/municipalities.ts';
 import { axe } from './a11y.mjs';
-import { ALL_CODES, ANSWERS, COUNTY_BY_CODE, Suite, answerAccepted, clickAnswer, context, mapSettled, page, questionText, url } from './lib.mjs';
+import { ALL_CODES, ANSWERS, COUNTY_BY_CODE, Suite, answerAccepted, clickAnswer, context, mapSettled, shortRuleFor, page, questionText, url } from './lib.mjs';
 
 const MUNICIPALITY_COUNTY = new Map(MUNICIPALITIES.map((m) => [m.code, m.county]));
 /** Län långt ifrån varandra, att klicka fel på. */
@@ -83,7 +83,7 @@ function measureMiss(p) {
 const sleep = (p, ms) => p.waitForTimeout(ms);
 
 /** Svarar rätt på frågorna tills läget har den sortens fråga som ska missas (blandat behövs inte här). */
-async function nextQuestion(p, last) {
+export async function nextQuestion(p, last) {
   return p
     .waitForFunction((last) => {
       const text = document.querySelector('.question')?.textContent?.trim();
@@ -93,11 +93,18 @@ async function nextQuestion(p, last) {
 }
 
 /** Missar första frågan med tre felsvar. Ger frågan och rätt svar. */
-async function miss(p, mode) {
-  const q = await nextQuestion(p, '');
+export async function miss(p, mode, { withRule = false } = {}) {
+  let q = await nextQuestion(p, '');
   await sleep(p, 450);
-  const answer = ANSWERS.get(q);
+  let answer = ANSWERS.get(q);
   if (!answer) throw new Error(`känner inte igen frågan "${q}"`);
+  // Nedräkningen gäller bara en miss utan minnesregel (PO-33); frågor med regel besvaras rätt.
+  for (let i = 0; !withRule && shortRuleFor(mode, answer) && i < 12; i++) {
+    await answerAccepted(p, answer);
+    q = await nextQuestion(p, q);
+    await sleep(p, 450);
+    answer = ANSWERS.get(q);
+  }
   const wrong = wrongAnswers(mode, answer);
   let given = 0;
   for (const w of wrong) {

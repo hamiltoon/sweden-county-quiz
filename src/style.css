@@ -1749,3 +1749,227 @@ a {
     font-size: 1.5rem;
   }
 }
+
+/* ---------- Minnesregler (PO-33) ---------- */
+/* Tipsraden i lägets kort på startskärmen. */
+.mode-tip {
+  margin-top: 4px;
+  font-size: 0.82rem;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.mnemonic-link-row {
+  margin: 4px 0 12px;
+  text-align: center;
+}
+
+.mnemonic-link {
+  display: inline-block;
+  padding: 10px 8px;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* Under kartan efter en miss: regelns korta text. Kartan blir lägre, men inte under 400 px på 360 × 740. */
+.mnemonic-strip {
+  flex: none;
+  margin: 0;
+  padding: 10px calc(14px + var(--safe-right)) calc(10px + var(--safe-bottom)) calc(14px + var(--safe-left));
+  background: var(--panel);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 0.95rem;
+  line-height: 1.3;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.12);
+  z-index: 2;
+}
+
+/* Slutskärmen: regeln under den missade saken i listan. */
+.result-list li {
+  flex-wrap: wrap;
+}
+
+.mnemonic {
+  flex-basis: 100%;
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent) 7%, var(--panel));
+}
+
+.mnemonic-text {
+  margin: 0;
+  line-height: 1.4;
+}
+
+.mnemonic-why {
+  margin-top: 6px;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.mnemonic-why summary,
+.mnemonic-discuss summary {
+  min-height: 32px;
+  padding: 6px 0;
+  cursor: pointer;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.mnemonic-why p {
+  margin: 4px 0 0;
+}
+
+.vote-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.vote-btn {
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--panel);
+  font-size: 1.15rem;
+  cursor: pointer;
+}
+
+.vote-btn[aria-pressed='true'] {
+  border-width: 2px;
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 15%, var(--panel));
+}
+
+.mnemonic-note {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.mnemonic-helped {
+  margin-top: 16px;
+  padding: 14px;
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.mnemonic-helped h3 {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+}
+
+.mnemonic-helped p {
+  margin: 4px 0;
+}
+
+.mnemonic-helped .btn-row {
+  margin-top: 10px;
+}
+
+.mnemonic-thanks {
+  margin: 0;
+  font-weight: 600;
+  color: var(--ok);
+}
+
+/* Sidan /minnesregler. */
+.mnemonics-page h1 {
+  margin: 8px 0 4px;
+  font-size: 1.8rem;
+}
+
+.mnemonics-page h2 {
+  margin: 20px 0 8px;
+  font-size: 1.1rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.mnemonic-card {
+  margin-bottom: 10px;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.mnemonic-card h3 {
+  margin: 0 0 4px;
+  font-size: 1rem;
+}
+
+.mnemonic-stats {
+  margin: 8px 0 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.mnemonic-questioned {
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--bad);
+  color: var(--bad);
+  font-weight: 600;
+}
+
+.mnemonic-comments {
+  margin: 4px 0;
+  padding-left: 18px;
+  font-size: 0.9rem;
+}
+
+.mnemonic-comments li {
+  margin: 4px 0;
+}
+
+.mnemonic-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.mnemonic-form textarea,
+.mnemonic-form input[type='text'] {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel);
+  color: var(--text);
+  font: inherit;
+}
+
+.mnemonic-form fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mnemonic-form legend {
+  margin-bottom: 4px;
+  font-weight: 700;
+}
+
+.mnemonic-form .radio {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+}
+
+.mnemonic-form .btn {
+  flex: none;
+}

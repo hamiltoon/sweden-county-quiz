@@ -11,6 +11,7 @@ import { COUNTY_BY_CODE } from '../data/counties';
 import { countyName, lang, setLang, t } from '../i18n';
 import { LANGS, LANG_NAMES } from '../shared/i18n';
 import { saveAccountLanguage } from '../api/account';
+import { tipFor } from '../mnemonics';
 
 export const ATTRIBUTION_HTML_ID = 'attribution';
 
@@ -18,7 +19,13 @@ export const ATTRIBUTION_HTML_ID = 'attribution';
  * Startskärmen. `brandMap` är en plats bredvid rubriken där en liten Sverigekarta kan läggas
  * när kartdatan har laddats; den har fast storlek så att inget hoppar.
  */
-export function renderStart(onStart: (mode: Mode) => void, leaderboard?: HTMLElement, brandMap?: HTMLElement, onLive?: () => void): HTMLElement {
+export function renderStart(
+  onStart: (mode: Mode) => void,
+  leaderboard?: HTMLElement,
+  brandMap?: HTMLElement,
+  onLive?: () => void,
+  onMnemonics?: () => void,
+): HTMLElement {
   const desc = t().start.desc;
   const modes: { mode: Mode; desc: string }[] = [
     { mode: 'lan', desc: desc.lan },
@@ -33,6 +40,8 @@ export function renderStart(onStart: (mode: Mode) => void, leaderboard?: HTMLEle
   const buttons = modes.map(({ mode, desc }) => {
     const best = getBest(mode);
     const bestText = best ? t().start.best(best.score, best.percent) : t().start.noBest;
+    // PO-33: en tankeregel för läget som en kort tipsrad.
+    const tip = tipFor(mode);
     const btn = el(
       'button',
       { class: 'mode-btn', type: 'button', 'data-mode': mode },
@@ -43,6 +52,7 @@ export function renderStart(onStart: (mode: Mode) => void, leaderboard?: HTMLEle
         el('span', { class: 'mode-title' }, modeLabel(mode)),
         el('span', { class: 'mode-desc' }, desc),
         el('span', { class: 'mode-best' }, bestText),
+        tip ? el('span', { class: 'mode-tip' }, t().mnemonic.tip(tip)) : null,
       ),
     );
     btn.addEventListener('click', () => onStart(mode));
@@ -72,6 +82,7 @@ export function renderStart(onStart: (mode: Mode) => void, leaderboard?: HTMLEle
       { class: 'rules' },
       t().start.rules(CONFIG.pointsByAttempt.join(' / ')),
     ),
+    onMnemonics ? renderMnemonicsLink(onMnemonics) : null,
     leaderboard,
   );
 }
@@ -91,6 +102,17 @@ function renderLangSwitch(): HTMLElement {
     return btn;
   });
   return el('div', { class: 'lang-switch', role: 'group', 'aria-label': t().lang.label }, ...buttons);
+}
+
+/** Länken till /minnesregler (PO-33). Öppnas i spelet, utan att sidan laddas om. */
+function renderMnemonicsLink(onOpen: () => void): HTMLElement {
+  const link = el('a', { class: 'mnemonic-link', href: '/minnesregler' }, el('span', { 'aria-hidden': 'true' }, `${t().mnemonic.bulb} `), t().mnemonic.link);
+  link.addEventListener('click', (e) => {
+    if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+    e.preventDefault();
+    onOpen();
+  });
+  return el('p', { class: 'mnemonic-link-row' }, link);
 }
 
 function renderLiveButton(onLive: () => void): HTMLElement {
@@ -119,12 +141,16 @@ export function renderEnd(
     leaderboard?: HTMLElement;
     /** Kartsammanfattning: en minikarta färgad efter hur varje fråga gick. */
     recap?: HTMLElement;
+    /** Minnesregeln för en missad sak, under den i listan (PO-33). */
+    ruleFor?: (q: Question) => HTMLElement | null;
+    /** "Hjälpte minnesregeln?" (PO-33). */
+    helped?: HTMLElement | null;
   } = {},
 ): HTMLElement {
   const missed = summary.results.filter((r) => !r.solved);
   const shaky = summary.results.filter((r) => r.solved && r.attempts > 1);
 
-  const list = (title: string, items: typeof missed) =>
+  const list = (title: string, items: typeof missed, withRules = false) =>
     items.length
       ? el(
           'div',
@@ -139,6 +165,7 @@ export function renderEnd(
                 {},
                 el('span', {}, resultLabel(r.question)),
                 el('span', { class: 'pts' }, t().common.points(r.points)),
+                withRules ? (extras.ruleFor?.(r.question) ?? null) : null,
               ),
             ),
           ),
@@ -163,7 +190,8 @@ export function renderEnd(
       isNewBest ? el('div', { class: 'new-best' }, t().end.newBest) : null,
     ),
     extras.leaderboard,
-    list(t().end.missed, missed),
+    list(t().end.missed, missed, true),
+    extras.helped ?? null,
     list(t().end.shaky, shaky),
     missed.length + shaky.length === 0 ? el('p', { class: 'perfect' }, t().end.perfect) : null,
     el('div', { class: 'btn-row' }, again, menu),

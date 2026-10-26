@@ -12,6 +12,7 @@ import { PROVINCES } from '../src/data/provinces.ts';
 import { MUNICIPALITIES } from '../src/data/municipalities.ts';
 import { OTHER_CITIES } from '../src/data/cities.ts';
 import { LAKES } from '../src/data/lakes.ts';
+import { MNEMONICS } from '../src/data/mnemonics.ts';
 
 // Playwright läses med require, så att en global installation också hittas (NODE_PATH).
 const require = createRequire(import.meta.url);
@@ -41,11 +42,15 @@ export function isStaging(base) {
   return new URL(base).hostname === new URL(STAGING).hostname;
 }
 
-/** Det som aldrig får skickas utanför staging och localhost: resultat till topplistan, passkeys och kontots språk. */
+/**
+ * Det som aldrig får skickas utanför staging och localhost: resultat till topplistan, passkeys,
+ * kontots språk och röster, svar, kommentarer och förslag om minnesreglerna.
+ */
 export const GUARDED = [
   { path: '**/api/scores', methods: ['POST'] },
   { path: '**/api/passkey/**', methods: null },
   { path: '**/api/me/language', methods: ['POST'] },
+  { path: '**/api/mnemonics/**', methods: ['POST'] },
 ];
 
 /**
@@ -125,6 +130,18 @@ for (const p of PROVINCES) ANSWERS.set(`Var ligger ${p.name}?`, { code: p.code }
 for (const m of MUNICIPALITIES) ANSWERS.set(`Var ligger ${m.name} i ${COUNTY_NAME.get(m.county)}?`, { code: m.code });
 for (const c of OTHER_CITIES) ANSWERS.set(`Var ligger ${c.name}?`, { point: c });
 for (const l of LAKES) ANSWERS.set(`Var ligger ${l.name}?`, { lake: l.id });
+
+/**
+ * Har svaret i läget en minnesregel med kort text (PO-33)? Då väntar avslöjandet efter en miss på
+ * ett tryck i stället för att räkna ned. Samma val som i spelet: en regel om saken före en tankeregel.
+ */
+export function shortRuleFor(mode, answer) {
+  const [kind, id] = answer.lake ? ['sjo', answer.lake] : answer.point ? (mode === 'stad' ? ['stad', answer.point.code] : [null, null]) : [mode, answer.code];
+  if (!kind) return null;
+  const matching = MNEMONICS.filter((r) => r.targets[kind]?.includes(id));
+  const rule = matching.find((r) => r.category !== 'princip') ?? matching[0];
+  return rule?.short ? rule : null;
+}
 
 export const COUNTY_SEATS = COUNTIES.map((c) => ({ code: c.code, lat: c.lat, lon: c.lon }));
 export const CITY_BY_NAME = new Map(OTHER_CITIES.map((c) => [c.name, c]));

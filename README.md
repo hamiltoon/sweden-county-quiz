@@ -33,6 +33,15 @@ En omgång går igenom alla 21 län (alla 25 landskap, alla tio sjöar, eller 20
 
 Under omgången fylls kartan: grönt för rätt direkt, gult för rätt efter fler försök och rött för missade. Det gör de sista frågorna lättare genom uteslutning; stäng av med `fillMapDuringRound` i `src/game/config.ts`. Vid en missad fråga zoomar kartan så att det sista felklicket och rätt svar syns tillsammans. Rätt svar får sitt namn på kartan, och en streckad linje med avståndet går från felklicket. Knappen "Nästa" räknar ned från 4 s. Ett tryck på kartan går vidare, och nedräkningen står still medan man håller fingret där. Slutskärmen visar poängen i en ring och en minikarta över hur varje fråga gick.
 
+**Minnesregler** (`src/data/mnemonics.ts`): knep för att komma ihåg var saker ligger, som ramsor, paradoxer, historia och konstiga bilder.
+- Efter en miss på något som har en regel med kort text står den under kartan, och spelet väntar på ett tryck i stället för att räkna ned.
+- Slutskärmen visar regeln under varje missad sak, med "Varför fungerar den?" och 👍/👎.
+- Svarar man rätt på något vars regel man såg i en tidigare omgång frågar slutskärmen en gång "Hjälpte minnesregeln?".
+- Lägeskorten har en tipsrad med en tankeregel.
+- På /minnesregler finns alla regler med röster och kommentarer, och där kan man föreslå egna.
+- Ett 👎 döljer regeln bara på den egna enheten. En regel med minst 5 röster och fler 👎 än 👍 markeras som ifrågasatt.
+- Reglerna finns bara på svenska än.
+
 I de andra lägena finns sjöarna kvar på kartan som riktmärken, utan namn. Klicken går igenom sjöarna till länen under. Poängfunktionen är utbytbar (`defaultScoring` i `src/game/config.ts`). Bästa resultat per läge sparas också i `localStorage` och visas på startskärmen.
 
 ## Live
@@ -112,6 +121,7 @@ npm run deploy               # produktion: npm run build && wrangler deploy
 - **start:** Spela live syns utan scroll på iPhone 13 och en Android på 360 × 740. På staging finns banderollen och "[Staging]" i titeln, på produktionen inte.
 - **solo:** en hel omgång i vart och ett av de sju lägena, med rätt svar på varje fråga, fram till slutskärmen utan fel i sidan.
 - **miss:** avslöjandet efter en missad fråga i solospelet (PO-15). Felklicket och rätt svar ska synas i samma vy, utanför rätt/fel-rutan. Rätt svar ska ha sitt namn på kartan, och en linje ska gå dit med avståndet, som inte får täcka namnet. Spelet ska gå vidare med "Nästa" eller efter minst 4 s. Nedräkningen ska stå still medan man håller på kartan, och för den som använt tangentbordet medan fokus är i rutan. Hinten om att hålla på kartan ska visas de tre första gångerna per enhet. Rätt på första försöket ska gå vidare efter 1,5 s som förut. Dessutom testas "minska rörelse", engelska och axe på rutan.
+- **regler:** minnesreglerna (PO-33). Testet kontrollerar regeldatan: alla regler gäller saker som finns och `short` är högst 110 tecken. Efter en miss på en sjö med regel ska `short` stå under kartan, kartan ska vara minst 400 px hög på 360 × 740 och spelet ska vänta på ett tryck. Slutskärmen ska visa regeln med Varför? och 👍/👎, och rösten ska sparas. I nästa omgång ska "Hjälpte minnesregeln?" komma en gång, med tipsraden i lägeskortet. Sidan /minnesregler ska ha röster, en kommentar och ett förslag, och engelskt läge ska säga att reglerna bara finns på svenska. Dessutom körs axe på slutskärmen och sidan.
 - **live:** en match med 2 spelare (iPhone och Android, mörkt läge, engelska) och en med 12 (en webbläsare och 11 bottar via WebSocket, Blandat med alla sorter). Starta matchen ska synas utan scroll i lobbyn. Vid varje avslöjande ska rätt svar och allas prickar ligga i vyn och inte under rätt/fel-rutan, och den egna raden i ställningen ska synas helt.
 - **a11y:** rätt/fel-rutan har kontrast minst 4,5:1 och en ikon, axe-core (WCAG 2.2 AA och best practice) hittar inget av nivån serious eller critical på start-, spel-, slut- eller lobbyskärmen (fynd på lägre nivå skrivs ut som kända), och kartan och minikartan skiljer rätt direkt, fler försök och missat åt även med simulerad deuteranopi och protanopi (i ljust och mörkt läge).
 - **guard:** skyddsräcket nedan fungerar.
@@ -121,14 +131,14 @@ Testerna körs samtidigt och tar ungefär en och en halv minut. Skärmbilder fr�
 som ligger i `dist/`, så att en körning direkt efter en deploy inte testar en blandning av gammalt och
 nytt; `--any-build` hoppar över det.
 
-Utom mot staging och localhost stoppas alla anrop som skulle skriva på topplistan, skapa passkeys
-eller ändra ett kontos språk redan i webbläsaren (`e2e/lib.mjs`). Skyddet är alltså på mot
+Utom mot staging och localhost stoppas alla anrop som skulle skriva på topplistan, skapa passkeys,
+ändra ett kontos språk eller rösta, svara, kommentera eller föreslå något om minnesreglerna redan i webbläsaren (`e2e/lib.mjs`). Skyddet är alltså på mot
 produktionen och mot alla adresser testerna inte känner till, och testerna anger aldrig något namn.
 Live-rum går bra att skapa var som helst; de töms av sig själva.
 
 Sajten deployas till Cloudflare Workers. `wrangler.jsonc` pekar ut `dist/` som static assets med `not_found_handling: "single-page-application"` (SPA-fallback till `index.html`). Bara `/api/*` går till Worker-scriptet i `worker/index.ts` (`run_worker_first`); allt annat serveras direkt som filer.
 
-Topplistan och kontona ligger i D1-databasen `sverigespelet` (tabellerna `scores`, `players`, `passkeys`, `sessions` och `auth_challenges`, se `migrations/`). Antalet sparningar per IP-adress begränsas med Workers rate limiting (`SUBMIT_LIMITER`). Kör `npx wrangler types worker/worker-configuration.d.ts` efter ändringar i `wrangler.jsonc`.
+Topplistan och kontona ligger i D1-databasen `sverigespelet` (tabellerna `scores`, `players`, `passkeys`, `sessions` och `auth_challenges`, se `migrations/`). Där ligger också det spelarna tycker om minnesreglerna (`mnemonic_votes`, `mnemonic_helped`, `mnemonic_comments` och `mnemonic_suggestions`); reglerna själva ligger i `src/data/mnemonics.ts`. Antalet sparningar per IP-adress begränsas med Workers rate limiting (`SUBMIT_LIMITER`). Kör `npx wrangler types worker/worker-configuration.d.ts` efter ändringar i `wrangler.jsonc`.
 
 API:
 
@@ -139,6 +149,8 @@ API:
 - `POST /api/passkey/login/options` och `.../login/verify` – logga in med en befintlig passkey.
 - `POST /api/logout` – logga ut den här enheten.
 - `POST /api/me/language` – spara språket (`sv` eller `en`) på kontot, om enheten är inloggad.
+- `GET /api/mnemonics?device=…` – minnesreglernas röster (👍/👎), svaren på "Hjälpte minnesregeln?", kommentarer, förslag och vilka regler som är ifrågasatta (minst 5 röster och fler 👎 än 👍), plus enhetens egna röster.
+- `POST /api/mnemonics/vote` med `{ "device", "ruleId", "vote": 1 | -1 | 0 }`, `.../helped` med `{ "device", "ruleId", "helped": true | false }`, `.../comment` med `{ "device", "ruleId", "text", "name"? }` och `.../suggest` med `{ "device", "kind": "rule" | "wish", "text", "name"? }`. En röst per regel och enhet (kan ändras), ett "hjälpte"-svar per regel och enhet. Begränsas per IP-adress som topplistan.
 
 ## Kartdata
 

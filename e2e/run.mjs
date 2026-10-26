@@ -2,7 +2,7 @@
  * Acceptanstesterna: `npm run test:e2e -- [adress]` (standard: staging).
  *
  *   --verbose     skriv ut alla kontroller, inte bara de som fallerar
- *   --only=a,b    kör bara vissa tester (start, solo, miss, live, guard, a11y)
+ *   --only=a,b    kör bara vissa tester (start, solo, miss, regler, live, guard, a11y)
  *   --any-build   vänta inte på att servern kör bygget i dist/
  *
  * Före testerna väntar run.mjs (upp till tre minuter) på att servern serverar samma bygge som
@@ -20,8 +20,9 @@ import live from './live.mjs';
 import guard from './guard.mjs';
 import a11y from './a11y.mjs';
 import miss from './miss.mjs';
+import mnemonics from './mnemonics.mjs';
 
-const SUITES = { guard, start, solo, miss, live, a11y };
+const SUITES = { guard, start, solo, miss, regler: mnemonics, live, a11y };
 const args = process.argv.slice(2);
 const base = (args.find((a) => /^https?:/.test(a)) ?? process.env.BASE ?? STAGING).replace(/\/?$/, '/');
 const only = args.find((a) => a.startsWith('--only='))?.slice(7).split(',');
