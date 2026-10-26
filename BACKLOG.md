@@ -328,24 +328,34 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
 - **Vad som gör en regel bra:** stämmer, kort, ger en bild, säger något om läget, gärna lite konstig, helst för flera saker.
 - **Beslut (PO):** betygsättningen sker i spelet, inte på en separat sida (John 2026-10-26). Rösterna sparas i en ny
   tabell i den befintliga D1-databasen. De påverkar inte topplistan, och ingen ny Cloudflare-resurs behövs.
+- **Efter UX-granskning 2026-10-26:** tyngdpunkten ligger på slutskärmen, där man har tid att läsa, inte i avslöjandet.
+  Sållningen skyddas mot att ett enda 👎 tar bort en regel, och mot att vem som helst röstar bort regler.
+  Faktafelet i "Väster-paradoxen" är rättat i förslagen.
 - **Acceptanskriterier:**
-  1. Reglerna ligger som data i repot (id, kategori, vilka län/landskap/sjöar/kommuner de gäller, text, varför). De 26
-     i `docs/minnesregler-forslag.json` finns med från start. Nya regler tillkommer via PR som PO godkänner.
-  2. **I avslöjandet:** efter en miss i solospelet visas regeln för just den saken, om det finns en, under rätt svar:
-     "💡 Minnesregel: …", med 👍 och 👎.
-  3. **Före en omgång:** en tankeregel (kategori princip) som gäller läget visas på startskärmen för läget eller i
-     omgångens början. Den går att stänga och visas inte igen samma dag.
-  4. **Röster:** 👍/👎 och en valfri kommentar sparas på servern per regel och enhet (eller namn, om man har ett).
-     Man kan ändra sin röst. Begränsat per IP som topplistan. Påverkar inte topplistan.
-  5. **Sållning:** en regel med fler 👎 än 👍 visas inte längre i spelet.
-  6. **Sidan Minnesregler** (t.ex. `/minnesregler`, länkad från startskärmen): alla regler grupperade per kategori,
-     med röster och kommentarer, där man kan rösta och skriva en egen regel eller önskan. Det ersätter den
-     separata sida PO gjorde som första steg.
-  7. PO kan läsa röster, kommentarer och förslag (t.ex. `GET /api/mnemonics`) för att ta fram nästa omgång regler.
-  8. Svenska. I engelskt läge visas en regel bara om den har en engelsk text (ordlekar fungerar sällan i översättning).
-  9. Live påverkas inte än. Där kommer reglerna i ett senare steg.
-  10. e2e: en regel visas efter en miss, en röst sparas på staging, och guard stoppar röster mot produktion i testerna.
-- **Mått:** andelen rätt på första försöket för saker där en regel visats, nästa gång samma sak kommer.
+  1. Reglerna ligger som data i repot: id, kategori, vilka län, landskap, sjöar eller kommuner de gäller, `short` (högst
+     110 tecken), `text` och `why`. Förslagen i `docs/minnesregler-forslag.json` finns med från start. Nya regler och
+     ändringar kommer via PR som PO godkänner.
+  2. **Slutskärmen (huvudplatsen):** under de missade frågorna får varje missad sak som har en regel en rad med
+     "💡 " och regelns `text`, och `why` går att fälla ut. Där finns 👍 och 👎.
+  3. **Avslöjandet:** efter en miss visas bara `short`, nederst, utan att kartan krymper till under cirka 400 px på
+     360×740. Ingen röstning där. Det kräver att PO-15 väntar på ett tryck efter en miss. Annars visas inget i avslöjandet.
+  4. **Lägeskortet:** en tankeregel (kategori princip) för läget visas som en kort tipsrad i lägets kort på
+     startskärmen, t.ex. "Tips: VHS = västkusten". Ingen banderoll eller dialog.
+  5. **"Hjälpte regeln?":** när man svarar rätt på en sak vars regel visats vid ett tidigare tillfälle på enheten,
+     frågar slutskärmen en gång "Hjälpte minnesregeln?" med 👍/👎. Det sparas separat från vanliga röster.
+  6. **Röster:** 👍/👎 sparas på servern per regel och enhet. Man kan ändra sin röst. Begränsat per IP som
+     topplistan. Påverkar inte topplistan. Kommentarer finns bara på /minnesregler, inte i spelet.
+  7. **Sållning:** ett 👎 döljer regeln direkt bara på den egna enheten. För alla döljs ingen regel automatiskt.
+     En regel med minst 5 röster och fler 👎 än 👍 markeras som "ifrågasatt", och PO avgör om den skrivs om eller tas bort.
+  8. **Sidan /minnesregler,** länkad från startskärmen: alla regler per kategori med röster, "hjälpte"-andel och
+     kommentarer. Där kan man rösta, kommentera och föreslå en egen regel eller en önskan.
+  9. PO kan läsa röster, "hjälpte"-svar, kommentarer, förslag och ifrågasatta regler via API, t.ex. `GET /api/mnemonics`.
+  10. Svenska. I engelskt läge visas en regel bara om den har en engelsk text. De flesta regler är ordlekar, så det
+      engelska läget får få regler, och det är medvetet.
+  11. Live påverkas inte än.
+  12. e2e: en regel visas på slutskärmen efter en miss, `short` i avslöjandet är högst 110 tecken och kartan minst
+      400 px på 360×740, en röst sparas på staging, och guard stoppar röster mot produktion.
+- **Mått:** svaren på "Hjälpte regeln?" (kriterium 5), kompletterat med andelen rätt nästa gång samma sak kommer. Underlaget blir tunt med få spelare.
 
 ### PO-02 Live: se vilka som har svarat medan frågan pågår
 - **Prioritet:** P2

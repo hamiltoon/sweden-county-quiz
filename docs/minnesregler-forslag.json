@@ -1,5 +1,5 @@
 {
-  "beskrivning": "Första förslagen på minnesregler (PO-33), faktagranskade av PO 2026-10-26. Ej betygsatta. Underlag till utvecklaren; kategorier: princip, lan, landskap, sjo, kommun.",
+  "beskrivning": "Förslag på minnesregler (PO-33), faktagranskade av PO och granskade av UX 2026-10-26. `short` (högst 110 tecken) visas i spelet; `text` och `why` på slutskärmen och /minnesregler. Regler utan `short` får en av utvecklaren eller visas bara på slutskärmen. Ej betygsatta av familjen.",
   "regler": [
     {
       "id": "p-vaster",
@@ -7,17 +7,29 @@
       "category": "princip",
       "entity": "Väster-paradoxen",
       "kind": "Paradox",
-      "text": "Västerbotten, Västernorrland och Västmanland ligger alla på Sveriges ÖSTRA halva. Bara Västra Götaland ligger i väst.",
-      "why": "Namnen säger väster om något annat (Bottenviken, Uppland), inte väster i Sverige. En regel som rättar tre vanliga fel."
+      "text": "Västerbotten och Västernorrland heter väster om Bottenviken och Bottenhavet, Västmanland väster om Uppland. Inget av dem ligger i västra Sverige; bara Västra Götaland gör det.",
+      "why": "Namnen säger väster om något annat. (Rättat 2026-10-26: Västerbottens län når ända till Norge, så ”östra halvan” stämde inte.)",
+      "short": "”Väster”-länen ligger inte i väst, utom Västra Götaland."
     },
     {
       "id": "p-ostkust",
       "order": 2,
       "category": "princip",
-      "entity": "Ostkusten, norr till söder",
+      "entity": "Ostkusten, norra delen",
       "kind": "Ramsa",
-      "text": "”Nya Vänner Vill Gärna Umgås, Sedan Seglar Ölänningar Kring Blekinges Skär.” Norrbotten, Västerbotten, Västernorrland, Gävleborg, Uppsala, Stockholm, Södermanland, Östergötland, Kalmar, Blekinge, Skåne.",
-      "why": "Första bokstaven i varje ord är ett kustlän, i ordning längs kusten."
+      "text": "”Nya Vänner Vill Gärna Umgås.” Norrbotten, Västerbotten, Västernorrland, Gävleborg, Uppsala – i ordning söderut längs kusten.",
+      "why": "Kortare ramsa; södra delen har en egen.",
+      "short": "Norra ostkusten: Nya Vänner Vill Gärna Umgås (N, V, V, G, U)."
+    },
+    {
+      "id": "p-ostkust-syd",
+      "order": 2.5,
+      "category": "princip",
+      "entity": "Ostkusten, södra delen",
+      "kind": "Ramsa",
+      "text": "”Stora Skepp Över Kalmarsund Bär Silver.” Stockholm, Södermanland, Östergötland, Kalmar, Blekinge, Skåne – i ordning söderut.",
+      "short": "Södra ostkusten: Stora Skepp Över Kalmarsund Bär Silver.",
+      "why": "Ö står för Östergötland; Kalmarsund ger en bild av kusten."
     },
     {
       "id": "p-vhs",
@@ -26,7 +38,8 @@
       "entity": "Västkusten, norr till söder",
       "kind": "Ordlek",
       "text": "Västkusten är ett VHS-band: Västra Götaland, Halland, Skåne.",
-      "why": "Tre bokstäver, en gammal videokassett och hela västkusten i rätt ordning."
+      "why": "Tre bokstäver, en gammal videokassett och hela västkusten i rätt ordning.",
+      "short": "Västkusten är ett VHS-band: Västra Götaland, Halland, Skåne."
     },
     {
       "id": "p-bytt-land",
@@ -34,8 +47,9 @@
       "category": "princip",
       "entity": "Landskap som bytt land",
       "kind": "Historia",
-      "text": "Landskap som en gång var danska eller norska ligger vid det landets gräns. Skåne, Blekinge och Halland (danska till 1658) ligger närmast Danmark. Bohuslän, Jämtland och Härjedalen (norska) ligger mot Norge.",
-      "why": "Historien förklarar kartan: man förlorar och vinner det som ligger närmast grannen."
+      "text": "Landskap som en gång var danska eller norska ligger vid det landets gräns: Skåne, Blekinge och Halland mot Danmark, Bohuslän, Jämtland och Härjedalen mot Norge. Undantaget är Gotland, danskt till 1645 men ute i Östersjön.",
+      "why": "Historien förklarar kartan: man förlorar och vinner det som ligger närmast grannen.",
+      "short": "Före detta danska och norska landskap ligger vid Danmark och Norge (utom Gotland)."
     },
     {
       "id": "p-gota-vattern",
@@ -70,8 +84,9 @@
       "category": "lan",
       "entity": "Södermanland → Nyköping",
       "kind": "Historia",
-      "text": "Nyköpings gästabud 1317: kungen bjöd sina bröder på fest och låste in dem i slottets fängelsehåla. En stad med en sådan historia får vara residensstad, inte Eskilstuna.",
-      "why": "En makaber berättelse fäster bättre än ett namn."
+      "text": "Nyköpings gästabud 1317: kungen låste in sina bröder i slottets fängelsehåla. Nyköping ligger vid kusten söder om Stockholm, och det är där Sörmland har sin residensstad, inte i Eskilstuna.",
+      "why": "En makaber berättelse fäster bättre än ett namn.",
+      "short": "Nyköping, gästabudets stad vid kusten söder om Stockholm, är Sörmlands residensstad."
     },
     {
       "id": "l-vaxjo",
@@ -98,7 +113,8 @@
       "entity": "Norrbotten → Luleå, Västerbotten → Umeå",
       "kind": "Ordlek",
       "text": "Luleå ligger Längst upp, Umeå Under.",
-      "why": "Två städer som ofta blandas ihop, sorterade med sin första bokstav."
+      "why": "Två städer som ofta blandas ihop, sorterade med sin första bokstav.",
+      "short": "Luleå Längst upp, Umeå Under."
     },
     {
       "id": "l-ostersund",
@@ -107,7 +123,8 @@
       "entity": "Jämtland → Östersund",
       "kind": "Konstig",
       "text": "Storsjöodjuret simmar i Storsjön utanför Östersund, mitt i Jämtland.",
-      "why": "Ett sjöodjur är svårt att glömma, och sjön ger både läge och stad."
+      "why": "Ett sjöodjur är svårt att glömma, och sjön ger både läge och stad.",
+      "short": "Storsjöodjuret simmar utanför Östersund i Jämtland."
     },
     {
       "id": "l-falun",
@@ -143,7 +160,8 @@
       "entity": "Norrlandskusten, söder till norr",
       "kind": "Ramsa",
       "text": "”Glada Hälsingar Med Ångbåt Vill Norrut.” Gästrikland, Hälsingland, Medelpad, Ångermanland, Västerbotten, Norrbotten.",
-      "why": "Sex landskap längs kusten i rätt ordning."
+      "why": "Sex landskap längs kusten i rätt ordning.",
+      "short": "Norrlandskusten: Glada Hälsingar Med Ångbåt Vill Norrut."
     },
     {
       "id": "k-dalsland",
@@ -188,7 +206,8 @@
       "entity": "Vänern och Vättern",
       "kind": "Ordlek",
       "text": "VÄNern ligger till VÄNster, Vättern till höger.",
-      "why": "Sveriges två största sjöar blandas ofta ihop; första stavelsen avgör."
+      "why": "Sveriges två största sjöar blandas ofta ihop; första stavelsen avgör.",
+      "short": "VÄNern ligger till VÄNster om Vättern."
     },
     {
       "id": "s-hjalmaren",
@@ -196,8 +215,9 @@
       "category": "sjo",
       "entity": "Mälaren och Hjälmaren",
       "kind": "Bild",
-      "text": "Hjälmaren är Mälarens lillebror som tagit på sig en hjälm och ställt sig bakom, västerut vid Örebro.",
-      "why": "Liknande namn, lillebror är mindre och står bakom storebror."
+      "text": "Hjälmaren är Mälarens lillebror med hjälm. Den ligger väster om Mälaren, vid Örebro.",
+      "why": "Liknande namn, lillebror är mindre och står bakom storebror.",
+      "short": "Hjälmaren: Mälarens lillebror, väster om Mälaren vid Örebro."
     },
     {
       "id": "s-siljan",
@@ -206,7 +226,8 @@
       "entity": "Siljan",
       "kind": "Konstig",
       "text": "Siljan är ett hål efter en meteorit: Siljansringen i Dalarna är Europas största kända nedslagskrater.",
-      "why": "En rund sjö mitt i Dalarna som en himlakropp har gjort."
+      "why": "En rund sjö mitt i Dalarna som en himlakropp har gjort.",
+      "short": "Siljan är en meteoritkrater mitt i Dalarna."
     },
     {
       "id": "s-hornavan",
@@ -233,7 +254,8 @@
       "entity": "Sundbyberg",
       "kind": "Konstig",
       "text": "Sundbyberg är Sveriges minsta kommun, under 9 km², inklämd mellan Stockholm och Solna. Den får plats i en fingertopp på kartan.",
-      "why": "Om du letar efter något pyttelitet nordväst om Stockholm: det är Sundbyberg."
+      "why": "Om du letar efter något pyttelitet nordväst om Stockholm: det är Sundbyberg.",
+      "short": "Sundbyberg: Sveriges minsta kommun, inklämd vid Stockholm."
     }
   ]
 }
