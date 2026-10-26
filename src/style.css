@@ -997,6 +997,17 @@ a {
   opacity: 0.45;
 }
 
+/* Mot det mörka havet syns nedtoningen knappt; där lyfts länet i stället. */
+@media (prefers-color-scheme: dark) {
+  .county.is-outside {
+    opacity: 0.6;
+  }
+
+  .county.is-inside:not([data-result]) {
+    fill: #3b4a66;
+  }
+}
+
 /* Länsgränserna ovanpå kommunkartan. */
 .group-border {
   fill: none;

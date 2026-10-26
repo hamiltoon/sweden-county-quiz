@@ -358,10 +358,10 @@ export class SwedenMap {
     this.renderPins();
   }
 
-  /** Ligger området utanför gruppen som focusGroup() zoomat in på? */
-  private isOutside(d: CountyFeature): boolean {
-    if (!this.groupBy || this.focusedGroup === null) return false;
-    return (d.properties as unknown as Record<string, unknown>)[this.groupBy] !== this.focusedGroup;
+  /** Om området ligger i eller utanför gruppen som focusGroup() zoomat in på (eller ingen grupp). */
+  private groupClass(d: CountyFeature): '' | 'is-inside' | 'is-outside' {
+    if (!this.groupBy || this.focusedGroup === null) return '';
+    return (d.properties as unknown as Record<string, unknown>)[this.groupBy] === this.focusedGroup ? 'is-inside' : 'is-outside';
   }
 
   /** Är området just nu mindre än SMALL_TARGET_PX på skärmen? */
@@ -412,7 +412,7 @@ export class SwedenMap {
 
   clearHighlights(): void {
     // Nedtoningen utanför länet (focusGroup) är ingen markering och ligger kvar.
-    this.countiesG.selectAll<SVGPathElement, CountyFeature>('path').attr('class', (d) => (this.isOutside(d) ? 'county is-outside' : 'county'));
+    this.countiesG.selectAll<SVGPathElement, CountyFeature>('path').attr('class', (d) => `county ${this.groupClass(d)}`.trim());
     this.lakesG.selectAll('path').attr('class', 'lake');
     this.lakeLabelsG.selectAll('text').classed('is-shown', false);
     this.renderLakeLabels();
@@ -730,7 +730,10 @@ export class SwedenMap {
     const key = this.groupBy;
     const inGroup = (d: CountyFeature) => (d.properties as unknown as Record<string, unknown>)[key] === group;
     this.focusedGroup = group;
-    this.countiesG.selectAll<SVGPathElement, CountyFeature>('path').classed('is-outside', (d) => this.isOutside(d));
+    this.countiesG
+      .selectAll<SVGPathElement, CountyFeature>('path')
+      .classed('is-outside', (d) => this.groupClass(d) === 'is-outside')
+      .classed('is-inside', (d) => this.groupClass(d) === 'is-inside');
     const boxes = this.features
       .filter(inGroup)
       .map((d) => this.featureBounds.get(d.properties.code))
