@@ -86,7 +86,13 @@ interface Marker {
   lat: number;
   kind: MarkerKind;
   label?: string;
+  /** Bara namnet, centrerat på punkten och utan prick: namnet på ett län, en kommun eller ett avstånd. */
+  textOnly?: boolean;
 }
+
+/** Ett namn utan prick tar ungefär så här mycket plats (px på skärmen) runt sin punkt. */
+const TEXT_HALF_H = 10;
+const textWidth = (label: string) => label.length * 14 * 0.62 + 6;
 
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 10;
@@ -143,6 +149,7 @@ export class SwedenMap {
   private readonly lakesG: Selection<SVGGElement, unknown, null, undefined>;
   private readonly lakeLabelsG: Selection<SVGGElement, unknown, null, undefined>;
   private readonly resultDotsG: Selection<SVGGElement, unknown, null, undefined>;
+  private readonly linesG: Selection<SVGGElement, unknown, null, undefined>;
   private readonly markersG: Selection<SVGGElement, unknown, null, undefined>;
   private readonly pinsG: Selection<SVGGElement, unknown, null, undefined>;
   private readonly pinLabelsG: Selection<SVGGElement, unknown, null, undefined>;
@@ -165,6 +172,8 @@ export class SwedenMap {
   /** Gruppen (länet) som focusGroup() senast zoomade in på; resten tonas ned. */
   private focusedGroup: string | null = null;
   private markers: Marker[] = [];
+  /** Linjen från felklicket till rätt svar (PO-15, variant C). */
+  private line: { from: [number, number]; to: [number, number] } | null = null;
   private pins: PlayerPin[] = [];
   /** Var de synliga sjönamnen hamnade, så att spelarnas namn inte läggs över dem. */
   private lakeLabelBoxes: Box[] = [];
@@ -225,6 +234,7 @@ export class SwedenMap {
     this.lakeHitG = this.root.append('g').attr('class', 'lake-hits');
     this.lakesG = this.root.append('g').attr('class', 'lakes');
     this.resultDotsG = this.root.append('g').attr('class', 'result-dots');
+    this.linesG = this.root.append('g').attr('class', 'reveal-lines');
     this.markersG = this.root.append('g').attr('class', 'markers');
     // Spelarnas prickar ligger ovanpå rätt svar, så att ett klick precis på staden syns med sitt ✓.
     this.pinsG = this.root.append('g').attr('class', 'pins');
@@ -493,8 +503,46 @@ export class SwedenMap {
     this.renderMarkers();
   }
 
+  /**
+   * Skriver ut områdets namn på kartan (rätt svar efter en miss). Namnet står i mitten av områdets
+   * största del, så att t.ex. ett län med öar inte får namnet ute i havet.
+   */
+  showRegionLabel(code: string, name: string): void {
+    const f = this.features.find((d) => d.properties.code === code);
+    if (!f) return;
+    const parts: Feature<Geometry>[] =
+      f.geometry.type === 'MultiPolygon'
+        ? f.geometry.coordinates.map((coordinates) => ({ type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates } }))
+        : [f];
+    const largest = parts.reduce((a, b) => (this.path.area(b) > this.path.area(a) ? b : a));
+    const lonLat = this.projection.invert?.(this.path.centroid(largest));
+    if (lonLat) this.addText(lonLat[0], lonLat[1], name, 'reveal');
+  }
+
+  /** Områdets geometri (WGS84), t.ex. för att räkna avstånd till det. */
+  regionGeometry(code: string): Polygon | MultiPolygon | null {
+    const g = this.features.find((d) => d.properties.code === code)?.geometry;
+    return g && (g.type === 'Polygon' || g.type === 'MultiPolygon') ? g : null;
+  }
+
+  /** En streckad linje mellan två punkter med `label` (t.ex. avståndet) mitt på. */
+  showLine(from: { lon: number; lat: number }, to: { lon: number; lat: number }, label: string): void {
+    this.line = { from: [from.lon, from.lat], to: [to.lon, to.lat] };
+    const a = this.projection([from.lon, from.lat]);
+    const b = this.projection([to.lon, to.lat]);
+    const mid = a && b ? this.projection.invert?.([(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]) : null;
+    if (mid) this.addText(mid[0], mid[1], label, 'wrong');
+    else this.renderMarkers();
+  }
+
+  private addText(lon: number, lat: number, label: string, kind: MarkerKind): void {
+    this.markers.push({ lon, lat, kind, label, textOnly: true });
+    this.renderMarkers();
+  }
+
   clearMarkers(): void {
     this.markers = [];
+    this.line = null;
     this.pins = [];
     this.renderMarkers();
     this.renderPins();
@@ -605,23 +653,46 @@ export class SwedenMap {
       .filter((m) => m.kind === 'reveal')
       .flatMap((m) => {
         const [x, y] = this.projection([m.lon, m.lat]) ?? [0, 0];
+        if (m.textOnly) return [this.labelBox(m, k)];
         const dot = 6 / k;
         const boxes: Box[] = [{ x0: x - dot, y0: y - dot, x1: x + dot, y1: y + dot }];
-        if (m.label) {
-          // Samma mått som marker-label i renderMarkers(): 14 px, centrerad 18 px ovanför.
-          const w = (m.label.length * 14 * 0.62 + 6) / k;
-          boxes.push({ x0: x - w / 2, y0: y - 30 / k, x1: x + w / 2, y1: y - 12 / k });
-        }
+        if (m.label) boxes.push(this.labelBox(m, k));
         return boxes;
       });
   }
 
-  /** Ritar en cirkel med given radie i km runt en punkt (t.ex. träffzonen i stadsläget). */
+  /**
+   * Var namnet hamnar, i kartans koordinater. Samma mått som marker-label i renderMarkers(): 14 px,
+   * centrerat 18 px ovanför pricken, eller mitt på punkten om det inte har någon prick.
+   */
+  private labelBox(m: Marker, k: number): Box {
+    const [x, y] = this.projection([m.lon, m.lat]) ?? [0, 0];
+    const w = textWidth(m.label ?? '') / k;
+    return m.textOnly
+      ? { x0: x - w / 2, y0: y - TEXT_HALF_H / k, x1: x + w / 2, y1: y + TEXT_HALF_H / k }
+      : { x0: x - w / 2, y0: y - 30 / k, x1: x + w / 2, y1: y - 12 / k };
+  }
+
   private renderMarkers(): void {
     const k = this.k;
+    const line = this.line ? [this.line] : [];
+    this.linesG
+      .selectAll<SVGLineElement, NonNullable<SwedenMap['line']>>('line')
+      .data(line)
+      .join('line')
+      .attr('class', 'reveal-line')
+      .each((d, i, nodes) => {
+        const a = this.projection(d.from) ?? [0, 0];
+        const b = this.projection(d.to) ?? [0, 0];
+        nodes[i].setAttribute('x1', String(a[0]));
+        nodes[i].setAttribute('y1', String(a[1]));
+        nodes[i].setAttribute('x2', String(b[0]));
+        nodes[i].setAttribute('y2', String(b[1]));
+      })
+      .style('stroke-dasharray', `${6 / k} ${5 / k}`);
     const groups = this.markersG
       .selectAll<SVGGElement, Marker>('g.marker')
-      .data(this.markers)
+      .data(this.markers.filter((d) => !d.textOnly))
       .join((enter) => {
         const g = enter.append('g');
         g.append('circle').attr('class', 'marker-halo');
@@ -640,9 +711,10 @@ export class SwedenMap {
       .selectAll<SVGTextElement, Marker>('text')
       .data(this.markers.filter((d) => d.label))
       .join('text')
-      .attr('class', 'marker-label')
+      .attr('class', (d) => (d.textOnly ? `marker-label is-text-only marker-label-${d.kind}` : 'marker-label'))
       .attr('x', (d) => this.projection([d.lon, d.lat])?.[0] ?? 0)
-      .attr('y', (d) => (this.projection([d.lon, d.lat])?.[1] ?? 0) - 18 / k)
+      // Utan prick står namnet mitt på punkten (5 px ≈ halva versalhöjden för 14 px).
+      .attr('y', (d) => (this.projection([d.lon, d.lat])?.[1] ?? 0) + (d.textOnly ? 5 : -18) / k)
       .attr('font-size', 14 / k)
       .style('stroke-width', `${3 / k}px`)
       .text((d) => d.label ?? '');
@@ -793,11 +865,12 @@ export class SwedenMap {
     // i kartans koordinater beror på zoomen: räkna ut zoomen, lägg till namnet och räkna om.
     const labelBoxes = (k: number): Box[] =>
       this.markers
-        .filter((m) => m.kind === 'reveal' && m.label)
+        .filter((m) => m.label && (m.kind === 'reveal' || m.textOnly))
         .map((m) => {
-          const [x, y] = this.projection([m.lon, m.lat]) ?? [0, 0];
-          const w = (m.label!.length * 14 * 0.62 + 6) / k;
-          return { x0: x - w / 2, y0: y - 32 / k, x1: x + w / 2, y1: y };
+          const box = this.labelBox(m, k);
+          // Lite luft ovanför namnet, och för en prick ända ned till den.
+          const [, y] = this.projection([m.lon, m.lat]) ?? [0, 0];
+          return { ...box, y0: box.y0 - 2 / k, y1: m.textOnly ? box.y1 : y };
         });
     let x0 = 0;
     let y0 = 0;
@@ -870,7 +943,7 @@ function shortName(name: string): string {
 }
 
 /** Animationens längd, eller 0 om användaren har valt "minska rörelse". */
-function motionMs(ms: number): number {
+export function motionMs(ms: number): number {
   return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : ms;
 }
 
