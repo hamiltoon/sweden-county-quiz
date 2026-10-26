@@ -3,7 +3,7 @@
  * varje avslöjande ska rätt svar och allas prickar synas i vyn och inte ligga under rätt/fel-rutan,
  * och den egna raden i ställningen ska synas helt.
  */
-import { ALL_CODES, ANSWERS, CITY_BY_NAME, COUNTY_BY_CODE, COUNTY_SEATS, Suite, answerAccepted, clickAnswer, context, countyFill, mapSettled, measureReveal, page, questionText, url } from './lib.mjs';
+import { ALL_CODES, ANSWERS, CITY_BY_NAME, COUNTY_BY_CODE, COUNTY_SEATS, Suite, answerAccepted, clickAnswer, context, countyFill, mapSettled, measureReveal, page, pointOnMap, questionText, url } from './lib.mjs';
 
 const BOT_NAMES = ['Erika', 'Maximilian', 'Åsa', 'Bo', 'Charlotte', 'Didrik', 'Elsa-Maj', 'Frans', 'Gun', 'Hjalmar', 'Ingrid'];
 
@@ -115,6 +115,16 @@ async function twoPlayers(run, t) {
     // Värden svarar rätt, gästen fel (en annan plats på kartan).
     const answer = ANSWERS.get(await questionText(h));
     await clickAnswer(h, answer);
+    if (n === 1) {
+      // PO-23: ett klick i havet räknas inte som svar, och gästen (engelska) får samma tips som i solospelet.
+      await mapSettled(g);
+      const sea = await pointOnMap(g, { lat: 56.0, lon: 18.6 });
+      await g.mouse.click(sea.x, sea.y);
+      const hint = await g.waitForSelector('.toast-info.is-visible', { timeout: 3000 }).then((el) => el.textContent(), () => null);
+      const open = await g.evaluate(() => !document.querySelector('.map-svg.is-locked'));
+      t.check(hint?.trim() === 'Tap a county' && open, `2 spelare: klick i havet ger tipset "${hint?.trim()}" och räknas inte som svar`);
+      await g.waitForTimeout(400);
+    }
     const box = await g.locator('.map').boundingBox();
     await g.mouse.click(box.x + box.width * 0.4, box.y + box.height * 0.35);
     await h.waitForSelector('.live-standings', { timeout: 15000 });
@@ -191,11 +201,36 @@ async function twelvePlayers(run, t) {
   await hc.close();
 }
 
+/** PO-23: en miss på land i en sjöfråga visar hur långt bort klicket var, som i solospelet. */
+async function lakeMiss(run, t) {
+  const hc = await context(run, 'iphone');
+  const h = await page(hc);
+  const code = await createRoom(h, run, 'Anna');
+  const ws = bot(run.base, code, 'Bo', 0);
+  await h.waitForFunction(() => document.querySelectorAll('.live-players li').length === 2);
+  await h.click('.live-mode-chip[data-mode="sjo"]');
+  await h.waitForFunction(() => document.querySelector('.live-mode-chip[data-mode="sjo"]')?.getAttribute('aria-pressed') === 'true');
+  await h.click('.live-lobby-action .btn-primary');
+  await waitQuestion(h, 1);
+  await mapSettled(h);
+  // Mitt på Gotland: land, långt från alla tio sjöar och deras träffytor.
+  const land = await pointOnMap(h, { lat: 57.45, lon: 18.5 });
+  await h.mouse.click(land.x, land.y);
+  await h.waitForSelector('.live-standings', { timeout: 15000 });
+  const toast = (await h.textContent('.toast.is-visible'))?.trim();
+  t.check(/^Fel – \d+ km bort\. Här ligger .+\.$/.test(toast ?? ''), `sjöfråga: en miss på land visar avståndet ("${toast}")`);
+  await t.shot(h, 'sjo-miss-km');
+  t.check(h.errors.length === 0, `sjöfråga: inga fel i sidan ${h.errors.slice(0, 3).join(' | ')}`);
+  ws.close();
+  await hc.close();
+}
+
 export default async function live(run) {
   const t = new Suite(run, 'live');
   await Promise.all([
     twoPlayers(run, t).catch((e) => t.check(false, `2 spelare: ${e.message.split('\n')[0]}`)),
     twelvePlayers(run, t).catch((e) => t.check(false, `12 spelare: ${e.message.split('\n')[0]}${e.state ? ` (${e.state})` : ''}`)),
+    lakeMiss(run, t).catch((e) => t.check(false, `sjöfråga: ${e.message.split('\n')[0]}`)),
   ]);
   return t;
 }

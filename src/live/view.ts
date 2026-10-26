@@ -8,6 +8,8 @@ import { COUNTY_BY_CODE } from '../data/counties';
 import { PROVINCE_BY_CODE } from '../data/provinces';
 import { MUNICIPALITY_BY_CODE } from '../data/municipalities';
 import { LAKE_BY_ID } from '../data/lakes';
+import { CONFIG } from '../game/config';
+import { distanceToShapeKm } from '../game/geo';
 import { modeLabel, questionLabel, questionPrompt, type Question } from '../game/game';
 import {
   LIVE_MAX_POINTS,
@@ -295,7 +297,12 @@ export class LiveView {
       map.setLakeResult(q.lake.id, state);
       if (mine?.correct) show(t().game.rightLake(t().game.lakeRank(q.lake.rank), mine.points), true);
       else if (mine?.code) show(t().game.wrongWasReveal(LAKE_BY_ID.get(mine.code)?.name ?? mine.code, name), false);
-      else if (mine?.lat !== undefined) show(t().game.missReveal(t().game.wrong, name), false);
+      else if (mine?.lat !== undefined && mine.lon !== undefined) {
+        // Ett klick på land (eller i havet): hur långt från sjön, som i solospelet (PO-23).
+        const shape = map.lakeGeometry(q.lake.id);
+        const km = shape ? Math.round(distanceToShapeKm(shape, mine.lat, mine.lon)) : null;
+        show(t().game.missReveal(km === null ? t().game.wrong : t().game.wrongKm(km), name), false);
+      }
       else show(t().live.timeUp(name), false);
       return;
     }
@@ -395,10 +402,13 @@ export class LiveView {
       else this.map.addMarker(click.lon, click.lat, 'picked');
       send(click.lake ? { code: click.lake, lat: click.lat, lon: click.lon } : { lat: click.lat, lon: click.lon });
     } else if (click.code) {
-      // Ett klick utanför alla områden (i havet) räknas inte. Punkten skickas med, så att
-      // klicket kan visas för de andra när svaret avslöjas.
+      // Punkten skickas med, så att klicket kan visas för de andra när svaret avslöjas.
       this.map.highlight(click.code, 'picked');
       send({ code: click.code, lat: click.lat, lon: click.lon });
+    } else {
+      // Ett klick utanför alla områden (i havet) räknas inte; samma tips som i solospelet (PO-23).
+      const hint = q.kind === 'landskap' ? t().game.clickProvince : q.kind === 'kommun' ? t().game.clickMunicipality : t().game.clickCounty;
+      this.toast?.show(hint, 'info', CONFIG.toastMs);
     }
   }
 
