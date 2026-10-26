@@ -146,6 +146,7 @@ export class SwedenMap {
   private readonly markersG: Selection<SVGGElement, unknown, null, undefined>;
   private readonly pinsG: Selection<SVGGElement, unknown, null, undefined>;
   private readonly pinLabelsG: Selection<SVGGElement, unknown, null, undefined>;
+  private readonly markerLabelsG: Selection<SVGGElement, unknown, null, undefined>;
   private readonly zoomBehavior: ZoomBehavior<SVGSVGElement, unknown>;
   private readonly projection: GeoProjection;
   private readonly path = geoPath();
@@ -223,12 +224,15 @@ export class SwedenMap {
     // träffar den sjön och aldrig grannsjöns träffyta.
     this.lakeHitG = this.root.append('g').attr('class', 'lake-hits');
     this.lakesG = this.root.append('g').attr('class', 'lakes');
-    this.lakeLabelsG = this.root.append('g').attr('class', 'lake-labels');
     this.resultDotsG = this.root.append('g').attr('class', 'result-dots');
     this.markersG = this.root.append('g').attr('class', 'markers');
     // Spelarnas prickar ligger ovanpå rätt svar, så att ett klick precis på staden syns med sitt ✓.
     this.pinsG = this.root.append('g').attr('class', 'pins');
     this.pinLabelsG = this.root.append('g').attr('class', 'pin-labels');
+    // Överst: namnet på rätt svar (sjön eller staden), så att det går att läsa även när många
+    // spelare har klickat runt det (PO-30).
+    this.lakeLabelsG = this.root.append('g').attr('class', 'lake-labels');
+    this.markerLabelsG = this.root.append('g').attr('class', 'marker-labels');
 
     this.coastG
       .selectAll('path')
@@ -622,7 +626,6 @@ export class SwedenMap {
         const g = enter.append('g');
         g.append('circle').attr('class', 'marker-halo');
         g.append('circle').attr('class', 'marker-dot');
-        g.append('text').attr('class', 'marker-label');
         return g;
       })
       .attr('class', (d) => `marker marker-${d.kind}`)
@@ -632,10 +635,16 @@ export class SwedenMap {
       });
     groups.select('circle.marker-halo').attr('r', 14 / k);
     groups.select('circle.marker-dot').attr('r', 5 / k);
-    groups
-      .select('text.marker-label')
-      .attr('y', -18 / k)
+    // Namnen i ett eget lager överst (se konstruktorn).
+    this.markerLabelsG
+      .selectAll<SVGTextElement, Marker>('text')
+      .data(this.markers.filter((d) => d.label))
+      .join('text')
+      .attr('class', 'marker-label')
+      .attr('x', (d) => this.projection([d.lon, d.lat])?.[0] ?? 0)
+      .attr('y', (d) => (this.projection([d.lon, d.lat])?.[1] ?? 0) - 18 / k)
       .attr('font-size', 14 / k)
+      .style('stroke-width', `${3 / k}px`)
       .text((d) => d.label ?? '');
   }
 
@@ -777,23 +786,41 @@ export class SwedenMap {
       boxes.push({ x0, y0, x1, y1 });
     }
     if (!boxes.length) return;
-    const x0 = Math.min(...boxes.map((b) => b.x0));
-    const y0 = Math.min(...boxes.map((b) => b.y0));
-    const x1 = Math.max(...boxes.map((b) => b.x1));
-    const y1 = Math.max(...boxes.map((b) => b.y1));
     const top = pad.top ?? 0;
     const bottom = pad.bottom ?? 0;
     const free = Math.max(this.height - top - bottom, 1);
-    const share = Math.max((x1 - x0) / this.width, (y1 - y0) / free, FIT_MIN_SHARE);
-    let k = Math.min(REVEAL_MAX_ZOOM, FIT_FILL / share);
-    if (k < REVEAL_MIN_ZOOM) {
-      // Hela kartan räcker om allt redan ligger fritt från rutan; annars krymps den så att det gör det.
-      const inside = y0 >= top && y1 <= this.height - bottom;
-      if (inside) {
-        if (this.isTransformed) this.resetZoom(duration);
-        return;
-      }
-      k = Math.min(1, FIT_FULL / Math.max((x1 - x0) / this.width, (y1 - y0) / free));
+    // Namnet på en stad (rätt svar) står ovanför pricken med fast storlek på skärmen, så dess yta
+    // i kartans koordinater beror på zoomen: räkna ut zoomen, lägg till namnet och räkna om.
+    const labelBoxes = (k: number): Box[] =>
+      this.markers
+        .filter((m) => m.kind === 'reveal' && m.label)
+        .map((m) => {
+          const [x, y] = this.projection([m.lon, m.lat]) ?? [0, 0];
+          const w = (m.label!.length * 14 * 0.62 + 6) / k;
+          return { x0: x - w / 2, y0: y - 32 / k, x1: x + w / 2, y1: y };
+        });
+    let x0 = 0;
+    let y0 = 0;
+    let x1 = 0;
+    let y1 = 0;
+    let k = 1;
+    let full = false;
+    for (let pass = 0; pass < 2; pass++) {
+      const all = pass === 0 ? boxes : [...boxes, ...labelBoxes(k)];
+      x0 = Math.min(...all.map((b) => b.x0));
+      y0 = Math.min(...all.map((b) => b.y0));
+      x1 = Math.max(...all.map((b) => b.x1));
+      y1 = Math.max(...all.map((b) => b.y1));
+      const share = Math.max((x1 - x0) / this.width, (y1 - y0) / free, FIT_MIN_SHARE);
+      k = Math.min(REVEAL_MAX_ZOOM, FIT_FILL / share);
+      full = k < REVEAL_MIN_ZOOM;
+      // Ryms allt bara i hela kartan krymps den, om det behövs, så att inget hamnar under rutan.
+      if (full) k = Math.min(1, FIT_FULL / Math.max((x1 - x0) / this.width, (y1 - y0) / free));
+    }
+    if (full && k >= 1 && x0 >= 0 && x1 <= this.width && y0 >= top && y1 <= this.height - bottom) {
+      // Hela kartan räcker: allt ligger redan i bild och fritt från rutan.
+      if (this.isTransformed) this.resetZoom(duration);
+      return;
     }
     // Ingen begränsning till kartans kanter här: vyn ska rymma allt, och kartan är låst medan svaret visas.
     const t = zoomIdentity

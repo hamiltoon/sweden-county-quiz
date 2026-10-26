@@ -1114,6 +1114,7 @@ a {
 }
 
 .marker-label {
+  pointer-events: none;
   fill: var(--text);
   font-weight: 700;
   text-anchor: middle;
