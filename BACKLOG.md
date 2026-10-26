@@ -76,11 +76,11 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
 
 | Status | Punkter |
 |---|---|
-| Pågår (utvecklaren) | PO-23 + PO-40 till produktion (#39), sedan PO-02 |
-| Nästa | Live-paketet: PO-02, PO-03, PO-04 |
+| Pågår (utvecklaren) | PO-02 |
+| Nästa | Live-paketet: PO-03, PO-04 |
 | Väntar på UX-verifiering | – |
 | Väntar på svar från John | – |
-| Klart | PO-01, PO-01b, PO-06, PO-14, PO-15, PO-16, PO-17, PO-22, PO-29, PO-29b, PO-30, PO-31, PO-33 |
+| Klart | PO-01, PO-01b, PO-06, PO-14, PO-15, PO-16, PO-17, PO-22, PO-23, PO-29, PO-29b, PO-30, PO-31, PO-33, PO-40 |
 
 ## Backlog i prioritetsordning
 
@@ -291,7 +291,7 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
   3. Efter att värden valt läge eller blandning ligger fokus kvar på det valda chipet.
 
 ### PO-23 Live: samma hjälp vid miss som i solospelet
-- **Status:** ✅ Godkänd av UX på staging 2026-10-26 ([#39](https://github.com/hamiltoon/sweden-county-quiz/pull/39)). Går till produktion.
+- **Status:** ✅ Klar 2026-10-26, i produktion via [#39](https://github.com/hamiltoon/sweden-county-quiz/pull/39) (version b3b80db5).
 - **Insats:** S
 - **Koppling:** UX-16, UX-17
 - **Värde:** I solospelet lär man sig av "250 km bort" och av tipset när man klickar i havet. I live får man bara "Fel." eller ingenting.
@@ -401,7 +401,7 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
 - **Koppling:** UX vid PO-33 (sidan är cirka 8 000 px lång)
 
 ### PO-40 Minnesregler, omgång 2
-- **Status:** ✅ Godkänd 2026-10-26 via e2e (regler 41/41); går ut med PO-23 i [#39](https://github.com/hamiltoon/sweden-county-quiz/pull/39). Tipset i Fler städer kommer från lägets egna regler tills en tankeregel finns.
+- **Status:** ✅ Godkänd 2026-10-26 via e2e (regler 41/41); i produktion 2026-10-26 via [#39](https://github.com/hamiltoon/sweden-county-quiz/pull/39). Tipset i Fler städer kommer från lägets egna regler tills en tankeregel finns.
 - **Insats:** S
 - **Koppling:** PO-33; regler från kreativ ledare, faktagranskade av PO: `docs/minnesregler-omgang2.json`
 - **Värde:** Regler för residensstäder som saknade dem (Visby, Karlstad, Västerås/Uppsala, Linköping, Jönköping,
@@ -683,6 +683,7 @@ Fynd från UX-specialisten (UX-01, UX-02 …) läggs in här med prioritet och k
 
 ## Klart
 
+- **PO-23 och PO-40** Live: samma hjälp vid miss som i solospelet; minnesregler omgång 2 (42 regler, tipsrad i alla lägen). I produktion 2026-10-26 via [#39](https://github.com/hamiltoon/sweden-county-quiz/pull/39).
 - **PO-33 och PO-17** Minnesregler i spelet (slutskärm, avslöjande, tipsrad, röster, /minnesregler) och Spela igen utan scroll. I produktion 2026-10-26 via [#37](https://github.com/hamiltoon/sweden-county-quiz/pull/37).
 - **PO-15** Avslöjandet lär ut: felklick och rätt svar i samma vy, namnet på kartan, linje med avstånd, 4 s med paus. I produktion 2026-10-26 via [#35](https://github.com/hamiltoon/sweden-county-quiz/pull/35).
 - **PO-30** Live: målets namn syns ovanpå prickarna. I produktion 2026-10-26 via [#34](https://github.com/hamiltoon/sweden-county-quiz/pull/34).
