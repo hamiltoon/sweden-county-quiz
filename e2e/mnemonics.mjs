@@ -160,6 +160,8 @@ async function revealAndEnd(run, t) {
     focused: document.activeElement?.classList.contains('mnemonic') ?? false,
   }));
   t.check(all.visible === LAKE_RULES && all.focused, `slutskärmen: "Visa alla" visar alla ${all.visible} och flyttar fokus till nästa regel`);
+  const moreHeight = await p.$eval(`.mnemonic[data-rule="${rule.id}"] details.mnemonic-more summary`, (el) => el.getBoundingClientRect().height);
+  t.check(moreHeight >= 44, `slutskärmen: Mer är ${Math.round(moreHeight)} px hög (minst 44)`);
   await p.click(`.mnemonic[data-rule="${rule.id}"] details.mnemonic-more summary`);
   t.check(await p.isVisible(`.mnemonic[data-rule="${rule.id}"] details.mnemonic-more[open] p`), 'slutskärmen: Mer fäller ut hela texten och varför');
   await axe(t, p, 'slutskärmen med minnesregler');

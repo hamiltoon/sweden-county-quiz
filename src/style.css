@@ -1820,8 +1820,10 @@ a {
 .mnemonic-why summary,
 .mnemonic-more summary,
 .mnemonic-discuss summary {
-  min-height: 32px;
-  padding: 6px 0;
+  /* Tryckytan är minst 44 px hög, som knapparna. */
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 10px 0;
   cursor: pointer;
   color: var(--accent);
   font-weight: 600;
