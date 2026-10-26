@@ -52,10 +52,12 @@ export function createAdvance(surface: HTMLElement, autoMs: number | null, onDon
   let remaining = autoMs ?? 0;
   let since = performance.now();
   let held = 0;
-  let paused = false;
+  // Nedräkningen börjar först när rutan syns (se nedan); till dess står den still.
+  let paused = true;
+  let shown = false;
   let interval: number | undefined;
   let down: { x: number; y: number; at: number } | null = null;
-  const shownAt = performance.now();
+  let shownAt = performance.now();
 
   const left = () => (paused ? remaining : remaining - (performance.now() - since));
   const render = () => {
@@ -71,7 +73,7 @@ export function createAdvance(surface: HTMLElement, autoMs: number | null, onDon
     render();
   };
   const resume = () => {
-    if (!paused || held > 0 || document.hidden) return;
+    if (!paused || !shown || held > 0 || document.hidden) return;
     since = performance.now();
     paused = false;
     render();
@@ -120,8 +122,17 @@ export function createAdvance(surface: HTMLElement, autoMs: number | null, onDon
     window.addEventListener('pointercancel', onUp, true);
     surface.addEventListener('click', onClick, true);
     document.addEventListener('visibilitychange', onVisibility);
-    if (document.hidden) pause();
     render();
+    // Efter nästa bildruta har rutan ritats; först då börjar de 4 sekunderna, också när kartan har
+    // mycket att rita och sidan är seg.
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => {
+        if (done) return;
+        shown = true;
+        shownAt = performance.now();
+        resume();
+      }),
+    );
     interval = window.setInterval(() => {
       render();
       if (left() <= 0) finish();
