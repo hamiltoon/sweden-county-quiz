@@ -80,6 +80,7 @@ export const en: Messages = {
     clickMunicipality: 'Tap a municipality',
     magnified: 'Small municipality – zoomed in, tap again',
     next: 'Next',
+    holdHint: 'Hold your finger on the map to look longer',
     distance: (km) => `${km} km`,
     right: (points) => `Right! +${points} pts`,
     rightLake: (rank, points) => `Right! ${rank} · +${points} pts`,

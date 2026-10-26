@@ -2,29 +2,11 @@ import { el } from './dom';
 import { t } from '../i18n';
 
 /**
- * PO-15: hur solospelet går vidare efter en missad fråga. Varianterna jämförs på staging med ?v=a,
- * ?v=b eller ?v=c; utan den går spelet vidare som förut.
- * - a: knappen "Nästa", ingen automatik.
- * - b: knappen med nedräkning; ett tryck på kartan går också vidare, och att hålla fingret på
- *   kartan pausar nedräkningen.
- * - c: som b, och en linje från felklicket till rätt svar med avståndet.
+ * PO-15 (variant C): hur solospelet går vidare efter en missad fråga. Knappen "Nästa" räknar ned,
+ * och spelet går vidare när tiden är ute, när man trycker på knappen eller när man trycker på kartan.
+ * Nedräkningen står still medan man håller fingret på kartan, medan fliken är dold och, för den som
+ * använder tangentbordet, medan fokus är i rutan (WCAG 2.2.1).
  */
-export type MissVariant = 'a' | 'b' | 'c';
-
-const VARIANT_KEY = 'sverigespelet.missVariant';
-
-/** Varianten från adressen (?v=), som sparas för fliken så att den följer med mellan omgångarna. */
-export function missVariant(): MissVariant | null {
-  const isVariant = (v: string | null): v is MissVariant => v === 'a' || v === 'b' || v === 'c';
-  const fromUrl = new URLSearchParams(location.search).get('v');
-  try {
-    if (isVariant(fromUrl)) sessionStorage.setItem(VARIANT_KEY, fromUrl);
-    const saved = sessionStorage.getItem(VARIANT_KEY);
-    return isVariant(saved) ? saved : null;
-  } catch {
-    return isVariant(fromUrl) ? fromUrl : null;
-  }
-}
 
 /** Ett tryck (inte ett håll eller en dragning) är kortare och rör sig mindre än så här. */
 const TAP_MS = 350;
@@ -33,6 +15,22 @@ const TAP_PX = 10;
 const TAP_GRACE_MS = 700;
 const TICK_MS = 100;
 
+const HINT_KEY = 'sverigespelet.holdHints.v1';
+/** Så många gånger per enhet visas hinten om att hålla på kartan. */
+const HINT_TIMES = 3;
+
+/** Ska hinten om att hålla på kartan visas den här gången? Räknar upp; utan lagring visas den varje gång. */
+export function takeHoldHint(): boolean {
+  try {
+    const shown = Number(localStorage.getItem(HINT_KEY) ?? '0') || 0;
+    if (shown >= HINT_TIMES) return false;
+    localStorage.setItem(HINT_KEY, String(shown + 1));
+  } catch {
+    /* utan lagring */
+  }
+  return true;
+}
+
 export interface Advance {
   /** Knappen, att lägga i rätt/fel-rutan. */
   readonly button: HTMLButtonElement;
@@ -40,33 +38,37 @@ export interface Advance {
   cancel(): void;
 }
 
-/**
- * Knappen "Nästa" och, med `autoMs`, en nedräkning som går vidare av sig själv. Med nedräkning går
- * också ett tryck på `surface` (kartan) vidare, och nedräkningen står still så länge man håller
- * kvar fingret där eller fliken är dold, och för gott när man trycker på en tangent.
- */
-export function createAdvance(surface: HTMLElement, autoMs: number | null, onDone: () => void): Advance {
+export interface AdvanceOptions {
+  /** Ytan där ett tryck går vidare och ett håll pausar (kartan). */
+  surface: HTMLElement;
+  /** Nedräkningens längd. */
+  ms: number;
+  /** Har tangentbordet använts i omgången? Då står nedräkningen still medan fokus är i rutan. */
+  keyboard: () => boolean;
+  onDone: () => void;
+}
+
+export function createAdvance({ surface, ms: total, keyboard, onDone }: AdvanceOptions): Advance {
   const count = el('span', { class: 'advance-count', 'aria-hidden': 'true' });
   const bar = el('span', { class: 'advance-bar', 'aria-hidden': 'true' });
-  const button = el('button', { class: 'toast-action', type: 'button' }, el('span', {}, t().game.next), ...(autoMs ? [count, bar] : []));
-  let remaining = autoMs ?? 0;
+  const button = el('button', { class: 'toast-action', type: 'button' }, el('span', {}, t().game.next), count, bar);
+  let remaining = total;
   let since = performance.now();
   let held = 0;
   // Nedräkningen börjar först när rutan syns (se nedan); till dess står den still.
   let paused = true;
   let shown = false;
-  // Den som använder tangentbordet får den tid som behövs (WCAG 2.2.1): nedräkningen stannar för
-  // gott, och man går vidare med knappen.
-  let byKeyboard = false;
   let interval: number | undefined;
   let down: { x: number; y: number; at: number } | null = null;
   let shownAt = performance.now();
 
+  /** Fokus i rutan efter att tangentbordet använts: man läser eller ska trycka Enter. */
+  const keyboardHold = () => keyboard() && !!button.closest('.toast')?.contains(document.activeElement);
   const left = () => (paused ? remaining : remaining - (performance.now() - since));
   const render = () => {
     const ms = Math.max(0, left());
     count.textContent = String(Math.ceil(ms / 1000));
-    bar.style.transform = `scaleX(${autoMs ? ms / autoMs : 0})`;
+    bar.style.transform = `scaleX(${ms / total})`;
     button.classList.toggle('is-paused', paused);
   };
   const pause = () => {
@@ -76,7 +78,7 @@ export function createAdvance(surface: HTMLElement, autoMs: number | null, onDon
     render();
   };
   const resume = () => {
-    if (!paused || !shown || byKeyboard || held > 0 || document.hidden) return;
+    if (!paused || !shown || held > 0 || document.hidden || keyboardHold()) return;
     since = performance.now();
     paused = false;
     render();
@@ -101,10 +103,6 @@ export function createAdvance(surface: HTMLElement, autoMs: number | null, onDon
     if (tap) finish();
   };
   const onVisibility = () => (document.hidden ? pause() : resume());
-  const onKey = () => {
-    byKeyboard = true;
-    pause();
-  };
 
   const cancel = () => {
     window.clearInterval(interval);
@@ -113,7 +111,6 @@ export function createAdvance(surface: HTMLElement, autoMs: number | null, onDon
     window.removeEventListener('pointercancel', onUp, true);
     surface.removeEventListener('click', onClick, true);
     document.removeEventListener('visibilitychange', onVisibility);
-    document.removeEventListener('keydown', onKey, true);
   };
   let done = false;
   const finish = () => {
@@ -124,28 +121,28 @@ export function createAdvance(surface: HTMLElement, autoMs: number | null, onDon
   };
 
   button.addEventListener('click', finish);
-  if (autoMs) {
-    surface.addEventListener('pointerdown', onDown, true);
-    window.addEventListener('pointerup', onUp, true);
-    window.addEventListener('pointercancel', onUp, true);
-    surface.addEventListener('click', onClick, true);
-    document.addEventListener('visibilitychange', onVisibility);
-    document.addEventListener('keydown', onKey, true);
+  surface.addEventListener('pointerdown', onDown, true);
+  window.addEventListener('pointerup', onUp, true);
+  window.addEventListener('pointercancel', onUp, true);
+  surface.addEventListener('click', onClick, true);
+  document.addEventListener('visibilitychange', onVisibility);
+  render();
+  // Efter nästa bildruta har rutan ritats; först då börjar de 4 sekunderna, också när kartan har
+  // mycket att rita och sidan är seg.
+  requestAnimationFrame(() =>
+    requestAnimationFrame(() => {
+      if (done) return;
+      shown = true;
+      shownAt = performance.now();
+      resume();
+    }),
+  );
+  interval = window.setInterval(() => {
+    // Fokus kan ha flyttats in i eller ut ur rutan med tangentbordet.
+    if (keyboardHold()) pause();
+    else resume();
     render();
-    // Efter nästa bildruta har rutan ritats; först då börjar de 4 sekunderna, också när kartan har
-    // mycket att rita och sidan är seg.
-    requestAnimationFrame(() =>
-      requestAnimationFrame(() => {
-        if (done) return;
-        shown = true;
-        shownAt = performance.now();
-        resume();
-      }),
-    );
-    interval = window.setInterval(() => {
-      render();
-      if (left() <= 0) finish();
-    }, TICK_MS);
-  }
+    if (left() <= 0) finish();
+  }, TICK_MS);
   return { button, cancel };
 }

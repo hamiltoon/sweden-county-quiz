@@ -92,6 +92,8 @@ interface Marker {
 
 /** Ett namn utan prick tar ungefär så här mycket plats (px på skärmen) runt sin punkt. */
 const TEXT_HALF_H = 10;
+/** Kortare linje än så här (px på skärmen) får ingen avståndsetikett. */
+const LINE_LABEL_MIN_PX = 40;
 const textWidth = (label: string) => label.length * 14 * 0.62 + 6;
 
 const MIN_ZOOM = 1;
@@ -105,8 +107,7 @@ const GROUP_ZOOM_MS = 750;
 const PADDING = 8;
 /** Län och landskap som är så små på skärmen att de får en extra osynlig träffyta. */
 const SMALL_COUNTIES: ReadonlySet<string> = new Set(['K', 'I', 'blekinge', 'oland']);
-/** Hur mycket av vyn ett län eller en sjö fyller när rätt svar visas, och hur långt in det zoomas som mest. */
-const REVEAL_FILL = 0.35;
+/** Hur långt in avslöjandet zoomar som mest, och under vilken zoom hela kartan visas i stället. */
 const REVEAL_MAX_ZOOM = 4;
 const REVEAL_MIN_ZOOM = 1.3;
 /** fitView(): hur mycket av vyn allt ska fylla (namnen bredvid prickarna behöver plats), och minsta yta. */
@@ -536,23 +537,23 @@ export class SwedenMap {
   /**
    * Var linjens etikett hamnar: mitt på linjen om det är fritt, annars längre mot ena änden eller
    * en bit vid sidan om, så att den inte täcker namnet på rätt svar (t.ex. en kort linje in i ett län).
+   * Ingen plats (null) om linjen är kortare än LINE_LABEL_MIN_PX på skärmen eller allt är upptaget.
    */
-  private lineLabelAt(a: [number, number], b: [number, number], label: string, k: number): [number, number] {
+  private lineLabelAt(a: [number, number], b: [number, number], label: string, k: number): [number, number] | null {
     const w = textWidth(label) / k;
     const h = TEXT_HALF_H / k;
-    const len = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+    const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    if (len * k < LINE_LABEL_MIN_PX) return null;
     const normal = [-(b[1] - a[1]) / len, (b[0] - a[0]) / len];
     const taken = this.answerBoxes();
-    let first: [number, number] | null = null;
     for (const along of [0.5, 0.35, 0.65, 0.2, 0.8])
       for (const side of [0, 16, -16, 28, -28]) {
         const x = a[0] + (b[0] - a[0]) * along + (normal[0] * side) / k;
         const y = a[1] + (b[1] - a[1]) * along + (normal[1] * side) / k;
-        first ??= [x, y];
         const box = { x0: x - w / 2, y0: y - h, x1: x + w / 2, y1: y + h };
         if (!taken.some((t) => overlaps(box, t))) return [x, y];
       }
-    return first!;
+    return null;
   }
 
   private addText(lon: number, lat: number, label: string, kind: MarkerKind): void {
@@ -709,20 +710,23 @@ export class SwedenMap {
         nodes[i].setAttribute('x2', String(b[0]));
         nodes[i].setAttribute('y2', String(b[1]));
       })
-      .style('stroke-dasharray', `${6 / k} ${5 / k}`);
+      // Med non-scaling-stroke räknas strecken i skärmens pixlar, oavsett zoom.
+      .style('stroke-dasharray', '6 5');
+    // Avståndet står bara där det får plats utan att täcka namnet på rätt svar (PO-15 krav 10).
+    const lineLabels = line.flatMap((d) => {
+      const at = this.lineLabelAt(this.projection(d.from) ?? [0, 0], this.projection(d.to) ?? [0, 0], d.label, k);
+      return at ? [{ label: d.label, x: at[0], y: at[1] }] : [];
+    });
     this.lineLabelG
-      .selectAll<SVGTextElement, NonNullable<SwedenMap['line']>>('text')
-      .data(line)
+      .selectAll<SVGTextElement, (typeof lineLabels)[number]>('text')
+      .data(lineLabels)
       .join('text')
       .attr('class', 'marker-label is-text-only marker-label-wrong')
       .attr('font-size', 14 / k)
       .style('stroke-width', `${3 / k}px`)
-      .text((d) => d.label)
-      .each((d, i, nodes) => {
-        const [x, y] = this.lineLabelAt(this.projection(d.from) ?? [0, 0], this.projection(d.to) ?? [0, 0], d.label, k);
-        nodes[i].setAttribute('x', String(x));
-        nodes[i].setAttribute('y', String(y + 5 / k));
-      });
+      .attr('x', (d) => d.x)
+      .attr('y', (d) => d.y + 5 / k)
+      .text((d) => d.label);
     const groups = this.markersG
       .selectAll<SVGGElement, Marker>('g.marker')
       .data(this.markers.filter((d) => !d.textOnly))
@@ -826,12 +830,6 @@ export class SwedenMap {
     this.svg.transition().duration(200).call(this.zoomBehavior.scaleBy, factor);
   }
 
-  /** Zoomar mjukt in på ett län så att man ser var det ligger, med lite omgivning kvar. */
-  focusCounty(code: string, duration = 500): void {
-    const f = this.features.find((d) => d.properties.code === code);
-    if (f) this.focusBounds(this.path.bounds(f), duration);
-  }
-
   /**
    * Zoomar in så att alla områden med `groupBy`-värdet `group` fyller kartan, t.ex. länet som en
    * kommunfråga nämner, och tonar ned resten. Zoomen går mjukt från vyn man har, så att man ser
@@ -859,18 +857,6 @@ export class SwedenMap {
     const y1 = Math.max(...boxes.map((b) => b.y1));
     const k = Math.min(this.maxZoom, GROUP_FILL / Math.max((x1 - x0) / this.width, (y1 - y0) / this.height));
     this.focusOn((x0 + x1) / 2, (y0 + y1) / 2, Math.max(1, k), motionMs(GROUP_ZOOM_MS));
-  }
-
-  /** Zoomar mjukt in på en sjö. */
-  focusLake(id: string, duration = 500): void {
-    const f = this.lakeFeatures.find((d) => d.properties.id === id);
-    if (f) this.focusBounds(this.path.bounds(f), duration);
-  }
-
-  /** Zoomar mjukt in kring en punkt, t.ex. en stad. */
-  focusPoint(lon: number, lat: number, k = 3, duration = 500): void {
-    const p = this.projection([lon, lat]);
-    if (p) this.focusOn(p[0], p[1], k, duration);
   }
 
   /**
@@ -934,15 +920,6 @@ export class SwedenMap {
       .scale(k)
       .translate(-(x0 + x1) / 2, -(y0 + y1) / 2);
     this.svg.transition().duration(duration).call(this.zoomBehavior.transform, t);
-  }
-
-  private focusBounds([[x0, y0], [x1, y1]]: [[number, number], [number, number]], duration: number): void {
-    const w = Math.max(x1 - x0, 1);
-    const h = Math.max(y1 - y0, 1);
-    const k = Math.min(REVEAL_MAX_ZOOM, REVEAL_FILL / Math.max(w / this.width, h / this.height));
-    // Stora län (t.ex. Norrbotten) syns redan tydligt; då behövs ingen zoom alls.
-    if (k < REVEAL_MIN_ZOOM) return;
-    this.focusOn((x0 + x1) / 2, (y0 + y1) / 2, k, duration);
   }
 
   /**

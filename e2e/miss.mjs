@@ -1,11 +1,13 @@
 /**
- * PO-15: avslöjandet efter en missad fråga i solospelet, i varianterna ?v=a, b och c.
+ * PO-15 (variant C): avslöjandet efter en missad fråga i solospelet.
  * 1. Felklicket och rätt svar syns i samma vy, fria från rutan.
  * 2. Rätt svar har sitt namn på kartan.
- * 3. Efter en miss går spelet vidare först med "Nästa" (a) eller efter minst 4 s (b, c), och
- *    nedräkningen står still medan man håller fingret på kartan (b). Rätt på första försöket går
- *    vidare lika snabbt som förut.
- * Dessutom: linjen med avståndet (c), ingen zoomanimation med "minska rörelse", och engelska.
+ * 3. Efter en miss går spelet vidare med "Nästa" eller efter minst 4 s, och nedräkningen står still
+ *    medan man håller fingret på kartan. Rätt på första försöket går vidare lika snabbt som förut.
+ * 8. Hinten om att hålla på kartan visas de tre första gångerna per enhet.
+ * 9. Efter att tangentbordet använts står nedräkningen still medan fokus är i rutan; Enter går vidare.
+ * 10. Avståndet på linjen täcker inte namnet på rätt svar.
+ * Dessutom: ingen zoomanimation med "minska rörelse", engelska och axe.
  */
 import { MUNICIPALITIES } from '../src/data/municipalities.ts';
 import { axe } from './a11y.mjs';
@@ -71,7 +73,8 @@ function measureMiss(p) {
         const n = label?.getBoundingClientRect();
         return !!d && !!n && d.left < n.right && d.right > n.left && d.top < n.bottom && d.bottom > n.top;
       })(),
-      button: document.querySelector('.toast.is-visible .toast-action')?.textContent ?? null,
+      button: document.querySelector('.toast.is-visible .toast-action span:first-child')?.textContent ?? null,
+      hint: document.querySelector('.toast.is-visible .toast-hint')?.textContent ?? null,
       transform: document.querySelector('.map-root').getAttribute('transform'),
     };
   });
@@ -142,18 +145,18 @@ function missTiming(p) {
   return p.evaluate(() => ({ elapsed: performance.now() - window.__miss.shown, until: window.__miss.next === null ? null : window.__miss.next - window.__miss.shown, held: window.__miss.held }));
 }
 
-async function variantRound(run, t, variant, mode, device = 'iphone') {
-  const name = `${variant}, ${mode}`;
-  const ctx = await context(run, device);
+async function round(run, t, mode, { hold = false } = {}) {
+  const name = mode;
+  const ctx = await context(run, 'iphone');
   const p = await page(ctx);
-  await p.goto(url(run, `?v=${variant}`));
+  await p.goto(url(run));
   await p.click(`.mode-btn[data-mode="${mode}"]`);
   await p.waitForSelector('.screen-game .map path');
   const { q } = await miss(p, mode);
-  // Fokus före hållet i b (ett tryck på kartan tar fokus från knappen, som det ska).
+  // Fokus före hållet (ett tryck på kartan tar fokus från knappen, som det ska).
   const focused = await p.evaluate(() => document.activeElement?.classList.contains('toast-action') ?? false);
   let heldSince = null;
-  if (variant === 'b') {
+  if (hold) {
     // Håll fingret (musen) på kartan, efter spärren mot dubbeltryck: nedräkningen står still medan
     // vyn mäts och fotograferas, och sedan i minst 3 s.
     await sleep(p, 800);
@@ -165,35 +168,26 @@ async function variantRound(run, t, variant, mode, device = 'iphone') {
   await sleep(p, 900);
   await mapSettled(p);
   const r = await measureMiss(p);
-  await t.shot(p, `${variant}-${mode}-miss`);
+  await t.shot(p, `${mode}-miss`);
   t.check(r.wrong > 0.1 && r.target > 0.95, `${name}: felklicket (${Math.round(r.wrong * 100)} %) och rätt svar (${Math.round(r.target * 100)} %) syns i samma vy, fritt från rutan – ${q}`);
   const place = q.replace(/^Var ligger /, '').replace(/ i .+ län\?$/, '').replace(/\?$/, '');
   t.check(r.label?.text === place && r.label.visible, `${name}: namnet "${r.label?.text}" står på kartan och syns (väntat "${place}")`);
-  t.check(/^Nästa/.test(r.button ?? '') && focused, `${name}: knappen "${r.button}" har fokus`);
-  if (variant === 'c') t.check(r.line && /^\d+ km$/.test(r.distance ?? '') && !r.distanceOnName, `${name}: linjen till rätt svar med avståndet "${r.distance}", som inte täcker namnet`);
-  else t.check(!r.line, `${name}: ingen linje`);
+  t.check(r.button === 'Nästa' && focused, `${name}: knappen "${r.button}" har fokus`);
+  t.check(r.hint === 'Håll fingret på kartan för att titta längre', `${name}: hinten första gången på enheten ("${r.hint}")`);
+  // Avståndet står på linjen, eller saknas om linjen är för kort (under 40 px) eller trång.
+  t.check(r.line && (r.distance === null || (/^\d+ km$/.test(r.distance) && !r.distanceOnName)), `${name}: linjen till rätt svar, avståndet "${r.distance ?? 'dolt'}" täcker inte namnet`);
 
-  if (variant === 'a') {
-    // Ingen nedräkning i a, så axe hinner gå igenom rutan med knappen.
-    await axe(t, p, `${name}, fel-rutan med knappen`);
-    await sleep(p, Math.max(0, 6000 - (await missTiming(p)).elapsed));
-    const { elapsed, until } = await missTiming(p);
-    t.check(until === null && (await questionText(p)) === q, `${name}: ingen automatik, frågan står kvar efter ${(elapsed / 1000).toFixed(1)} s`);
-    await p.click('.toast-action');
-    t.check((await nextQuestion(p, q)) !== q, `${name}: "Nästa" går vidare`);
-  } else {
-    if (heldSince !== null) {
-      await sleep(p, Math.max(0, 3000 - (Date.now() - heldSince)));
-      const paused = await p.$eval('.toast-action', (b) => b.classList.contains('is-paused'));
-      await p.mouse.up();
-      t.check(paused, `${name}: nedräkningen står still medan man håller på kartan`);
-    }
-    await nextQuestion(p, q);
-    const { until, held } = await missTiming(p);
-    const after = (until - held) / 1000;
-    // Minst 4 s från att rutan syns (b: utöver tiden man höll på kartan); nedräkningen kollar var 100:e ms.
-    t.check(after >= 4 && after < 4.6, `${name}: går vidare av sig självt efter ${after.toFixed(2)} s${held > 500 ? ` (plus ${(held / 1000).toFixed(1)} s då man höll på kartan)` : ''}`);
+  if (heldSince !== null) {
+    await sleep(p, Math.max(0, 3000 - (Date.now() - heldSince)));
+    const paused = await p.$eval('.toast-action', (b) => b.classList.contains('is-paused'));
+    await p.mouse.up();
+    t.check(paused, `${name}: nedräkningen står still medan man håller på kartan`);
   }
+  await nextQuestion(p, q);
+  const { until, held } = await missTiming(p);
+  const after = (until - held) / 1000;
+  // Minst 4 s från att rutan syns (utöver tiden man höll på kartan); nedräkningen kollar var 100:e ms.
+  t.check(after >= 4 && after < 4.6, `${name}: går vidare av sig självt efter ${after.toFixed(2)} s${held > 500 ? ` (plus ${(held / 1000).toFixed(1)} s då man höll på kartan)` : ''}`);
 
   // Rätt på första försöket går vidare lika snabbt som förut (1,5 s).
   const q2 = await questionText(p);
@@ -207,38 +201,53 @@ async function variantRound(run, t, variant, mode, device = 'iphone') {
   await ctx.close();
 }
 
-/** Med "minska rörelse" hoppar kartan direkt till vyn med felklicket och svaret. */
+/**
+ * Med "minska rörelse" hoppar kartan direkt till vyn med felklicket och svaret. Enheten har redan
+ * sett hinten tre gånger, så den visas inte.
+ */
 async function reducedMotion(run, t) {
   const ctx = await context(run, 'android', { reducedMotion: true });
+  await ctx.addInitScript(() => localStorage.setItem('sverigespelet.holdHints.v1', '3'));
   const p = await page(ctx);
-  await p.goto(url(run, '?v=b'));
+  await p.goto(url(run));
   await p.click('.mode-btn[data-mode="stad"]');
   await p.waitForSelector('.screen-game .map path');
   await miss(p, 'stad');
-  await p.waitForSelector('.toast.is-visible .toast-action');
   await sleep(p, 80);
-  const early = (await measureMiss(p)).transform;
+  const early = await measureMiss(p);
   await sleep(p, 800);
-  const late = (await measureMiss(p)).transform;
-  t.check(early === late, `minska rörelse: ingen zoomanimation (${early} → ${late})`);
+  const late = await measureMiss(p);
+  t.check(early.transform === late.transform, `minska rörelse: ingen zoomanimation (${early.transform} → ${late.transform})`);
   t.check(!(await p.isVisible('.advance-bar')), 'minska rörelse: ingen rörlig nedräkningsstapel, bara siffran');
+  t.check(late.hint === null, `hinten visas inte en fjärde gång på enheten ("${late.hint}")`);
   await ctx.close();
 }
 
-/** WCAG 2.2.1: en tangenttryckning stoppar nedräkningen, och Enter på knappen går vidare. */
+/**
+ * WCAG 2.2.1: när tangentbordet har använts står nedräkningen still medan fokus är i rutan. Enter
+ * på "Nästa" går vidare, och flyttas fokus ut ur rutan räknar den ned igen.
+ */
 async function keyboard(run, t) {
   const ctx = await context(run, 'desktop');
   const p = await page(ctx);
-  await p.goto(url(run, '?v=c'));
+  await p.goto(url(run));
   await p.click('.mode-btn[data-mode="lan"]');
   await p.waitForSelector('.screen-game .map path');
-  const { q } = await miss(p, 'lan');
   await p.keyboard.press('Shift');
+  const first = await miss(p, 'lan');
   await sleep(p, 5500);
   const paused = await p.$eval('.toast-action', (b) => b.classList.contains('is-paused')).catch(() => false);
-  t.check(paused && (await questionText(p)) === q, 'tangentbord: nedräkningen stannar efter en tangenttryckning');
+  t.check(paused && (await questionText(p)) === first.q, 'tangentbord: nedräkningen står still medan fokus är på "Nästa"');
+  // Nedräkningen står still, så axe hinner gå igenom rutan med knappen och hinten.
+  await axe(t, p, 'fel-rutan med knappen');
   await p.keyboard.press('Enter');
-  t.check((await nextQuestion(p, q)) !== q, 'tangentbord: Enter på "Nästa" går vidare');
+  t.check((await nextQuestion(p, first.q)) !== first.q, 'tangentbord: Enter på "Nästa" går vidare');
+  const second = await miss(p, 'lan');
+  await sleep(p, 1500);
+  await p.keyboard.press('Tab');
+  const out = await p.evaluate(() => !document.activeElement?.closest('.toast'));
+  const moved = await nextQuestion(p, second.q).then(() => true, () => false);
+  t.check(out && moved, 'tangentbord: med fokus utanför rutan räknar den ned och går vidare');
   await ctx.close();
 }
 
@@ -246,32 +255,24 @@ async function keyboard(run, t) {
 async function english(run, t) {
   const ctx = await context(run, 'android', { lang: 'en' });
   const p = await page(ctx);
-  await p.goto(url(run, '?v=a'));
+  await p.goto(url(run));
   await p.click('.mode-btn[data-mode="lan"]');
   await p.waitForSelector('.screen-game .map path');
   for (let i = 0; i < 12 && !(await p.$('.toast.is-visible .toast-action')); i++) {
     await answerAccepted(p, { code: FAR_COUNTIES[i % 2] });
     await sleep(p, 1600);
   }
-  const button = (await p.textContent('.toast.is-visible .toast-action').catch(() => null))?.trim();
-  t.check(button === 'Next', `engelska: knappen heter "${button}"`);
+  const r = await measureMiss(p);
+  t.check(r.button === 'Next' && r.hint === 'Hold your finger on the map to look longer', `engelska: knappen "${r.button}", hinten "${r.hint}"`);
   await t.shot(p, 'en-miss');
   await ctx.close();
 }
 
 export default async function miss_(run) {
   const t = new Suite(run, 'miss');
-  const rounds = [
-    ['a', 'lan'],
-    ['a', 'sjo'],
-    ['b', 'stad'],
-    ['b', 'kommun'],
-    ['c', 'ort'],
-    ['c', 'landskap'],
-    ['c', 'kommun'],
-  ];
+  const rounds = [['lan'], ['sjo'], ['stad', { hold: true }], ['kommun', { hold: true }], ['ort'], ['landskap']];
   await Promise.all([
-    ...rounds.map(([v, mode]) => variantRound(run, t, v, mode).catch((e) => t.check(false, `${v}, ${mode}: ${e.message.split('\n')[0]}`))),
+    ...rounds.map(([mode, opts]) => round(run, t, mode, opts).catch((e) => t.check(false, `${mode}: ${e.message.split('\n')[0]}`))),
     reducedMotion(run, t).catch((e) => t.check(false, `minska rörelse: ${e.message.split('\n')[0]}`)),
     english(run, t).catch((e) => t.check(false, `engelska: ${e.message.split('\n')[0]}`)),
     keyboard(run, t).catch((e) => t.check(false, `tangentbord: ${e.message.split('\n')[0]}`)),

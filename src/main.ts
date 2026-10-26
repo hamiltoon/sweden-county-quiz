@@ -15,7 +15,7 @@ import { COUNTIES_URL, LAKES_URL, NEIGHBORS_URL, regionsFor } from './map/source
 import { kommunMapOptions, takeMagnifyHint } from './map/kommun';
 import { el, clear } from './ui/dom';
 import { Toast } from './ui/toast';
-import { createAdvance, missVariant, type Advance } from './ui/advance';
+import { createAdvance, takeHoldHint, type Advance } from './ui/advance';
 import { renderEnd, renderRecapLegend, renderStart } from './ui/screens';
 import { renderEndLeaderboard, renderStartLeaderboard } from './ui/leaderboard';
 import { newResultId } from './api/leaderboard';
@@ -210,10 +210,13 @@ async function showGame(mode: Mode): Promise<void> {
   // Kommunläget: vid fel kommun säger vi hur många kommuner bort den var.
   const steps = mode === 'kommun' ? regionSteps(topology, regions.objectName) : null;
   const game = new Game(mode);
-  const variant = missVariant();
   let locked = false;
   let timer: number | undefined;
   let advance: Advance | null = null;
+  // Har tangentbordet använts i omgången? Då väntar avslöjandet efter en miss medan fokus är i rutan.
+  let keyboardUsed = false;
+  const listeners = new AbortController();
+  document.addEventListener('keydown', () => (keyboardUsed = true), { capture: true, signal: listeners.signal });
   let lastClickAt = 0;
 
   const updateHud = () => {
@@ -223,6 +226,7 @@ async function showGame(mode: Mode): Promise<void> {
   };
 
   const finishRound = () => {
+    listeners.abort();
     map.destroy();
     const summary = game.summary();
     // Samma id i rekordet och på topplistan, så att rekordet inte sparas två gånger om det
@@ -295,19 +299,25 @@ async function showGame(mode: Mode): Promise<void> {
   };
 
   /**
-   * PO-15 (med ?v=a/b/c): efter en missad fråga visar kartan det sista felklicket och rätt svar i
-   * samma vy, och spelet går vidare med knappen "Nästa" eller (b och c) efter nedräkningen.
-   * `nearest` är närmaste punkt på rätt svar, för linjen med avståndet i variant c.
+   * PO-15: efter en missad fråga visar kartan det sista felklicket och rätt svar i samma vy, med en
+   * linje och avståndet emellan (`nearest` är närmaste punkt på rätt svar). Spelet går vidare med
+   * knappen "Nästa", ett tryck på kartan eller efter nedräkningen.
    */
   const missAndContinue = (message: string, click: MapClick, target: FitTarget, nearest: { lon: number; lat: number; km: number } | null) => {
     locked = true;
     map.setInteractive(false);
-    if (variant === 'c' && nearest && Math.round(nearest.km) >= 1) map.showLine(click, nearest, t().game.distance(Math.round(nearest.km)));
-    advance = createAdvance(mapEl, variant === 'a' ? null : CONFIG.revealMissAutoMs, () => {
-      advance = null;
-      nextQuestion();
+    if (nearest && Math.round(nearest.km) >= 1) map.showLine(click, nearest, t().game.distance(Math.round(nearest.km)));
+    advance = createAdvance({
+      surface: mapEl,
+      ms: CONFIG.revealMissAutoMs,
+      keyboard: () => keyboardUsed,
+      onDone: () => {
+        advance = null;
+        nextQuestion();
+      },
     });
-    toast.show(message, 'bad', 0, advance.button);
+    const hint = takeHoldHint() ? [el('p', { class: 'toast-hint' }, t().game.holdHint)] : [];
+    toast.show(message, 'bad', 0, el('div', { class: 'toast-actions' }, advance.button, ...hint));
     advance.button.focus({ preventScroll: true });
     map.fitView([click], target, toastPadding(), motionMs(CONFIG.revealFitMs));
   };
@@ -342,14 +352,8 @@ async function showGame(mode: Mode): Promise<void> {
         else map.addMarker(click.lon, click.lat, 'wrong');
         map.highlightLake(target.id, 'reveal');
         map.showLakeLabel(target.id);
-        const message = t().game.missReveal(missText(), target.name);
-        if (variant) {
-          const shape = map.lakeGeometry(target.id);
-          missAndContinue(message, click, { lake: target.id }, shape && nearestOnShape(shape, click.lat, click.lon));
-        } else {
-          map.focusLake(target.id);
-          revealAndContinue(message, 'bad', CONFIG.revealMissMs);
-        }
+        const shape = map.lakeGeometry(target.id);
+        missAndContinue(t().game.missReveal(missText(), target.name), click, { lake: target.id }, shape && nearestOnShape(shape, click.lat, click.lon));
       } else {
         if (clicked) {
           map.highlightLake(clicked.id, 'wrong');
@@ -384,14 +388,9 @@ async function showGame(mode: Mode): Promise<void> {
         const message = away
           ? t().game.wrongWasAwayReveal(regionName(click.code), t().game.municipalitiesAway(away), target.name)
           : t().game.wrongWasReveal(regionName(click.code), target.name);
-        if (variant) {
-          map.showRegionLabel(target.code, target.name);
-          const shape = map.regionGeometry(target.code);
-          missAndContinue(message, click, { code: target.code }, shape && nearestOnShape(shape, click.lat, click.lon));
-        } else {
-          map.focusCounty(target.code);
-          revealAndContinue(message, 'bad', CONFIG.revealMissMs);
-        }
+        map.showRegionLabel(target.code, target.name);
+        const shape = map.regionGeometry(target.code);
+        missAndContinue(message, click, { code: target.code }, shape && nearestOnShape(shape, click.lat, click.lon));
       } else {
         map.highlight(click.code, 'wrong');
         // Ta inte bort markeringen om frågan hunnit avslutas; då ska felklicket synas med svaret.
@@ -418,13 +417,7 @@ async function showGame(mode: Mode): Promise<void> {
       } else if (outcome.finished) {
         map.addMarker(click.lon, click.lat, 'wrong');
         map.addMarker(target.lon, target.lat, 'reveal', target.name);
-        const message = t().game.missReveal(t().game.wrongKm(km), target.name);
-        if (variant) {
-          missAndContinue(message, click, { point: target }, { lon: target.lon, lat: target.lat, km: outcome.distanceKm ?? 0 });
-        } else {
-          map.focusPoint(target.lon, target.lat);
-          revealAndContinue(message, 'bad', CONFIG.revealMissMs);
-        }
+        missAndContinue(t().game.missReveal(t().game.wrongKm(km), target.name), click, { point: target }, { lon: target.lon, lat: target.lat, km: outcome.distanceKm ?? 0 });
       } else {
         map.addMarker(click.lon, click.lat, 'wrong');
         toast.show(`${t().game.kmAway(km)} ${attemptsText(outcome.attemptsLeft)}`, 'bad', CONFIG.toastMs);
@@ -439,6 +432,7 @@ async function showGame(mode: Mode): Promise<void> {
   quit.addEventListener('click', () => {
     window.clearTimeout(timer);
     advance?.cancel();
+    listeners.abort();
     map.destroy();
     showStart();
   });

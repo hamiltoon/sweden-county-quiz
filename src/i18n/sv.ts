@@ -77,6 +77,7 @@ export const sv = {
     clickMunicipality: 'Klicka på en kommun',
     magnified: 'Liten kommun – förstorat, tryck igen',
     next: 'Nästa',
+    holdHint: 'Håll fingret på kartan för att titta längre',
     distance: (km: number) => `${km} km`,
     right: (points: number) => `Rätt! +${points} p`,
     rightLake: (rank: string, points: number) => `Rätt! ${rank} · +${points} p`,
