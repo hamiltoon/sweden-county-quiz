@@ -432,7 +432,7 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
 - **Acceptanskriterier:** skrivs innan start.
 
 ### PO-02 Live: se vilka som har svarat medan frågan pågår
-- **Prioritet:** P2
+- **Status:** Godkänd av UX på staging 2026-10-26 ([#41](https://github.com/hamiltoon/sweden-county-quiz/pull/41)); krav 6–7 läggs till före produktion.
 - **Insats:** S (servern skickar redan `answered` per spelare)
 - **Koppling:** IDEER.md "Göra live mer levande" 2
 - **Värde:** Pressen när man ser "Erika ✓" medan man själv letar på kartan. I dag står bara "1 av 2 har svarat".
@@ -443,6 +443,8 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
   3. Med 12 spelare får raden plats på en mobil som iPhone 13 utan att täcka kartan mer än i dag (den får rulla i sidled eller korta namnen).
   4. En spelare som har tappat anslutningen syns som borta.
   5. Svenska och engelska.
+  6. Ordning: eget namn, sedan de som inte har svarat, sist de som har svarat ihopslagna till "✓ N"; alla som inte har svarat syns utan scroll i sidled (annars "+N till"). (Tillagt efter UX 2026-10-26.)
+  7. Lugn övergång när någon svarar; ingen rörelse med "minska rörelse".
 
 ### PO-03 Live: nedräkning 3–2–1 före varje fråga
 - **Prioritet:** P2
