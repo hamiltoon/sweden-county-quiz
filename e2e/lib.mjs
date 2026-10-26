@@ -198,15 +198,25 @@ export async function answerAccepted(p, answer) {
   for (let attempt = 0; attempt < 4; attempt++) {
     // Efter en förstoring måste zoomen vara klar innan nästa klick räknas ut.
     if (attempt > 0) await mapSettled(p);
+    // Har frågan redan bytts (svaret togs emot sent) skulle ett nytt klick hamna på nästa fråga.
+    if (attempt > 0 && (await questionText(p)) !== before) return;
     await clickAnswer(p, answer);
-    const accepted = await p
+    // Svaret är taget när rätt/fel-rutan syns eller frågan byts. Ett klick på en för liten kommun
+    // förstorar kartan i stället (förklaringen, eller ingen ruta alls), och då klickas det igen.
+    const outcome = await p
       .waitForFunction(
-        (before) => !!document.querySelector('.toast-ok.is-visible, .toast-bad.is-visible, .live-standings') || document.querySelector('.question')?.textContent?.trim() !== before || (document.querySelector('.live-status')?.textContent ?? '').length > 0 && !!document.querySelector('.map-svg.is-locked'),
+        (before) => {
+          if (document.querySelector('.toast-ok.is-visible, .toast-bad.is-visible, .live-standings')) return 'ok';
+          if (document.querySelector('.question')?.textContent?.trim() !== before) return 'ok';
+          if ((document.querySelector('.live-status')?.textContent ?? '').length > 0 && document.querySelector('.map-svg.is-locked')) return 'ok';
+          if (document.querySelector('.toast-info.is-visible')) return 'magnified';
+          return false;
+        },
         before,
-        { timeout: 900 },
+        { timeout: 2500 },
       )
-      .then(() => true, () => false);
-    if (accepted) return;
+      .then((h) => h.jsonValue(), () => 'timeout');
+    if (outcome === 'ok') return;
     await p.waitForTimeout(400);
   }
   throw new Error(`svaret togs inte emot efter fyra klick (${before})`);

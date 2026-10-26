@@ -37,7 +37,7 @@ Under omgången fylls kartan: grönt för rätt direkt, gult för rätt efter fl
 - Efter en miss på något som har en regel med kort text står den under kartan, och spelet väntar på ett tryck i stället för att räkna ned.
 - Slutskärmen visar regeln under varje missad sak, med "Varför fungerar den?" och 👍/👎.
 - Svarar man rätt på något vars regel man såg i en tidigare omgång frågar slutskärmen en gång "Hjälpte minnesregeln?".
-- Lägeskorten har en tipsrad med en tankeregel.
+- Lägeskorten har en tipsrad med en tankeregel. Fler städer saknar tankeregel, så där kommer tipset från en av lägets egna regler.
 - På /minnesregler finns alla regler med röster och kommentarer, och där kan man föreslå egna.
 - Ett 👎 döljer regeln bara på den egna enheten. En regel med minst 5 röster och fler 👎 än 👍 markeras som ifrågasatt.
 - Reglerna finns bara på svenska än.

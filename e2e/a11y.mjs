@@ -162,13 +162,22 @@ async function scheme(run, t, dark) {
 }
 
 async function checkToast(t, p, label, icon) {
-  await p.waitForSelector('.toast.is-visible');
-  const bg = await rgbOf(p, '.toast.is-visible', 'backgroundColor');
-  const fg = await rgbOf(p, '.toast.is-visible', 'color');
-  const ratio = contrast(bg, fg);
+  // Allt läses i ett anrop: fel-rutan syns bara i 1,2 s och kan hinna försvinna mellan flera.
+  const toast = await p.waitForFunction(() => {
+    const el = document.querySelector('.toast.is-visible');
+    if (!el) return false;
+    const rgb = (value) => {
+      const c = document.createElement('canvas').getContext('2d');
+      c.fillStyle = value;
+      c.fillRect(0, 0, 1, 1);
+      return [...c.getImageData(0, 0, 1, 1).data.slice(0, 3)];
+    };
+    const style = getComputedStyle(el);
+    return { bg: rgb(style.backgroundColor), fg: rgb(style.color), icon: getComputedStyle(el, '::before').content };
+  }).then((h) => h.jsonValue());
+  const ratio = contrast(toast.bg, toast.fg);
   t.check(ratio >= 4.5, `${label}: rutans kontrast ${ratio.toFixed(2)}:1`);
-  const shown = await p.$eval('.toast.is-visible', (el) => getComputedStyle(el, '::before').content);
-  t.check(shown.includes(icon), `${label}: rutan har ikonen ${icon}`);
+  t.check(toast.icon.includes(icon), `${label}: rutan har ikonen ${icon}`);
 }
 
 /**
