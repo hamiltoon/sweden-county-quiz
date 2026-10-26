@@ -68,7 +68,7 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
 | Status | Punkter |
 |---|---|
 | Pågår (utvecklaren) | PO-15 i varianter |
-| Nästa | Live-paketet: PO-23, PO-02, PO-03, PO-04 |
+| Nästa | PO-33 Minnesregler, sedan live-paketet: PO-23, PO-02, PO-03, PO-04 |
 | Väntar på UX-verifiering | – |
 | Väntar på svar från John | – |
 | Klart | PO-01, PO-01b, PO-06, PO-14, PO-16, PO-22, PO-29, PO-29b, PO-30, PO-31 |
@@ -319,24 +319,33 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
 - **Värde:** När kartan zoomar in på länet behöver man inte veta var länet ligger. En liten karta i hörnet håller kvar det lärandet.
 - **Acceptanskriterier:** skrivs när den blir aktuell; utvärderas efter att PO-16 krav 8 har använts en tid.
 
-### PO-33 Minnesregler: lär dig hur man tänker för att komma ihåg
-- **Prioritet:** P2, upptäcktsfas pågår. Byggs efter PO-15, eftersom regeln ska visas i avslöjandet.
-- **Insats:** M (fas 2), L (fas 3)
-- **Koppling:** Johns idé 2026-10-26; riktningen "lära sig geografi"
-- **Värde:** Spelet lär inte bara ut var saker ligger, utan också knep för att komma ihåg dem: ramsor, paradoxer, historia
-  och gärna lite konstiga bilder. En regel som "Väster-länen ligger i öster" rättar tre fel på en gång.
-- **Vad som gör en regel bra:** den stämmer, är kort, ger en bild, säger något om läget, är gärna lite konstig och
-  hjälper helst för flera saker. John avgör.
-- **Faser:**
-  1. **Kurering (pågår):** PO tar fram förslag och John betygsätter dem som bra, sådär eller dålig, med kommentar, på
-     [Minnesregler](https://claude.ai/artifact/Jia78CnwUrqGRjpbAd5k9V). PO läser betygen, skriver om eller stryker och tar fram
-     nya i samma stil som de som fick bra. Bara regler med betyget bra går vidare.
-  2. **I spelet:** efter en miss visas regeln för just den saken i avslöjandet (PO-15). Före en omgång kan en
-     tankeregel för läget visas, t.ex. VHS för västkusten.
-  3. **Familjens egna regler:** man kan tycka till om en regel (👍/👎) och skriva sin egen, så att reglerna blir
-     familjens egna. Kräver lagring på servern, så det är en **fråga till John** innan det byggs.
+### PO-33 Minnesregler i spelet
+- **Prioritet:** P1, direkt efter PO-15 (regeln visas i avslöjandet som PO-15 bygger)
+- **Insats:** M–L
+- **Koppling:** Johns idé 2026-10-26; riktningen "lära sig geografi". Första förslagen: `docs/minnesregler-forslag.json` (26 regler, faktagranskade, ej betygsatta).
+- **Värde:** Spelet lär inte bara ut var saker ligger, utan knep för att komma ihåg dem: ramsor, paradoxer, historia
+  och gärna lite konstiga bilder. John och familjen avgör själva vilka regler som är bra, direkt i spelet.
+- **Vad som gör en regel bra:** stämmer, kort, ger en bild, säger något om läget, gärna lite konstig, helst för flera saker.
+- **Beslut (PO):** betygsättningen sker i spelet, inte på en separat sida (John 2026-10-26). Rösterna sparas i en ny
+  tabell i den befintliga D1-databasen. De påverkar inte topplistan, och ingen ny Cloudflare-resurs behövs.
+- **Acceptanskriterier:**
+  1. Reglerna ligger som data i repot (id, kategori, vilka län/landskap/sjöar/kommuner de gäller, text, varför). De 26
+     i `docs/minnesregler-forslag.json` finns med från start. Nya regler tillkommer via PR som PO godkänner.
+  2. **I avslöjandet:** efter en miss i solospelet visas regeln för just den saken, om det finns en, under rätt svar:
+     "💡 Minnesregel: …", med 👍 och 👎.
+  3. **Före en omgång:** en tankeregel (kategori princip) som gäller läget visas på startskärmen för läget eller i
+     omgångens början. Den går att stänga och visas inte igen samma dag.
+  4. **Röster:** 👍/👎 och en valfri kommentar sparas på servern per regel och enhet (eller namn, om man har ett).
+     Man kan ändra sin röst. Begränsat per IP som topplistan. Påverkar inte topplistan.
+  5. **Sållning:** en regel med fler 👎 än 👍 visas inte längre i spelet.
+  6. **Sidan Minnesregler** (t.ex. `/minnesregler`, länkad från startskärmen): alla regler grupperade per kategori,
+     med röster och kommentarer, där man kan rösta och skriva en egen regel eller önskan. Det ersätter den
+     separata sida PO gjorde som första steg.
+  7. PO kan läsa röster, kommentarer och förslag (t.ex. `GET /api/mnemonics`) för att ta fram nästa omgång regler.
+  8. Svenska. I engelskt läge visas en regel bara om den har en engelsk text (ordlekar fungerar sällan i översättning).
+  9. Live påverkas inte än. Där kommer reglerna i ett senare steg.
+  10. e2e: en regel visas efter en miss, en röst sparas på staging, och guard stoppar röster mot produktion i testerna.
 - **Mått:** andelen rätt på första försöket för saker där en regel visats, nästa gång samma sak kommer.
-- **Acceptanskriterier:** skrivs för fas 2 när minst 15 regler har fått betyget bra.
 
 ### PO-02 Live: se vilka som har svarat medan frågan pågår
 - **Prioritet:** P2

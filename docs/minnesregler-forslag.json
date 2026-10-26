@@ -1,0 +1,239 @@
+{
+  "beskrivning": "Första förslagen på minnesregler (PO-33), faktagranskade av PO 2026-10-26. Ej betygsatta. Underlag till utvecklaren; kategorier: princip, lan, landskap, sjo, kommun.",
+  "regler": [
+    {
+      "id": "p-vaster",
+      "order": 1,
+      "category": "princip",
+      "entity": "Väster-paradoxen",
+      "kind": "Paradox",
+      "text": "Västerbotten, Västernorrland och Västmanland ligger alla på Sveriges ÖSTRA halva. Bara Västra Götaland ligger i väst.",
+      "why": "Namnen säger väster om något annat (Bottenviken, Uppland), inte väster i Sverige. En regel som rättar tre vanliga fel."
+    },
+    {
+      "id": "p-ostkust",
+      "order": 2,
+      "category": "princip",
+      "entity": "Ostkusten, norr till söder",
+      "kind": "Ramsa",
+      "text": "”Nya Vänner Vill Gärna Umgås, Sedan Seglar Ölänningar Kring Blekinges Skär.” Norrbotten, Västerbotten, Västernorrland, Gävleborg, Uppsala, Stockholm, Södermanland, Östergötland, Kalmar, Blekinge, Skåne.",
+      "why": "Första bokstaven i varje ord är ett kustlän, i ordning längs kusten."
+    },
+    {
+      "id": "p-vhs",
+      "order": 3,
+      "category": "princip",
+      "entity": "Västkusten, norr till söder",
+      "kind": "Ordlek",
+      "text": "Västkusten är ett VHS-band: Västra Götaland, Halland, Skåne.",
+      "why": "Tre bokstäver, en gammal videokassett och hela västkusten i rätt ordning."
+    },
+    {
+      "id": "p-bytt-land",
+      "order": 4,
+      "category": "princip",
+      "entity": "Landskap som bytt land",
+      "kind": "Historia",
+      "text": "Landskap som en gång var danska eller norska ligger vid det landets gräns. Skåne, Blekinge och Halland (danska till 1658) ligger närmast Danmark. Bohuslän, Jämtland och Härjedalen (norska) ligger mot Norge.",
+      "why": "Historien förklarar kartan: man förlorar och vinner det som ligger närmast grannen."
+    },
+    {
+      "id": "p-gota-vattern",
+      "order": 5,
+      "category": "princip",
+      "entity": "Väster- och Östergötland",
+      "kind": "Bild",
+      "text": "Vättern är skiljeväggen: Västergötland på vänster sida, Östergötland på höger.",
+      "why": "Här betyder väster faktiskt väster, till skillnad från Väster-paradoxen."
+    },
+    {
+      "id": "p-jaure",
+      "order": 6,
+      "category": "princip",
+      "entity": "Sjöar som slutar på -jaure och -träsk",
+      "kind": "Ordlek",
+      "text": "Låter sjön samisk eller norrländsk (-jaure, -träsk) ligger den långt upp i Lappland. Torneträsk, Akkajaure och Uddjaure, plus grannen Hornavan.",
+      "why": "Fyra av Sveriges tio största sjöar avgörs av namnets slut."
+    },
+    {
+      "id": "l-harnosand",
+      "order": 10,
+      "category": "lan",
+      "entity": "Västernorrland → Härnösand",
+      "kind": "Ordlek",
+      "text": "Härnösand Håller Hovet, Sundsvall Säljer.",
+      "why": "Den mindre staden är residensstad; den större är handelsstaden. Två H mot två S."
+    },
+    {
+      "id": "l-nykoping",
+      "order": 11,
+      "category": "lan",
+      "entity": "Södermanland → Nyköping",
+      "kind": "Historia",
+      "text": "Nyköpings gästabud 1317: kungen bjöd sina bröder på fest och låste in dem i slottets fängelsehåla. En stad med en sådan historia får vara residensstad, inte Eskilstuna.",
+      "why": "En makaber berättelse fäster bättre än ett namn."
+    },
+    {
+      "id": "l-vaxjo",
+      "order": 12,
+      "category": "lan",
+      "entity": "Kronoberg → Växjö",
+      "kind": "Bild",
+      "text": "Det finns ingen stad som heter Kronoberg, men Kronobergs slottsruin står i en sjö strax utanför Växjö.",
+      "why": "Länet har fått sitt namn från ruinen, och ruinen ligger vid residensstaden."
+    },
+    {
+      "id": "l-karlskrona",
+      "order": 13,
+      "category": "lan",
+      "entity": "Blekinge → Karlskrona",
+      "kind": "Historia",
+      "text": "Karlskrona betyder Karl XI:s krona: kungen byggde flottans stad 1680 längst ut i Blekinges skärgård.",
+      "why": "Örlogsflottan ska ligga vid havet, och Blekinge är Sveriges sydöstra hörn."
+    },
+    {
+      "id": "l-lulea-umea",
+      "order": 14,
+      "category": "lan",
+      "entity": "Norrbotten → Luleå, Västerbotten → Umeå",
+      "kind": "Ordlek",
+      "text": "Luleå ligger Längst upp, Umeå Under.",
+      "why": "Två städer som ofta blandas ihop, sorterade med sin första bokstav."
+    },
+    {
+      "id": "l-ostersund",
+      "order": 15,
+      "category": "lan",
+      "entity": "Jämtland → Östersund",
+      "kind": "Konstig",
+      "text": "Storsjöodjuret simmar i Storsjön utanför Östersund, mitt i Jämtland.",
+      "why": "Ett sjöodjur är svårt att glömma, och sjön ger både läge och stad."
+    },
+    {
+      "id": "l-falun",
+      "order": 16,
+      "category": "lan",
+      "entity": "Dalarna → Falun",
+      "kind": "Bild",
+      "text": "Alla röda stugor i Dalarna är målade med Falu rödfärg från gruvan i Falun.",
+      "why": "Dalahästar och röda stugor leder till samma stad."
+    },
+    {
+      "id": "l-gavle",
+      "order": 17,
+      "category": "lan",
+      "entity": "Gävleborg → Gävle",
+      "kind": "Konstig",
+      "text": "Gävlebocken brinner nästan varje jul i Gävle, vid kusten där Norrland börjar.",
+      "why": "Ett återkommande nyhetsinslag som också säger var gränsen till Norrland går."
+    },
+    {
+      "id": "l-halmstad",
+      "order": 18,
+      "category": "lan",
+      "entity": "Halland → Halmstad",
+      "kind": "Ordlek",
+      "text": "HALmstad i HALland, mitt på västkusten mellan Göteborg och Skåne.",
+      "why": "Enkel, men namnet gör jobbet."
+    },
+    {
+      "id": "k-norrlandskust",
+      "order": 20,
+      "category": "landskap",
+      "entity": "Norrlandskusten, söder till norr",
+      "kind": "Ramsa",
+      "text": "”Glada Hälsingar Med Ångbåt Vill Norrut.” Gästrikland, Hälsingland, Medelpad, Ångermanland, Västerbotten, Norrbotten.",
+      "why": "Sex landskap längs kusten i rätt ordning."
+    },
+    {
+      "id": "k-dalsland",
+      "order": 21,
+      "category": "landskap",
+      "entity": "Dalsland",
+      "kind": "Bild",
+      "text": "Dalsland är en dal inklämd mellan Vänern och Norge.",
+      "why": "Två grannar som alla känner till ringar in ett litet landskap."
+    },
+    {
+      "id": "k-narke",
+      "order": 22,
+      "category": "landskap",
+      "entity": "Närke",
+      "kind": "Ordlek",
+      "text": "NÄRke ligger NÄRa mitten: runt Örebro och Hjälmaren, mellan Vänern och Mälaren.",
+      "why": "Namnet blir en ledtråd, fast det egentligen betyder något annat."
+    },
+    {
+      "id": "k-medelpad",
+      "order": 23,
+      "category": "landskap",
+      "entity": "Medelpad",
+      "kind": "Ordlek",
+      "text": "MEDELpad ligger i MEDEL-läget på Norrlandskusten, runt Sundsvall.",
+      "why": "Litet landskap, stor stad, och mitt i kustordningen."
+    },
+    {
+      "id": "k-lappland",
+      "order": 24,
+      "category": "landskap",
+      "entity": "Lappland",
+      "kind": "Bild",
+      "text": "Lappland är Sveriges största landskap och ligger som en filt över hela fjällvärlden i norr, från Jämtland till Finland.",
+      "why": "Det stora fältet i norr som inte rör kusten."
+    },
+    {
+      "id": "s-vanern",
+      "order": 30,
+      "category": "sjo",
+      "entity": "Vänern och Vättern",
+      "kind": "Ordlek",
+      "text": "VÄNern ligger till VÄNster, Vättern till höger.",
+      "why": "Sveriges två största sjöar blandas ofta ihop; första stavelsen avgör."
+    },
+    {
+      "id": "s-hjalmaren",
+      "order": 31,
+      "category": "sjo",
+      "entity": "Mälaren och Hjälmaren",
+      "kind": "Bild",
+      "text": "Hjälmaren är Mälarens lillebror som tagit på sig en hjälm och ställt sig bakom, västerut vid Örebro.",
+      "why": "Liknande namn, lillebror är mindre och står bakom storebror."
+    },
+    {
+      "id": "s-siljan",
+      "order": 32,
+      "category": "sjo",
+      "entity": "Siljan",
+      "kind": "Konstig",
+      "text": "Siljan är ett hål efter en meteorit: Siljansringen i Dalarna är Europas största kända nedslagskrater.",
+      "why": "En rund sjö mitt i Dalarna som en himlakropp har gjort."
+    },
+    {
+      "id": "s-hornavan",
+      "order": 33,
+      "category": "sjo",
+      "entity": "Hornavan",
+      "kind": "Konstig",
+      "text": "Hornavan vid Arjeplog är Sveriges djupaste sjö, över 200 meter. Ett horn som går rakt ner.",
+      "why": "Ett rekord gör en av de anonyma fjällsjöarna lätt att peka ut."
+    },
+    {
+      "id": "s-tornetrask",
+      "order": 34,
+      "category": "sjo",
+      "entity": "Torneträsk",
+      "kind": "Bild",
+      "text": "Torneträsk är den nordligaste av de stora sjöarna: malmtåget till Narvik kör längs stranden förbi Abisko.",
+      "why": "Längst upp på kartan, nära Norge."
+    },
+    {
+      "id": "m-sundbyberg",
+      "order": 40,
+      "category": "kommun",
+      "entity": "Sundbyberg",
+      "kind": "Konstig",
+      "text": "Sundbyberg är Sveriges minsta kommun, under 9 km², inklämd mellan Stockholm och Solna. Den får plats i en fingertopp på kartan.",
+      "why": "Om du letar efter något pyttelitet nordväst om Stockholm: det är Sundbyberg."
+    }
+  ]
+}
