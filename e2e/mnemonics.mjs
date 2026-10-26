@@ -61,9 +61,18 @@ async function finishRound(p, last) {
 }
 
 /** En postning till /api/mnemonics: sparad (staging, localhost) eller stoppad (produktionen). */
-function posted(run, ctx, p, path, before) {
-  if (run.guarded) return Promise.resolve(ctx.blocked.length > before ? 'stoppad' : 'skickad');
+async function posted(run, ctx, p, path, before) {
+  if (run.guarded) {
+    // Skyddsräcket stoppar anropet en kort stund efter klicket; vänta på att det har registrerats.
+    for (let i = 0; i < 30 && ctx.blocked.length <= before; i++) await p.waitForTimeout(100);
+    return ctx.blocked.slice(before).some((b) => b === `POST /api/mnemonics/${path}`) ? 'stoppad' : 'skickad';
+  }
   return p.waitForResponse((r) => r.url().includes(`/api/mnemonics/${path}`), { timeout: 8000 }).then((r) => (r.ok() ? 'sparad' : `svar ${r.status()}`), () => 'inget svar');
+}
+
+/** Fel i sidan, utom webbläsarens meddelande om anrop som skyddsräcket stoppade (mot produktionen). */
+function pageErrors(run, p) {
+  return p.errors.filter((e) => !(run.guarded && e.includes('ERR_BLOCKED_BY_CLIENT')));
 }
 
 /** Antal regler (med kort text eller inte) som gäller någon sjö: så många rader får slutskärmen om alla missas. */
@@ -199,7 +208,7 @@ async function revealAndEnd(run, t) {
   await finishRound(p, '');
   const again = await p.evaluate(() => document.querySelector('.mnemonic-helped')?.dataset.rule ?? null);
   t.check(again !== helped, `tredje omgången: frågan om ${helped} ställs inte igen (nu: ${again ?? 'ingen'})`);
-  t.check(p.errors.length === 0, `inga fel i sidan ${p.errors.slice(0, 3).join(' | ')}`);
+  t.check(pageErrors(run, p).length === 0, `inga fel i sidan ${pageErrors(run, p).slice(0, 3).join(' | ')}`);
   if (run.guarded) t.check(ctx.blocked.every((b) => b.startsWith('POST /api/mnemonics/') || b.startsWith('POST /api/scores')), `bara stoppade röster och resultat ${ctx.blocked.join(', ')}`);
   await ctx.close();
 }
@@ -250,7 +259,7 @@ async function startAndPage(run, t) {
   await p.goBack();
   await p.waitForSelector('.screen-start .mode-list');
   t.check(new URL(p.url()).pathname === '/', 'bakåt leder till startskärmen');
-  t.check(p.errors.length === 0, `inga fel i sidan ${p.errors.slice(0, 3).join(' | ')}`);
+  t.check(pageErrors(run, p).length === 0, `inga fel i sidan ${pageErrors(run, p).slice(0, 3).join(' | ')}`);
   await ctx.close();
 }
 
