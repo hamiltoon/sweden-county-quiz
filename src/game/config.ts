@@ -12,8 +12,10 @@ export const CONFIG = {
   otherCitiesPerRound: 20,
   /** Hur länge (ms) rätt svar visas efter en fråga innan nästa. */
   revealMs: 1500,
-  /** Efter en missad fråga zoomar kartan in på rätt svar, så det får visas lite längre. */
-  revealMissMs: 2400,
+  /** PO-15 (variant b och c): nedräkningen efter en missad fråga innan spelet går vidare av sig självt. */
+  revealMissAutoMs: 4000,
+  /** PO-15: zoomen som visar felklicket och rätt svar tillsammans. */
+  revealFitMs: 600,
   /**
    * Färga län och sjöar efter hur frågan gick, redan under omgången. Obs: det gör de sista
    * frågorna lättare, eftersom man kan räkna ut svaret genom uteslutning. Stäng av med false;

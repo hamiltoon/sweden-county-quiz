@@ -24,20 +24,23 @@ export function shuffle<T>(items: readonly T[]): T[] {
  * Hörnen i 1:10m-data ligger tätt, så felet är litet jämfört med avstånden som visas.
  * Ger 0 om geometrin saknar koordinater.
  */
-export function distanceToShapeKm(
-  geometry: { type: 'Polygon'; coordinates: number[][][] } | { type: 'MultiPolygon'; coordinates: number[][][][] },
-  lat: number,
-  lon: number,
-): number {
+export function distanceToShapeKm(geometry: Shape, lat: number, lon: number): number {
+  return nearestOnShape(geometry, lat, lon)?.km ?? 0;
+}
+
+type Shape = { type: 'Polygon'; coordinates: number[][][] } | { type: 'MultiPolygon'; coordinates: number[][][][] };
+
+/** Närmaste hörn i konturen och avståndet dit (km), eller null om geometrin saknar koordinater. */
+export function nearestOnShape(geometry: Shape, lat: number, lon: number): { lat: number; lon: number; km: number } | null {
   const polygons = geometry.type === 'Polygon' ? [geometry.coordinates] : geometry.coordinates;
-  let best = Infinity;
+  let best: { lat: number; lon: number; km: number } | null = null;
   for (const polygon of polygons) {
     for (const ring of polygon) {
       for (const [pLon, pLat] of ring) {
-        const d = haversineKm(lat, lon, pLat, pLon);
-        if (d < best) best = d;
+        const km = haversineKm(lat, lon, pLat, pLon);
+        if (!best || km < best.km) best = { lat: pLat, lon: pLon, km };
       }
     }
   }
-  return Number.isFinite(best) ? best : 0;
+  return best;
 }

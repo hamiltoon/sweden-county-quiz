@@ -57,7 +57,7 @@ function checkDistinct(t, label, colors) {
 /** Fynd av lägre nivå som backloggen redan har, med punkten som ska rätta dem. */
 const KNOWN = { 'page-has-heading-one': 'PO-25 (UX-30): skärmarna saknar h1' };
 
-async function axe(t, p, label) {
+export async function axe(t, p, label) {
   await p.addScriptTag({ content: AXE });
   const violations = await p.evaluate(async () =>
     (await window.axe.run(document, { runOnly: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa', 'best-practice'] })).violations.map((v) => ({

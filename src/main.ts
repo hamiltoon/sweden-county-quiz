@@ -2,19 +2,20 @@ import './style.css';
 import type { Topology } from 'topojson-specification';
 import { Game, modeLabel, type AnswerOutcome, type Mode, type Question, type Summary } from './game/game';
 import { CONFIG } from './game/config';
-import { distanceToShapeKm } from './game/geo';
+import { distanceToShapeKm, nearestOnShape } from './game/geo';
 import { LAKE_BY_ID } from './data/lakes';
 import { COUNTY_BY_CODE } from './data/counties';
 import { PROVINCE_BY_CODE } from './data/provinces';
 import { MUNICIPALITY_BY_CODE } from './data/municipalities';
 import { getCurrentLiveRoom, getLiveName, getLivePlayerId, saveBest, saveLiveName, setCurrentLiveRoom } from './game/storage';
-import { SwedenMap, type MapClick, type ResultState } from './map/map';
+import { motionMs, SwedenMap, type FitTarget, type MapClick, type ResultState } from './map/map';
 import { renderMiniMap } from './map/minimap';
 import { regionSteps } from './map/adjacency';
 import { COUNTIES_URL, LAKES_URL, NEIGHBORS_URL, regionsFor } from './map/sources';
 import { kommunMapOptions, takeMagnifyHint } from './map/kommun';
 import { el, clear } from './ui/dom';
 import { Toast } from './ui/toast';
+import { createAdvance, takeHoldHint, type Advance } from './ui/advance';
 import { renderEnd, renderRecapLegend, renderStart } from './ui/screens';
 import { renderEndLeaderboard, renderStartLeaderboard } from './ui/leaderboard';
 import { newResultId } from './api/leaderboard';
@@ -211,6 +212,11 @@ async function showGame(mode: Mode): Promise<void> {
   const game = new Game(mode);
   let locked = false;
   let timer: number | undefined;
+  let advance: Advance | null = null;
+  // Har tangentbordet använts i omgången? Då väntar avslöjandet efter en miss medan fokus är i rutan.
+  let keyboardUsed = false;
+  const listeners = new AbortController();
+  document.addEventListener('keydown', () => (keyboardUsed = true), { capture: true, signal: listeners.signal });
   let lastClickAt = 0;
 
   const updateHud = () => {
@@ -220,6 +226,7 @@ async function showGame(mode: Mode): Promise<void> {
   };
 
   const finishRound = () => {
+    listeners.abort();
     map.destroy();
     const summary = game.summary();
     // Samma id i rekordet och på topplistan, så att rekordet inte sparas två gånger om det
@@ -281,6 +288,40 @@ async function showGame(mode: Mode): Promise<void> {
     timer = window.setTimeout(nextQuestion, ms);
   };
 
+  /** Hur mycket av kartan överst eller nederst som rätt/fel-rutan täcker, så att svaret inte hamnar under den. */
+  const toastPadding = (): { top?: number; bottom?: number } => {
+    const box = toast.bounds();
+    const m = mapEl.getBoundingClientRect();
+    if (!box) return {};
+    // Rutan glider in 12 px; räkna med där den hamnar.
+    const margin = 18;
+    return box.top - m.top < m.height / 2 ? { top: Math.max(0, box.bottom - m.top + margin) } : { bottom: Math.max(0, m.bottom - box.top + margin) };
+  };
+
+  /**
+   * PO-15: efter en missad fråga visar kartan det sista felklicket och rätt svar i samma vy, med en
+   * linje och avståndet emellan (`nearest` är närmaste punkt på rätt svar). Spelet går vidare med
+   * knappen "Nästa", ett tryck på kartan eller efter nedräkningen.
+   */
+  const missAndContinue = (message: string, click: MapClick, target: FitTarget, nearest: { lon: number; lat: number; km: number } | null) => {
+    locked = true;
+    map.setInteractive(false);
+    if (nearest && Math.round(nearest.km) >= 1) map.showLine(click, nearest, t().game.distance(Math.round(nearest.km)));
+    advance = createAdvance({
+      surface: mapEl,
+      ms: CONFIG.revealMissAutoMs,
+      keyboard: () => keyboardUsed,
+      onDone: () => {
+        advance = null;
+        nextQuestion();
+      },
+    });
+    const hint = takeHoldHint() ? [el('p', { class: 'toast-hint' }, t().game.holdHint)] : [];
+    toast.show(message, 'bad', 0, el('div', { class: 'toast-actions' }, advance.button, ...hint));
+    advance.button.focus({ preventScroll: true });
+    map.fitView([click], target, toastPadding(), motionMs(CONFIG.revealFitMs));
+  };
+
   map.onClick = (click: MapClick) => {
     if (locked) return;
     // Oavsiktliga dubbeltryck ska inte kosta två försök.
@@ -311,8 +352,8 @@ async function showGame(mode: Mode): Promise<void> {
         else map.addMarker(click.lon, click.lat, 'wrong');
         map.highlightLake(target.id, 'reveal');
         map.showLakeLabel(target.id);
-        map.focusLake(target.id);
-        revealAndContinue(t().game.missReveal(missText(), target.name), 'bad', CONFIG.revealMissMs);
+        const shape = map.lakeGeometry(target.id);
+        missAndContinue(t().game.missReveal(missText(), target.name), click, { lake: target.id }, shape && nearestOnShape(shape, click.lat, click.lon));
       } else {
         if (clicked) {
           map.highlightLake(clicked.id, 'wrong');
@@ -343,13 +384,13 @@ async function showGame(mode: Mode): Promise<void> {
       } else if (outcome.finished) {
         map.highlight(click.code, 'wrong');
         map.highlight(target.code, 'reveal');
-        map.focusCounty(target.code);
         const away = steps?.(click.code, target.code);
-        revealAndContinue(
-          away ? t().game.wrongWasAwayReveal(regionName(click.code), t().game.municipalitiesAway(away), target.name) : t().game.wrongWasReveal(regionName(click.code), target.name),
-          'bad',
-          CONFIG.revealMissMs,
-        );
+        const message = away
+          ? t().game.wrongWasAwayReveal(regionName(click.code), t().game.municipalitiesAway(away), target.name)
+          : t().game.wrongWasReveal(regionName(click.code), target.name);
+        map.showRegionLabel(target.code, target.name);
+        const shape = map.regionGeometry(target.code);
+        missAndContinue(message, click, { code: target.code }, shape && nearestOnShape(shape, click.lat, click.lon));
       } else {
         map.highlight(click.code, 'wrong');
         // Ta inte bort markeringen om frågan hunnit avslutas; då ska felklicket synas med svaret.
@@ -376,8 +417,7 @@ async function showGame(mode: Mode): Promise<void> {
       } else if (outcome.finished) {
         map.addMarker(click.lon, click.lat, 'wrong');
         map.addMarker(target.lon, target.lat, 'reveal', target.name);
-        map.focusPoint(target.lon, target.lat);
-        revealAndContinue(t().game.missReveal(t().game.wrongKm(km), target.name), 'bad', CONFIG.revealMissMs);
+        missAndContinue(t().game.missReveal(t().game.wrongKm(km), target.name), click, { point: target }, { lon: target.lon, lat: target.lat, km: outcome.distanceKm ?? 0 });
       } else {
         map.addMarker(click.lon, click.lat, 'wrong');
         toast.show(`${t().game.kmAway(km)} ${attemptsText(outcome.attemptsLeft)}`, 'bad', CONFIG.toastMs);
@@ -391,6 +431,8 @@ async function showGame(mode: Mode): Promise<void> {
   zoomReset.addEventListener('click', () => map.resetZoom());
   quit.addEventListener('click', () => {
     window.clearTimeout(timer);
+    advance?.cancel();
+    listeners.abort();
     map.destroy();
     showStart();
   });

@@ -86,7 +86,15 @@ interface Marker {
   lat: number;
   kind: MarkerKind;
   label?: string;
+  /** Bara namnet, centrerat på punkten och utan prick: namnet på ett län, en kommun eller ett avstånd. */
+  textOnly?: boolean;
 }
+
+/** Ett namn utan prick tar ungefär så här mycket plats (px på skärmen) runt sin punkt. */
+const TEXT_HALF_H = 10;
+/** Kortare linje än så här (px på skärmen) får ingen avståndsetikett. */
+const LINE_LABEL_MIN_PX = 40;
+const textWidth = (label: string) => label.length * 14 * 0.62 + 6;
 
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 10;
@@ -99,8 +107,7 @@ const GROUP_ZOOM_MS = 750;
 const PADDING = 8;
 /** Län och landskap som är så små på skärmen att de får en extra osynlig träffyta. */
 const SMALL_COUNTIES: ReadonlySet<string> = new Set(['K', 'I', 'blekinge', 'oland']);
-/** Hur mycket av vyn ett län eller en sjö fyller när rätt svar visas, och hur långt in det zoomas som mest. */
-const REVEAL_FILL = 0.35;
+/** Hur långt in avslöjandet zoomar som mest, och under vilken zoom hela kartan visas i stället. */
 const REVEAL_MAX_ZOOM = 4;
 const REVEAL_MIN_ZOOM = 1.3;
 /** fitView(): hur mycket av vyn allt ska fylla (namnen bredvid prickarna behöver plats), och minsta yta. */
@@ -143,10 +150,12 @@ export class SwedenMap {
   private readonly lakesG: Selection<SVGGElement, unknown, null, undefined>;
   private readonly lakeLabelsG: Selection<SVGGElement, unknown, null, undefined>;
   private readonly resultDotsG: Selection<SVGGElement, unknown, null, undefined>;
+  private readonly linesG: Selection<SVGGElement, unknown, null, undefined>;
   private readonly markersG: Selection<SVGGElement, unknown, null, undefined>;
   private readonly pinsG: Selection<SVGGElement, unknown, null, undefined>;
   private readonly pinLabelsG: Selection<SVGGElement, unknown, null, undefined>;
   private readonly markerLabelsG: Selection<SVGGElement, unknown, null, undefined>;
+  private readonly lineLabelG: Selection<SVGGElement, unknown, null, undefined>;
   private readonly zoomBehavior: ZoomBehavior<SVGSVGElement, unknown>;
   private readonly projection: GeoProjection;
   private readonly path = geoPath();
@@ -165,6 +174,8 @@ export class SwedenMap {
   /** Gruppen (länet) som focusGroup() senast zoomade in på; resten tonas ned. */
   private focusedGroup: string | null = null;
   private markers: Marker[] = [];
+  /** Linjen från felklicket till rätt svar (PO-15, variant C). */
+  private line: { from: [number, number]; to: [number, number]; label: string } | null = null;
   private pins: PlayerPin[] = [];
   /** Var de synliga sjönamnen hamnade, så att spelarnas namn inte läggs över dem. */
   private lakeLabelBoxes: Box[] = [];
@@ -225,6 +236,7 @@ export class SwedenMap {
     this.lakeHitG = this.root.append('g').attr('class', 'lake-hits');
     this.lakesG = this.root.append('g').attr('class', 'lakes');
     this.resultDotsG = this.root.append('g').attr('class', 'result-dots');
+    this.linesG = this.root.append('g').attr('class', 'reveal-lines');
     this.markersG = this.root.append('g').attr('class', 'markers');
     // Spelarnas prickar ligger ovanpå rätt svar, så att ett klick precis på staden syns med sitt ✓.
     this.pinsG = this.root.append('g').attr('class', 'pins');
@@ -233,6 +245,7 @@ export class SwedenMap {
     // spelare har klickat runt det (PO-30).
     this.lakeLabelsG = this.root.append('g').attr('class', 'lake-labels');
     this.markerLabelsG = this.root.append('g').attr('class', 'marker-labels');
+    this.lineLabelG = this.root.append('g').attr('class', 'line-labels');
 
     this.coastG
       .selectAll('path')
@@ -493,8 +506,64 @@ export class SwedenMap {
     this.renderMarkers();
   }
 
+  /**
+   * Skriver ut områdets namn på kartan (rätt svar efter en miss). Namnet står i mitten av områdets
+   * största del, så att t.ex. ett län med öar inte får namnet ute i havet.
+   */
+  showRegionLabel(code: string, name: string): void {
+    const f = this.features.find((d) => d.properties.code === code);
+    if (!f) return;
+    const parts: Feature<Geometry>[] =
+      f.geometry.type === 'MultiPolygon'
+        ? f.geometry.coordinates.map((coordinates) => ({ type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates } }))
+        : [f];
+    const largest = parts.reduce((a, b) => (this.path.area(b) > this.path.area(a) ? b : a));
+    const lonLat = this.projection.invert?.(this.path.centroid(largest));
+    if (lonLat) this.addText(lonLat[0], lonLat[1], name, 'reveal');
+  }
+
+  /** Områdets geometri (WGS84), t.ex. för att räkna avstånd till det. */
+  regionGeometry(code: string): Polygon | MultiPolygon | null {
+    const g = this.features.find((d) => d.properties.code === code)?.geometry;
+    return g && (g.type === 'Polygon' || g.type === 'MultiPolygon') ? g : null;
+  }
+
+  /** En streckad linje mellan två punkter med `label` (t.ex. avståndet) längs linjen. */
+  showLine(from: { lon: number; lat: number }, to: { lon: number; lat: number }, label: string): void {
+    this.line = { from: [from.lon, from.lat], to: [to.lon, to.lat], label };
+    this.renderMarkers();
+  }
+
+  /**
+   * Var linjens etikett hamnar: mitt på linjen om det är fritt, annars längre mot ena änden eller
+   * en bit vid sidan om, så att den inte täcker namnet på rätt svar (t.ex. en kort linje in i ett län).
+   * Ingen plats (null) om linjen är kortare än LINE_LABEL_MIN_PX på skärmen eller allt är upptaget.
+   */
+  private lineLabelAt(a: [number, number], b: [number, number], label: string, k: number): [number, number] | null {
+    const w = textWidth(label) / k;
+    const h = TEXT_HALF_H / k;
+    const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    if (len * k < LINE_LABEL_MIN_PX) return null;
+    const normal = [-(b[1] - a[1]) / len, (b[0] - a[0]) / len];
+    const taken = this.answerBoxes();
+    for (const along of [0.5, 0.35, 0.65, 0.2, 0.8])
+      for (const side of [0, 16, -16, 28, -28]) {
+        const x = a[0] + (b[0] - a[0]) * along + (normal[0] * side) / k;
+        const y = a[1] + (b[1] - a[1]) * along + (normal[1] * side) / k;
+        const box = { x0: x - w / 2, y0: y - h, x1: x + w / 2, y1: y + h };
+        if (!taken.some((t) => overlaps(box, t))) return [x, y];
+      }
+    return null;
+  }
+
+  private addText(lon: number, lat: number, label: string, kind: MarkerKind): void {
+    this.markers.push({ lon, lat, kind, label, textOnly: true });
+    this.renderMarkers();
+  }
+
   clearMarkers(): void {
     this.markers = [];
+    this.line = null;
     this.pins = [];
     this.renderMarkers();
     this.renderPins();
@@ -605,23 +674,62 @@ export class SwedenMap {
       .filter((m) => m.kind === 'reveal')
       .flatMap((m) => {
         const [x, y] = this.projection([m.lon, m.lat]) ?? [0, 0];
+        if (m.textOnly) return [this.labelBox(m, k)];
         const dot = 6 / k;
         const boxes: Box[] = [{ x0: x - dot, y0: y - dot, x1: x + dot, y1: y + dot }];
-        if (m.label) {
-          // Samma mått som marker-label i renderMarkers(): 14 px, centrerad 18 px ovanför.
-          const w = (m.label.length * 14 * 0.62 + 6) / k;
-          boxes.push({ x0: x - w / 2, y0: y - 30 / k, x1: x + w / 2, y1: y - 12 / k });
-        }
+        if (m.label) boxes.push(this.labelBox(m, k));
         return boxes;
       });
   }
 
-  /** Ritar en cirkel med given radie i km runt en punkt (t.ex. träffzonen i stadsläget). */
+  /**
+   * Var namnet hamnar, i kartans koordinater. Samma mått som marker-label i renderMarkers(): 14 px,
+   * centrerat 18 px ovanför pricken, eller mitt på punkten om det inte har någon prick.
+   */
+  private labelBox(m: Marker, k: number): Box {
+    const [x, y] = this.projection([m.lon, m.lat]) ?? [0, 0];
+    const w = textWidth(m.label ?? '') / k;
+    return m.textOnly
+      ? { x0: x - w / 2, y0: y - TEXT_HALF_H / k, x1: x + w / 2, y1: y + TEXT_HALF_H / k }
+      : { x0: x - w / 2, y0: y - 30 / k, x1: x + w / 2, y1: y - 12 / k };
+  }
+
   private renderMarkers(): void {
     const k = this.k;
+    const line = this.line ? [this.line] : [];
+    this.linesG
+      .selectAll<SVGLineElement, NonNullable<SwedenMap['line']>>('line')
+      .data(line)
+      .join('line')
+      .attr('class', 'reveal-line')
+      .each((d, i, nodes) => {
+        const a = this.projection(d.from) ?? [0, 0];
+        const b = this.projection(d.to) ?? [0, 0];
+        nodes[i].setAttribute('x1', String(a[0]));
+        nodes[i].setAttribute('y1', String(a[1]));
+        nodes[i].setAttribute('x2', String(b[0]));
+        nodes[i].setAttribute('y2', String(b[1]));
+      })
+      // Med non-scaling-stroke räknas strecken i skärmens pixlar, oavsett zoom.
+      .style('stroke-dasharray', '6 5');
+    // Avståndet står bara där det får plats utan att täcka namnet på rätt svar (PO-15 krav 10).
+    const lineLabels = line.flatMap((d) => {
+      const at = this.lineLabelAt(this.projection(d.from) ?? [0, 0], this.projection(d.to) ?? [0, 0], d.label, k);
+      return at ? [{ label: d.label, x: at[0], y: at[1] }] : [];
+    });
+    this.lineLabelG
+      .selectAll<SVGTextElement, (typeof lineLabels)[number]>('text')
+      .data(lineLabels)
+      .join('text')
+      .attr('class', 'marker-label is-text-only marker-label-wrong')
+      .attr('font-size', 14 / k)
+      .style('stroke-width', `${3 / k}px`)
+      .attr('x', (d) => d.x)
+      .attr('y', (d) => d.y + 5 / k)
+      .text((d) => d.label);
     const groups = this.markersG
       .selectAll<SVGGElement, Marker>('g.marker')
-      .data(this.markers)
+      .data(this.markers.filter((d) => !d.textOnly))
       .join((enter) => {
         const g = enter.append('g');
         g.append('circle').attr('class', 'marker-halo');
@@ -640,9 +748,10 @@ export class SwedenMap {
       .selectAll<SVGTextElement, Marker>('text')
       .data(this.markers.filter((d) => d.label))
       .join('text')
-      .attr('class', 'marker-label')
+      .attr('class', (d) => (d.textOnly ? `marker-label is-text-only marker-label-${d.kind}` : 'marker-label'))
       .attr('x', (d) => this.projection([d.lon, d.lat])?.[0] ?? 0)
-      .attr('y', (d) => (this.projection([d.lon, d.lat])?.[1] ?? 0) - 18 / k)
+      // Utan prick står namnet mitt på punkten (5 px ≈ halva versalhöjden för 14 px).
+      .attr('y', (d) => (this.projection([d.lon, d.lat])?.[1] ?? 0) + (d.textOnly ? 5 : -18) / k)
       .attr('font-size', 14 / k)
       .style('stroke-width', `${3 / k}px`)
       .text((d) => d.label ?? '');
@@ -721,12 +830,6 @@ export class SwedenMap {
     this.svg.transition().duration(200).call(this.zoomBehavior.scaleBy, factor);
   }
 
-  /** Zoomar mjukt in på ett län så att man ser var det ligger, med lite omgivning kvar. */
-  focusCounty(code: string, duration = 500): void {
-    const f = this.features.find((d) => d.properties.code === code);
-    if (f) this.focusBounds(this.path.bounds(f), duration);
-  }
-
   /**
    * Zoomar in så att alla områden med `groupBy`-värdet `group` fyller kartan, t.ex. länet som en
    * kommunfråga nämner, och tonar ned resten. Zoomen går mjukt från vyn man har, så att man ser
@@ -756,18 +859,6 @@ export class SwedenMap {
     this.focusOn((x0 + x1) / 2, (y0 + y1) / 2, Math.max(1, k), motionMs(GROUP_ZOOM_MS));
   }
 
-  /** Zoomar mjukt in på en sjö. */
-  focusLake(id: string, duration = 500): void {
-    const f = this.lakeFeatures.find((d) => d.properties.id === id);
-    if (f) this.focusBounds(this.path.bounds(f), duration);
-  }
-
-  /** Zoomar mjukt in kring en punkt, t.ex. en stad. */
-  focusPoint(lon: number, lat: number, k = 3, duration = 500): void {
-    const p = this.projection([lon, lat]);
-    if (p) this.focusOn(p[0], p[1], k, duration);
-  }
-
   /**
    * Zoomar så att alla punkterna och rätt svar syns samtidigt, inom kartan utom `pad` överst och
    * nederst (där t.ex. rätt/fel-rutan ligger). Ligger de utspridda visas hela kartan, och då
@@ -793,11 +884,12 @@ export class SwedenMap {
     // i kartans koordinater beror på zoomen: räkna ut zoomen, lägg till namnet och räkna om.
     const labelBoxes = (k: number): Box[] =>
       this.markers
-        .filter((m) => m.kind === 'reveal' && m.label)
+        .filter((m) => m.label && (m.kind === 'reveal' || m.textOnly))
         .map((m) => {
-          const [x, y] = this.projection([m.lon, m.lat]) ?? [0, 0];
-          const w = (m.label!.length * 14 * 0.62 + 6) / k;
-          return { x0: x - w / 2, y0: y - 32 / k, x1: x + w / 2, y1: y };
+          const box = this.labelBox(m, k);
+          // Lite luft ovanför namnet, och för en prick ända ned till den.
+          const [, y] = this.projection([m.lon, m.lat]) ?? [0, 0];
+          return { ...box, y0: box.y0 - 2 / k, y1: m.textOnly ? box.y1 : y };
         });
     let x0 = 0;
     let y0 = 0;
@@ -828,15 +920,6 @@ export class SwedenMap {
       .scale(k)
       .translate(-(x0 + x1) / 2, -(y0 + y1) / 2);
     this.svg.transition().duration(duration).call(this.zoomBehavior.transform, t);
-  }
-
-  private focusBounds([[x0, y0], [x1, y1]]: [[number, number], [number, number]], duration: number): void {
-    const w = Math.max(x1 - x0, 1);
-    const h = Math.max(y1 - y0, 1);
-    const k = Math.min(REVEAL_MAX_ZOOM, REVEAL_FILL / Math.max(w / this.width, h / this.height));
-    // Stora län (t.ex. Norrbotten) syns redan tydligt; då behövs ingen zoom alls.
-    if (k < REVEAL_MIN_ZOOM) return;
-    this.focusOn((x0 + x1) / 2, (y0 + y1) / 2, k, duration);
   }
 
   /**
@@ -870,7 +953,7 @@ function shortName(name: string): string {
 }
 
 /** Animationens längd, eller 0 om användaren har valt "minska rörelse". */
-function motionMs(ms: number): number {
+export function motionMs(ms: number): number {
   return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : ms;
 }
 

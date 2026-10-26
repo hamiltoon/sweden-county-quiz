@@ -1124,6 +1124,16 @@ a {
   stroke-linejoin: round;
 }
 
+/* PO-15, variant c: linjen från felklicket till rätt svar, med avståndet mitt på. */
+.reveal-line {
+  fill: none;
+  stroke: var(--bad);
+  stroke-width: 2.5px;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
 .marker-correct {
   color: var(--ok);
 }
@@ -1287,6 +1297,80 @@ a {
 .toast-bad::before {
   content: '✗';
   content: '✗' / '';
+}
+
+/* PO-15: knappen "Nästa" i rutan efter en missad fråga, under texten, och de första gångerna en hint. */
+.toast-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.toast-hint {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.toast.has-action {
+  border-radius: 22px;
+  padding-bottom: 10px;
+}
+
+.toast-action {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--bad-strong);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.toast.is-visible .toast-action {
+  pointer-events: auto;
+}
+
+.toast-action:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 2px;
+}
+
+.advance-count {
+  min-width: 1ch;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Nedräkningen: stapeln krymper mot vänster och står still medan man håller på kartan. */
+.advance-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 4px;
+  background: currentColor;
+  transform-origin: left center;
+  transition: transform 0.1s linear;
+}
+
+.toast-action.is-paused .advance-bar {
+  opacity: 0.45;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Siffran räcker; ingen rörlig stapel. */
+  .advance-bar {
+    display: none;
+  }
 }
 
 /* ---------- Live ---------- */
