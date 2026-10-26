@@ -76,8 +76,8 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
 
 | Status | Punkter |
 |---|---|
-| Pågår (utvecklaren) | PO-23 |
-| Nästa | Live-paketet: PO-23, PO-02, PO-03, PO-04 |
+| Pågår (utvecklaren) | PO-23 till produktion, PO-40 |
+| Nästa | Live-paketet: PO-02, PO-03, PO-04 |
 | Väntar på UX-verifiering | – |
 | Väntar på svar från John | – |
 | Klart | PO-01, PO-01b, PO-06, PO-14, PO-15, PO-16, PO-17, PO-22, PO-29, PO-29b, PO-30, PO-31, PO-33 |
@@ -291,7 +291,7 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
   3. Efter att värden valt läge eller blandning ligger fokus kvar på det valda chipet.
 
 ### PO-23 Live: samma hjälp vid miss som i solospelet
-- **Prioritet:** P1, nästa efter PO-33
+- **Status:** ✅ Godkänd av UX på staging 2026-10-26 ([#39](https://github.com/hamiltoon/sweden-county-quiz/pull/39)). Går till produktion.
 - **Insats:** S
 - **Koppling:** UX-16, UX-17
 - **Värde:** I solospelet lär man sig av "250 km bort" och av tipset när man klickar i havet. I live får man bara "Fel." eller ingenting.
@@ -665,8 +665,8 @@ Fynd från UX-specialisten (UX-01, UX-02 …) läggs in här med prioritet och k
 | UX-13 | Lobbyn tappar fokus | ✅ Klar | PO-22 |
 | UX-14 | Starta matchen under vecket | ✅ Klar | PO-22 |
 | UX-15 | Live-timern saknar siffror och 3–2–1 | P2 | PO-03 |
-| UX-16 | Live: klick i havet ignoreras tyst | P2 | PO-23 |
-| UX-17 | Live: sjömiss ger bara "Fel." | P2 | PO-23 |
+| UX-16 | Live: klick i havet ignoreras tyst | ✅ Klar | PO-23 |
+| UX-17 | Live: sjömiss ger bara "Fel." | ✅ Klar | PO-23 |
 | UX-18 | Avslöjandets zoom ignorerar minska rörelse | ✅ Klar | PO-15 |
 | UX-19 | "Klicka"/"Tap" på fel enhet | P3 | PO-24 |
 | UX-20 | Första besöket: texter i fel ordning | P3 | PO-24 |
