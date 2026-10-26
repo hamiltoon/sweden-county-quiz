@@ -67,8 +67,8 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
 
 | Status | Punkter |
 |---|---|
-| Pågår (utvecklaren) | – (pausat 2026-10-25 kväll på Johns begäran) |
-| Nästa | PO-16 i varianter, sedan PO-15 i varianter, PO-30 |
+| Pågår (utvecklaren) | PO-16 i varianter (med PO-31 och e2e som väntar på bygghash) |
+| Nästa | PO-30, sedan PO-15 i varianter |
 | Väntar på UX-verifiering | – |
 | Väntar på svar från John | – |
 | Klart | PO-01, PO-01b, PO-06, PO-14, PO-22, PO-29, PO-29b |
@@ -118,7 +118,7 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
   5. Testat med 12 spelare i län, residensstad, sjöar och kommuner, på båda skärmstorlekarna.
 
 ### PO-29 Staging och automatiska acceptanstester
-- **Prioritet:** P1, direkt efter PO-01b
+- **Status:** ✅ Klar 2026-10-25 ([#29](https://github.com/hamiltoon/sweden-county-quiz/pull/29)). UX har godkänt kriterium 1–7; kriterium 8 i PO-29b.
 - **Insats:** M–L
 - **Koppling:** Beslut om arbetssätt med John 2026-10-25; felet i PO-01 kriterium 8 nådde produktion
 - **Värde för spelarna:** Det som når John och Erika är redan kontrollerat, så att en kväll i live inte förstörs av ett fel.
@@ -205,7 +205,7 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
   7. Svenska och engelska.
 
 ### PO-16 Kommuner: kartan zoomar in på länet
-- **Prioritet:** P1, efter PO-29. Byggs som två till tre varianter på staging som UX testar och PO väljer mellan.
+- **Prioritet:** P1, pågår sedan 2026-10-26. Byggs som två till tre varianter på staging (?v=a/b/c) som UX testar och PO väljer mellan.
 - **Insats:** M
 - **Koppling:** UX-01
 - **Värde:** 274 av 290 kommuner är mindre än ett finger på en iPhone, och zoomen nollställs vid varje fråga, så man
@@ -290,7 +290,7 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
   4. Topplistan och tidigare resultat lämnas orörda.
 
 ### PO-30 Live: målets namn syns ovanpå prickarna
-- **Prioritet:** P2
+- **Prioritet:** P1, direkt efter PO-16 (liten, rör samma yta som PO-15 och hjälper lärandet)
 - **Insats:** S
 - **Koppling:** UX-verifieringen av PO-01b (putsning)
 - **Värde:** När alla klickat nära rätt svar täcker prickarna målets namn ("Umeå", "Uddjaure"). Namnet är det man ska lära sig.
