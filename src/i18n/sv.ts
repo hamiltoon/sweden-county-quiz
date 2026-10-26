@@ -117,6 +117,7 @@ export const sv = {
   mnemonic: {
     bulb: '💡',
     why: 'Varför fungerar den?',
+    about: (things: string) => `Gäller ${things}.`,
     good: 'Bra regel',
     bad: 'Dålig regel',
     hiddenHere: 'Regeln visas inte mer på den här enheten.',

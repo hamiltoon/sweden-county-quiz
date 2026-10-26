@@ -40,12 +40,15 @@ function checkData(t) {
   t.check(new Set(MNEMONICS.map((r) => r.id)).size === MNEMONICS.length, 'regeldatan: unika id');
 }
 
-/** Svarar rätt tills frågan gäller en sjö vars regel har kort text; ger frågan. */
+/** Sjöarna som har samma regel som `id` (t.ex. Vänern och Vättern). */
+const partnersOf = (id) => LAKES.map((l) => l.id).filter((other) => other !== id && ruleForLake(other)?.id === ruleForLake(id)?.id);
+
+/** Svarar rätt tills frågan gäller en sjö vars regel har kort text och gäller en sjö till; ger frågan. */
 async function untilRuleLake(p, last = '') {
   for (let i = 0; i < 12; i++) {
     const q = await nextQuestion(p, last);
     const lake = ANSWERS.get(q)?.lake;
-    if (lake && ruleForLake(lake)?.short) return q;
+    if (lake && ruleForLake(lake)?.short && partnersOf(lake).length) return q;
     await sleep(p, 450);
     await answerAccepted(p, ANSWERS.get(q));
     last = q;
@@ -53,8 +56,8 @@ async function untilRuleLake(p, last = '') {
   throw new Error('ingen sjö med en kort regel kom');
 }
 
-/** Svarar rätt på resten av omgången, fram till slutskärmen. */
-async function finishRound(p, last) {
+/** Svarar rätt på resten av omgången, fram till slutskärmen, utom på sjöarna i `missAlso`. */
+async function finishRound(p, last, missAlso = []) {
   while (await p.locator('.screen-game').count()) {
     const q = await p
       .waitForFunction((last) => {
@@ -64,7 +67,12 @@ async function finishRound(p, last) {
       .then((h) => h.jsonValue());
     if (q === '__end__') break;
     await sleep(p, 450);
-    await answerAccepted(p, ANSWERS.get(q));
+    if (missAlso.includes(ANSWERS.get(q).lake)) {
+      await miss(p, 'sjo', { withRule: true });
+      await p.click('.toast-action');
+    } else {
+      await answerAccepted(p, ANSWERS.get(q));
+    }
     last = q;
   }
   await p.waitForSelector('.screen-end .result-list, .screen-end .perfect', { timeout: 15000 });
@@ -84,6 +92,7 @@ async function revealAndEnd(run, t) {
   await p.waitForSelector('.screen-game .map path');
   const q = await untilRuleLake(p);
   const rule = ruleForLake(ANSWERS.get(q).lake);
+  const partners = partnersOf(ANSWERS.get(q).lake);
   await miss(p, 'sjo', { withRule: true });
   await sleep(p, 900);
   const r = await p.evaluate(() => ({
@@ -106,15 +115,26 @@ async function revealAndEnd(run, t) {
   const next = await nextQuestion(p, q);
   t.check(!(await p.$('.mnemonic-strip')), 'avslöjandet: regeln försvinner med nästa fråga');
   await sleep(p, 450);
-  await answerAccepted(p, ANSWERS.get(next));
-  await finishRound(p, next);
+  // Missa också den andra sjön med samma regel: regeln ska ändå stå en gång på slutskärmen.
+  if (partners.includes(ANSWERS.get(next).lake)) {
+    await miss(p, 'sjo', { withRule: true });
+    await p.click('.toast-action');
+  } else {
+    await answerAccepted(p, ANSWERS.get(next));
+  }
+  await finishRound(p, next, partners);
 
   // Slutskärmen: regeln under den missade sjön, med "Varför?" och röstknappar.
   const end = await p.evaluate((id) => {
-    const box = document.querySelector(`.result-list .mnemonic[data-rule="${id}"]`);
-    return box ? { text: box.querySelector('.mnemonic-text')?.textContent?.trim(), why: !!box.querySelector('details.mnemonic-why'), votes: box.querySelectorAll('.vote-btn').length } : null;
+    const boxes = document.querySelectorAll(`.result-list .mnemonic[data-rule="${id}"]`);
+    const box = boxes[0];
+    return box
+      ? { count: boxes.length, about: box.querySelector('.mnemonic-about')?.textContent ?? null, text: box.querySelector('.mnemonic-text')?.textContent?.trim(), why: !!box.querySelector('details.mnemonic-why'), votes: box.querySelectorAll('.vote-btn').length }
+      : null;
   }, rule.id);
   t.check(end?.text === `💡 ${rule.text}` && end.why === !!rule.why && end.votes === 2, `slutskärmen: regeln under den missade sjön med Varför? och 👍/👎 ${JSON.stringify(end)}`);
+  const names = [ANSWERS.get(q).lake, ...partners].map((id) => LAKES.find((l) => l.id === id).name);
+  t.check(end?.count === 1 && names.every((n) => end.about?.includes(n)), `slutskärmen: regeln står en gång för båda sjöarna ("${end?.about}")`);
   await t.shot(p, 'slutskarm-regel');
   await axe(t, p, 'slutskärmen med en minnesregel');
   const before = ctx.blocked.length;

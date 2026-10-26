@@ -522,12 +522,20 @@ function endRules(summary: Summary, round: string): { ruleFor: (q: Question) => 
       break;
     }
   }
+  // Varje regel visas en gång, under den första missade saken den gäller, med alla sakerna utskrivna.
+  const things = new Map<string, string[]>();
+  for (const r of summary.results) {
+    const rule = r.solved ? null : ruleFor(r.question);
+    if (rule) things.set(rule.id, [...(things.get(rule.id) ?? []), questionLabel(r.question)]);
+  }
+  const shown = new Set<string>();
   return {
     ruleFor: (q) => {
       const rule = ruleFor(q);
-      if (!rule) return null;
+      if (!rule || shown.has(rule.id)) return null;
+      shown.add(rule.id);
       markSeen(rule.id, round);
-      return renderRule(rule);
+      return renderRule(rule, things.get(rule.id));
     },
     helped,
   };

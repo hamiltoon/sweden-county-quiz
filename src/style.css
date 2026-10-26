@@ -1973,3 +1973,10 @@ a {
 .mnemonic-form .btn {
   flex: none;
 }
+
+.mnemonic-about {
+  margin: 0 0 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+}

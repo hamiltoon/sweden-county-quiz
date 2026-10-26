@@ -1,6 +1,6 @@
 /** Minnesreglerna på skärmen: röstknapparna, raden på slutskärmen och "Hjälpte minnesregeln?". */
 import type { Mnemonic } from '../data/mnemonics';
-import { t } from '../i18n';
+import { lang, t } from '../i18n';
 import { el } from '../ui/dom';
 import { answerHelped, myVotes, textOf, vote } from './index';
 
@@ -32,13 +32,17 @@ export function renderVoteButtons(rule: Mnemonic, onChange?: (value: 1 | -1 | 0)
   return el('div', { class: 'vote-row' }, up, down, note);
 }
 
-/** Regeln med 💡, "Varför?" att fälla ut och röstknapparna (slutskärmen, krav 2). */
-export function renderRule(rule: Mnemonic): HTMLElement | null {
+/**
+ * Regeln med 💡, "Varför?" att fälla ut och röstknapparna (slutskärmen, krav 2). Gäller den flera
+ * av de missade sakerna står de först, eftersom regeln bara visas en gång.
+ */
+export function renderRule(rule: Mnemonic, things: string[] = []): HTMLElement | null {
   const text = textOf(rule);
   if (!text) return null;
   return el(
     'div',
     { class: 'mnemonic', 'data-rule': rule.id },
+    things.length > 1 ? el('p', { class: 'mnemonic-about' }, t().mnemonic.about(new Intl.ListFormat(lang(), { type: 'conjunction' }).format(things))) : null,
     el('p', { class: 'mnemonic-text' }, el('span', { 'aria-hidden': 'true' }, `${t().mnemonic.bulb} `), text.text),
     text.why ? el('details', { class: 'mnemonic-why' }, el('summary', {}, t().mnemonic.why), el('p', {}, text.why)) : null,
     renderVoteButtons(rule),
