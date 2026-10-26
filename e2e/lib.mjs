@@ -136,10 +136,9 @@ for (const l of LAKES) ANSWERS.set(`Var ligger ${l.name}?`, { lake: l.id });
  * ett tryck i stället för att räkna ned. Samma val som i spelet: en regel om saken före en tankeregel.
  */
 export function shortRuleFor(mode, answer) {
-  const [kind, id] = answer.lake ? ['sjo', answer.lake] : answer.point ? (mode === 'stad' ? ['stad', answer.point.code] : [null, null]) : [mode, answer.code];
-  if (!kind) return null;
+  const [kind, id] = answer.lake ? ['sjo', answer.lake] : answer.point ? (mode === 'stad' ? ['stad', answer.point.code] : ['ort', answer.point.name]) : [mode, answer.code];
   const matching = MNEMONICS.filter((r) => r.targets[kind]?.includes(id));
-  const rule = matching.find((r) => r.category !== 'princip') ?? matching[0];
+  const rule = matching.find((r) => r.category !== 'princip' && r.kind !== 'Tankeregel') ?? matching[0];
   return rule?.short ? rule : null;
 }
 

@@ -4,12 +4,14 @@
  * kommer via PR som PO godkänner.
  *
  * `targets` säger vilka frågor regeln hör till: länskoder för län (`lan`) och residensstäder
- * (`stad`), landskapens och sjöarnas id och kommunkoder. `short` (högst 110 tecken) visas i
+ * (`stad`), landskapens och sjöarnas id, kommunkoder och namnen på städerna i Fler städer (`ort`).
+ * En tom lista betyder att regeln gäller läget men ingen enskild fråga (en tankeregel för tipsraden).
+ * Kategorin `stad` är Fler städer. `short` (högst 110 tecken) visas i
  * avslöjandet efter en miss; `text` och `why` på slutskärmen och /minnesregler. Regler utan text i
  * `en` visas inte på engelska (de flesta är ordlekar på svenska).
  */
-export type MnemonicCategory = 'princip' | 'lan' | 'landskap' | 'sjo' | 'kommun';
-export type MnemonicTarget = 'lan' | 'stad' | 'landskap' | 'sjo' | 'kommun';
+export type MnemonicCategory = 'princip' | 'lan' | 'landskap' | 'sjo' | 'kommun' | 'stad';
+export type MnemonicTarget = 'lan' | 'stad' | 'landskap' | 'sjo' | 'kommun' | 'ort';
 
 export interface MnemonicText {
   text: string;
@@ -291,6 +293,176 @@ export const MNEMONICS: readonly Mnemonic[] = [
     short: 'Sundbyberg: Sveriges minsta kommun, inklämd vid Stockholm.',
     text: 'Sundbyberg är Sveriges minsta kommun, under 9 km², inklämd mellan Stockholm och Solna. Den får plats i en fingertopp på kartan.',
     why: 'Om du letar efter något pyttelitet nordväst om Stockholm: det är Sundbyberg.',
+  },
+  // Omgång 2 (PO-40), docs/minnesregler-omgang2.json.
+  {
+    id: 'l-visby',
+    category: 'lan',
+    entity: 'Gotland → Visby',
+    kind: 'Bild',
+    targets: { stad: ['I'] },
+    short: 'Visby sitter på Gotlands västsida och tittar mot fastlandet.',
+    text: 'Visby ligger på Gotlands västra kust, med ringmuren vänd mot havet och fastlandet. Staden vänder ansiktet mot Sverige.',
+    why: 'Säger vilken sida av ön staden ligger på, inte bara att den ligger på Gotland.',
+  },
+  {
+    id: 'l-karlstad',
+    category: 'lan',
+    entity: 'Värmland → Karlstad',
+    kind: 'Bild',
+    targets: { stad: ['S'] },
+    short: 'Sola i Karlstad solar på Vänerns norra strand, där Klarälven mynnar.',
+    text: 'Karlstad kallas Solstaden, och Sola är stadens symbol. Hon solar på Vänerns norra strand, i deltat där Klarälven rinner ut.',
+    why: 'En figur och en strand: man ser var på Vänern staden ligger.',
+  },
+  {
+    id: 'l-aros',
+    category: 'lan',
+    entity: 'Västmanland → Västerås, Uppsala → Uppsala',
+    kind: 'Historia',
+    targets: { stad: ['U', 'C'] },
+    short: 'Två Aros: Västra Aros blev Västerås vid Mälaren, Östra Aros blev Uppsala längre österut.',
+    text: 'Västerås hette Västra Aros, och dagens Uppsala hette Östra Aros innan namnet flyttade dit från Gamla Uppsala. Aros betyder åmynning. Västerås ligger på Mälarens norra strand, och Uppsala ligger österut, norr om Stockholm.',
+    why: 'Ett namnpar ger två residensstäder och deras läge i förhållande till varandra.',
+  },
+  {
+    id: 'l-linkoping',
+    category: 'lan',
+    entity: 'Östergötland → Linköping (och Norrköping)',
+    kind: 'Ordlek',
+    targets: { stad: ['E'], ort: ['Norrköping'] },
+    short: 'Norrköping ligger Norr och Nära havet; residensstaden Linköping Längre in i Landet.',
+    text: 'Östergötlands två städer: Norrköping ligger nordost om Linköping, vid Bråviken nära havet. Linköping, residensstaden, ligger längre in i landet.',
+    why: 'Löser förväxlingen mellan de två och säger var båda ligger. Norrköping finns i Fler städer.',
+  },
+  {
+    id: 'l-jonkoping',
+    category: 'lan',
+    entity: 'Jönköping → Jönköping',
+    kind: 'Bild',
+    targets: { stad: ['F'] },
+    short: 'Vättern är en tändsticka och Jönköping är det röda huvudet längst i söder.',
+    text: 'Jönköping är tändstickornas stad (Tändsticksmuseet). Vättern är lång och smal som en tändsticka, och Jönköping sitter som huvudet på dess södra spets.',
+    why: 'Stadens kändaste produkt blir en bild av sjöns form och stadens plats på den.',
+  },
+  {
+    id: 'l-orebro',
+    category: 'lan',
+    entity: 'Örebro → Örebro',
+    kind: 'Bild',
+    targets: { stad: ['T'] },
+    short: 'Hjälmaren är en fisk som simmar österut; Örebro sitter på stjärtfenan i väster.',
+    text: 'Hjälmaren är avlång och rinner österut mot Mälaren. Örebro ligger vid sjöns västra ände, som stjärtfenan på en fisk som simmar mot Stockholm.',
+    why: 'Bygger på regeln om Hjälmaren och lägger till vilken ände staden sitter i.',
+  },
+  {
+    id: 'l-malmo',
+    category: 'lan',
+    entity: 'Skåne → Malmö',
+    kind: 'Bild',
+    targets: { stad: ['M'] },
+    short: 'Malmö håller i Öresundsbron, i Sveriges sydvästra hörn; Köpenhamn har andra änden.',
+    text: 'Öresundsbron landar i Malmö. Staden ligger i Sveriges sydvästra hörn och tittar rakt över sundet på Köpenhamn.',
+    why: 'Bron gör hörnet lätt att se framför sig.',
+  },
+  {
+    id: 'l-goteborg',
+    category: 'lan',
+    entity: 'Västra Götaland → Göteborg',
+    kind: 'Konstig',
+    targets: { stad: ['O'] },
+    short: 'Vänern drar ur proppen: Göta älv rinner ner och mynnar i havet vid Göteborg.',
+    text: 'Göta älv är Vänerns avlopp. Den rinner från sjöns sydvästra hörn ner till havet, och där den mynnar ligger Göteborg, som har fått sitt namn efter älven.',
+    why: 'Sjön, älven och staden hänger ihop i en enda bild.',
+  },
+  {
+    id: 'f-helsingborg',
+    category: 'stad',
+    entity: 'Helsingborg',
+    kind: 'Bild',
+    targets: { ort: ['Helsingborg'] },
+    short: 'Helsingborg vinkar till Helsingör över Öresunds smalaste ställe, norr om Malmö.',
+    text: 'Där Öresund är som smalast, ungefär 4 km, ligger Helsingborg på svenska sidan och Helsingør på danska. Malmö har bron längre söderut.',
+    why: 'Två nästan likadana namn mittemot varandra. Tillsammans med Malmö-regeln ger det Skånes två övergångar till Danmark.',
+  },
+  {
+    id: 'f-kiruna',
+    category: 'stad',
+    entity: 'Kiruna',
+    kind: 'Konstig',
+    targets: { ort: ['Kiruna'] },
+    short: 'Kiruna, staden som flyttar för gruvan, är Sveriges nordligaste stad, sydost om Torneträsk.',
+    text: 'Kiruna flyttas österut eftersom gruvan äter sig in under staden; det nya centrum invigdes 2022. Det är Sveriges nordligaste stad, i Lappland, en bit sydost om Torneträsk.',
+    why: 'En stad som går är svår att glömma. Torneträsk-regeln finns redan som grannmärke.',
+  },
+  {
+    id: 'f-sundsvall',
+    category: 'stad',
+    entity: 'Sundsvall',
+    kind: 'Konstig',
+    targets: { ort: ['Sundsvall'] },
+    short: 'Vik Sverige på mitten, norr mot söder: vecket hamnar nästan i Sundsvall.',
+    text: 'Sverige sträcker sig från Smygehuk (55,3° N) till Treriksröset (69,1° N). Mitten är 62,2° N, och Sundsvall ligger på 62,4°, vid kusten i Medelpad.',
+    why: 'En handrörelse (vika kartan) som ger både höjden och att staden ligger vid kusten.',
+  },
+  {
+    id: 'f-boras',
+    category: 'stad',
+    entity: 'Borås',
+    kind: 'Bild',
+    targets: { ort: ['Borås'] },
+    short: 'Textilstaden Borås ligger sex mil rakt öster om Göteborg, inåt land.',
+    text: 'Borås är Sveriges textilstad. Den ligger på nästan samma breddgrad som Göteborg, ungefär sex mil österut, inåt land.',
+    why: 'Göteborg är redan ett riktmärke. Samma höjd och en rak linje österut är lätt att klicka.',
+  },
+  {
+    id: 'm-norrut',
+    category: 'kommun',
+    entity: 'Kommunerna växer norrut',
+    kind: 'Tankeregel',
+    targets: { kommun: [] },
+    short: 'Kommunerna växer norrut: Kiruna kommun är större än hela Skåne.',
+    text: 'Kiruna kommun (ungefär 20 000 km²) är större än hela Skåne län (ungefär 11 000 km²). Är kommunen liten letar du i söder eller runt storstäderna; är den enorm ligger den i norr.',
+    why: 'En tankeregel som hjälper innan man ens vet var kommunen ligger.',
+  },
+  {
+    id: 'm-vatten',
+    category: 'kommun',
+    entity: 'Kommuner på -hamn, -vik och -sund',
+    kind: 'Ordlek',
+    targets: {
+      kommun: [
+        '0192',
+        '0481',
+        '0563',
+        '0882',
+        '0883',
+        '1082',
+        '1291',
+        '1415',
+        '1491',
+        '1781',
+        '1882',
+        '2031',
+        '2182',
+        '2284',
+        '2313',
+        '2380',
+      ],
+    },
+    short: 'Heter kommunen något på -hamn, -vik eller -sund ligger den vid havet eller en sjö.',
+    text: 'Det gäller alla 16 sådana kommuner i spelet, t.ex. Oskarshamn, Simrishamn och Västervik vid havet, Kristinehamn vid Vänern, Askersund vid Vättern, Rättvik vid Siljan, Ulricehamn vid Åsunden och Östersund vid Storsjön. Klicka vid stranden.',
+    why: 'Namnets slut berättar var på kartan man ska leta.',
+  },
+  {
+    id: 'r-vatten',
+    category: 'princip',
+    entity: 'Residensstäder: klicka vid vattnet',
+    kind: 'Tankeregel',
+    targets: { stad: [] },
+    short: 'Tveka? Klicka vid vattnet: nästan alla residensstäder ligger vid hav eller stor sjö.',
+    text: 'De flesta residensstäder ligger vid havet eller vid en stor sjö. Undantagen är få: Uppsala, Linköping, Växjö och Falun ligger inåt land. I Norrland ligger alla vid kusten, utom Östersund, som valde Storsjön och odjuret.',
+    why: 'En regel för hela läget: den ger ett bättre första klick även när man inte vet svaret.',
   },
 ];
 

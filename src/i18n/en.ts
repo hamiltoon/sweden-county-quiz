@@ -139,7 +139,7 @@ export const en: Messages = {
     loading: 'Loading votes and comments…',
     failed: 'Votes and comments could not be loaded right now.',
     sendFailed: 'Could not send. Try again.',
-    categories: { princip: 'Rules of thumb', lan: 'Counties and seats', landskap: 'Provinces', sjo: 'Lakes', kommun: 'Municipalities' },
+    categories: { princip: 'Rules of thumb', lan: 'Counties and seats', stad: 'More cities', landskap: 'Provinces', sjo: 'Lakes', kommun: 'Municipalities' },
     votes: (up, down) => `👍 ${up} · 👎 ${down}`,
     helped: (yes, total) => `Helped ${yes} of ${total}`,
     questioned: 'Questioned',

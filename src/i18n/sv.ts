@@ -138,7 +138,7 @@ export const sv = {
     loading: 'Hämtar röster och kommentarer…',
     failed: 'Röster och kommentarer kunde inte hämtas just nu.',
     sendFailed: 'Det gick inte att skicka. Försök igen.',
-    categories: { princip: 'Tankeregler', lan: 'Län och residensstäder', landskap: 'Landskap', sjo: 'Sjöar', kommun: 'Kommuner' },
+    categories: { princip: 'Tankeregler', lan: 'Län och residensstäder', stad: 'Fler städer', landskap: 'Landskap', sjo: 'Sjöar', kommun: 'Kommuner' },
     votes: (up: number, down: number) => `👍 ${up} · 👎 ${down}`,
     helped: (yes: number, total: number) => `Hjälpte ${yes} av ${total}`,
     questioned: 'Ifrågasatt',

@@ -72,9 +72,16 @@ function targetOf(q: Question): [MnemonicTarget, string] | null {
       return ['kommun', q.municipality.code];
     case 'sjo':
       return ['sjo', q.lake.id];
+    case 'ort':
+      return ['ort', q.city.name];
     default:
       return null;
   }
+}
+
+/** En tankeregel gäller ett helt läge (kategorin princip, eller typen Tankeregel), inte en enskild sak. */
+function isThinkingRule(rule: Mnemonic): boolean {
+  return rule.category === 'princip' || rule.kind === 'Tankeregel';
 }
 
 /** Regeln för just den här saken: en regel om saken själv före en tankeregel som gäller flera. */
@@ -83,7 +90,7 @@ export function ruleFor(q: Question): Mnemonic | null {
   if (!target) return null;
   const [kind, id] = target;
   const matching = MNEMONICS.filter((r) => r.targets[kind]?.includes(id) && usable(r));
-  return matching.find((r) => r.category !== 'princip') ?? matching[0] ?? null;
+  return matching.find((r) => !isThinkingRule(r)) ?? matching[0] ?? null;
 }
 
 /** Vilka sorters frågor ett läge har. */
@@ -92,18 +99,21 @@ const MODE_TARGETS: Record<Mode, MnemonicTarget[]> = {
   stad: ['stad'],
   landskap: ['landskap'],
   kommun: ['kommun'],
-  ort: [],
+  ort: ['ort'],
   sjo: ['sjo'],
-  blandat: ['lan', 'stad', 'landskap', 'kommun', 'sjo'],
+  blandat: ['lan', 'stad', 'landskap', 'kommun', 'ort', 'sjo'],
 };
 
 /**
- * Tipset i lägets kort: en tankeregel (princip) med kort text som gäller läget. Samma tips hela
- * dagen, så att kortet inte byter text varje gång startskärmen ritas om.
+ * Tipset i lägets kort: en tankeregel med kort text som gäller läget, eller, om läget inte har någon
+ * (Fler städer), en av lägets andra regler. Samma tips hela dagen, så att kortet inte byter text
+ * varje gång startskärmen ritas om.
  */
 export function tipFor(mode: Mode): string | null {
   const kinds = MODE_TARGETS[mode];
-  const tips = MNEMONICS.filter((r) => r.category === 'princip' && usable(r) && textOf(r)?.short && kinds.some((k) => r.targets[k]));
+  const forMode = MNEMONICS.filter((r) => usable(r) && textOf(r)?.short && kinds.some((k) => r.targets[k]));
+  const thinking = forMode.filter(isThinkingRule);
+  const tips = thinking.length ? thinking : forMode;
   if (!tips.length) return null;
   const day = Math.floor(Date.now() / 86_400_000);
   return textOf(tips[day % tips.length])!.short!;
