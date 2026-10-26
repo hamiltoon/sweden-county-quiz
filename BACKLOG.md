@@ -67,8 +67,8 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
 
 | Status | Punkter |
 |---|---|
-| Pågår (utvecklaren) | PO-30 |
-| Nästa | PO-15 i varianter |
+| Pågår (utvecklaren) | PO-30 till produktion, PO-15 i varianter |
+| Nästa | Live-paketet: PO-23, PO-02, PO-03, PO-04 |
 | Väntar på UX-verifiering | – |
 | Väntar på svar från John | – |
 | Klart | PO-01, PO-01b, PO-06, PO-14, PO-16, PO-22, PO-29, PO-29b, PO-31 |
@@ -297,7 +297,7 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
   4. Topplistan och tidigare resultat lämnas orörda.
 
 ### PO-30 Live: målets namn syns ovanpå prickarna
-- **Prioritet:** P1, direkt efter PO-16 (liten, rör samma yta som PO-15 och hjälper lärandet)
+- **Status:** ✅ Godkänd av UX på staging 2026-10-26 (12 spelare, 10 avslöjanden, namnet överst och inom kartan). Går till produktion.
 - **Insats:** S
 - **Koppling:** UX-verifieringen av PO-01b (putsning)
 - **Värde:** När alla klickat nära rätt svar täcker prickarna målets namn ("Umeå", "Uddjaure"). Namnet är det man ska lära sig.
