@@ -152,7 +152,11 @@ async function twelvePlayers(run, t) {
   await t.shot(h, 'lobby-12');
   await h.click('.live-lobby-action .btn-primary');
   for (let n = 1; n <= 10; n++) {
-    await waitQuestion(h, n);
+    await waitQuestion(h, n).catch(async (e) => {
+      await t.shot(h, `fel-fraga-${n}`);
+      e.state = `väntade på fråga ${n}: ${await h.evaluate(() => `${document.querySelector('.hud-progress')?.textContent} ${document.querySelector('.live-status')?.textContent?.slice(0, 60)}`)}`;
+      throw e;
+    });
     const answer = ANSWERS.get(await questionText(h));
     if (answer?.code && / i .+ län\?$/.test(await questionText(h))) {
       // Kommunfråga: kartan zoomar in på länet (PO-16).
@@ -161,7 +165,11 @@ async function twelvePlayers(run, t) {
       t.check(fill.inside && fill.share >= 0.6, `12 spelare, fråga ${n} (kommun): länet fyller kartan (${Math.round(fill.share * 100)} %)`);
     }
     await answerAccepted(h, answer);
-    await h.waitForSelector('.live-standings', { timeout: 15000 });
+    await h.waitForSelector('.live-standings', { timeout: 15000 }).catch(async (e) => {
+      await t.shot(h, `fel-avslojande-${n}`);
+      e.state = `fråga ${n} "${await questionText(h)}": ${await h.evaluate(() => document.querySelector('.live-status')?.textContent?.slice(0, 60))}`;
+      throw e;
+    });
     await checkReveal(t, `12 spelare, fråga ${n}`, h, 12);
     if (n === 1) {
       // Boten kan få avslöjandet en stund efter värden.
@@ -184,7 +192,7 @@ export default async function live(run) {
   const t = new Suite(run, 'live');
   await Promise.all([
     twoPlayers(run, t).catch((e) => t.check(false, `2 spelare: ${e.message.split('\n')[0]}`)),
-    twelvePlayers(run, t).catch((e) => t.check(false, `12 spelare: ${e.message.split('\n')[0]}`)),
+    twelvePlayers(run, t).catch((e) => t.check(false, `12 spelare: ${e.message.split('\n')[0]}${e.state ? ` (${e.state})` : ''}`)),
   ]);
   return t;
 }
