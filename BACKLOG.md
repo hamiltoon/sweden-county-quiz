@@ -58,6 +58,8 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
 
 ## Så prioriterar vi
 
+- **Balans (John 2026-10-26):** blanda lärande, fel och live i stället för att ta allt live först.
+
 - **Vilka som spelar:** främst John och de närmaste, t.ex. Erika, som tävlar mot varandra, oftast i live på mobilen.
   Det som gör live roligare att spela *tillsammans* går därför först.
 - **Vad vi går efter:** värde per insats, ungefär som RICE men utan siffror vi inte har.
@@ -77,7 +79,7 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
 | Status | Punkter |
 |---|---|
 | Pågår (utvecklaren) | – (pausat 2026-10-26 på Johns begäran) |
-| Nästa | PO-02b (ordningen i svarsraden), sedan PO-03, PO-04 |
+| Nästa | PO-02b, PO-18, PO-28, PO-10, sedan PO-03, PO-04, sedan PO-13, PO-41, PO-42 (blandat lärande och live, John 2026-10-26) |
 | Väntar på UX-verifiering | – |
 | Väntar på svar från John | – |
 | Klart | PO-01, PO-01b, PO-06, PO-14, PO-15, PO-16, PO-17, PO-02, PO-22, PO-23, PO-29, PO-29b, PO-30, PO-31, PO-33, PO-40 |
@@ -256,7 +258,7 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
   4. "Nytt bästa resultat!" visas inte på den allra första omgången i ett läge (UX-29).
 
 ### PO-18 Namn: säg direkt om namnet är skyddat
-- **Prioritet:** P2
+- **Prioritet:** P1, efter PO-02b (ett fel som tar bort resultat i tysthet)
 - **Insats:** S–M
 - **Koppling:** UX-06
 - **Värde:** I dag godtas ett skyddat namn när man skriver det, och först efter en hel omgång kommer beskedet att
@@ -301,7 +303,7 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
   3. Svenska och engelska.
 
 ### PO-28 Residensstad: prick i stället för ifyllt län
-- **Prioritet:** P2
+- **Prioritet:** P1, efter PO-18
 - **Insats:** S
 - **Koppling:** UX-12; **beslut av John 2026-10-25:** prick, utan att nollställa topplistan
 - **Värde:** När hela länet färgas efter varje svar kan de sista städerna räknas ut genom uteslutning. Med en prick
@@ -483,7 +485,7 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
 - **Acceptanskriterier:** skrivs innan start. En utgångspunkt är en visar-vy av ett befintligt rum, utan att den räknas som spelare.
 
 ### PO-10 Utmana en kompis
-- **Prioritet:** P2, först efter live-paketet (PO-02–PO-04)
+- **Prioritet:** P1, efter PO-28 (före PO-03 och PO-04; John 2026-10-26). Kriterierna skärps innan start.
 - **Insats:** M
 - **Koppling:** IDEER.md "Socialt"; Johns riktning 2026-10-25
 - **Värde:** Tävla och lära sig även när man inte ses: "Slå mina 52 poäng på län!". Efteråt ser båda var den andra
