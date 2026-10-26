@@ -366,6 +366,15 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
       400 px på 360×740, en röst sparas på staging, och guard stoppar röster mot produktion.
 - **Mått:** svaren på "Hjälpte regeln?" (kriterium 5), kompletterat med andelen rätt nästa gång samma sak kommer. Underlaget blir tunt med få spelare.
 
+### PO-34 Förlorarens ramsa (K-02)
+- **Prioritet:** P2, efter PO-33 (bygger på dess röstning)
+- **Insats:** M
+- **Koppling:** Kreativ ledare, omgång 1
+- **Värde:** Efter en live-match hittar den som kom sist på en minnesregel för frågan som flest missade, och de andra
+  röstar. En vinnande regel kommer in i PO-33 med namn ("Erikas regel"). Den som hittar på en regel själv minns den
+  bäst, förlusten blir rolig, och familjen fyller på med egna regler.
+- **Acceptanskriterier:** skrivs när PO-33 är i produktion.
+
 ### PO-02 Live: se vilka som har svarat medan frågan pågår
 - **Prioritet:** P2
 - **Insats:** S (servern skickar redan `answered` per spelare)
@@ -407,6 +416,14 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
   3. Med inställningen "minska rörelse" i telefonen (`prefers-reduced-motion`) hoppar raderna direkt till sina platser.
   4. Svenska och engelska.
 
+### PO-35 Soffläget: tv:n visar kartan, telefonerna svarar (K-03)
+- **Prioritet:** P2, nästa stora live-satsning efter live-paketet (PO-23, PO-02–PO-04)
+- **Insats:** M
+- **Koppling:** Kreativ ledare, omgång 1; riktningen "man spelar när man ses"
+- **Värde:** När familjen sitter i samma rum visar en stor skärm (tv eller laptop) kartan, frågan och allas prickar,
+  och telefonerna används för att svara. Avslöjandet blir gemensamt, och alla pekar på tv:n.
+- **Acceptanskriterier:** skrivs innan start. En utgångspunkt är en visar-vy av ett befintligt rum, utan att den räknas som spelare.
+
 ### PO-10 Utmana en kompis
 - **Prioritet:** P2, först efter live-paketet (PO-02–PO-04)
 - **Insats:** M
@@ -435,6 +452,15 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
   3. Övningsomgången ställer bara de frågorna, och en fråga som besvaras rätt direkt två gånger i rad försvinner ur listan.
   4. Övningsomgångar sparas inte på topplistan och ändrar inte bästa resultat.
   5. Svenska och engelska.
+
+### PO-36 Siluetten: känn igen formen (K-06)
+- **Prioritet:** P2, efter PO-13
+- **Insats:** S–M
+- **Koppling:** Kreativ ledare, omgång 1; liknar "Omvänt läge" i IDEER.md
+- **Värde:** Ett län, landskap eller en sjö visas som en ensam siluett, och man väljer namnet bland några alternativ.
+  Efteråt landar formen på sin plats. Man lär sig formen och inte bara läget, och formerna ger nya bilder till
+  minnesreglerna (Gotland som en tand).
+- **Acceptanskriterier:** skrivs innan start.
 
 ### PO-07 Live: skiljetecken vid lika poäng
 - **Prioritet:** P2 (efter PO-13; billig när PO-01 sparar svarstiderna)
@@ -555,6 +581,10 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
 | Svårighetsnivå "Expert" och omvänt läge | Nya spelsätt; väntar tills live-paketet är klart. Omvänt läge (flerval) skulle också ge ett sätt att spela utan att peka på kartan (UX-11). |
 | Spela kartan med tangentbord och skärmläsare (UX-11) | Stort arbete (L) för ingen i dagens spelarkrets. Tas upp om spelet ska nå fler, troligast via omvänt läge. |
 | Bredare layout på dator (UX-21), liggande mobil (UX-23), klippkant i grannkartan (UX-28) | Spelet spelas på mobil i stående läge; liten nytta för spelarna i dag. |
+| K-01 Familjens nålar (egna platser som riktmärken) | Stark lärandeidé, men privata platser får inte bli publika i ett öppet spel. Tas upp igen om de kan sparas på enheten eller bara i ett live-rum. |
+| K-04 Gränslarmet i bilen | Rolig geografi i verkligheten, men en webbapp kan inte följa positionen med skärmen släckt på iPhone. Kanske senare. |
+| K-07 Rita Sverige blind | Kul inledning på en live-match, men osäkert hur poängen ska räknas. Kanske senare. |
+| K-05 Mänskliga kartan, K-08 Missmonstret, K-09 Kylskåpskartan, K-10 Sabotagekort | Nej för nu: kräver många i samma rum (K-05), överlappar PO-13 (K-08), används sällan (K-09) eller straffar den som ligger efter i en familj med olika nivåer (K-10). |
 
 ## UX-fynd
 
