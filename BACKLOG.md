@@ -76,7 +76,7 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
 
 | Status | Punkter |
 |---|---|
-| Pågår (utvecklaren) | PO-15 i varianter |
+| Pågår (utvecklaren) | PO-15 (variant C vald, tillägg 8–10) |
 | Nästa | PO-33 Minnesregler, sedan live-paketet: PO-23, PO-02, PO-03, PO-04 |
 | Väntar på UX-verifiering | – |
 | Väntar på svar från John | – |
@@ -197,7 +197,10 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
   6. axe-core hittar inga kontrastfel på spelskärmen eller slutskärmen.
 
 ### PO-15 Avslöjandet lär ut var rätt svar ligger
-- **Prioritet:** P1, efter PO-29. Byggs som två till tre varianter på staging som UX testar och PO väljer mellan.
+- **Prioritet:** P1, pågår. Tre varianter byggda ([#35](https://github.com/hamiltoon/sweden-county-quiz/pull/35)).
+- **Beslut (PO, 2026-10-26):** variant C. Spelet går vidare efter 4 s (pausas när man håller fingret på kartan), och en
+  streckad linje visar avståndet från felklicket till rätt svar ("364 km"). UX: riktningen är lättare att minnas än en
+  siffra. A bröt flytet med ett extra tryck per miss. En miss med minnesregel väntar på ett tryck (PO-33).
 - **Insats:** M
 - **Koppling:** UX-07, UX-18
 - **Värde:** Kärnan är att lära sig geografi. Efter en miss visas rätt svar i 2,4 sekunder, och det egna felklicket
@@ -212,6 +215,10 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
   5. Live påverkas inte (där styr servern tiden; PO-01 visar klicken).
   6. Med "minska rörelse" (`prefers-reduced-motion`) hoppar kartan direkt till vyn utan zoomanimation (UX-18).
   7. Svenska och engelska.
+  8. Hinten "Håll fingret på kartan för att titta längre" visas de 2–3 första gångerna per enhet.
+  9. Tangentbord och skärmläsare (WCAG 2.2.1): nedräkningen pausas så länge fokus är i rutan efter att tangentbordet
+     har använts i omgången. Enter eller mellanslag går vidare.
+  10. Avståndsetiketten överlappar inte rätt svars namn. Den flyttas eller döljs när linjen är kort.
 
 ### PO-16 Kommuner: kartan zoomar in på länet
 - **Status:** ✅ Klar 2026-10-26, i produktion via [#33](https://github.com/hamiltoon/sweden-county-quiz/pull/33) (version a27ce283). UX har godkänt C med krav 7–8; 8c (mörkt läge) uppfyllt med fyllning 3,32:1 och gräns 3,44:1, mätt i e2e.
@@ -381,6 +388,12 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
 - **Koppling:** utvecklarens förslag vid PO-15
 - **Värde:** Den som vill se rätt svar närmare kan nypa och zooma innan man går vidare.
 - **Acceptanskriterier:** skrivs när den blir aktuell. Nypande får inte räknas som "tryck för att gå vidare".
+
+### PO-38 Inställning: gå vidare själv
+- **Prioritet:** P3
+- **Insats:** S
+- **Koppling:** UX vid PO-15 (variant A som val för den som vill plugga i lugn och ro)
+- **Acceptanskriterier:** skrivs när den blir aktuell.
 
 ### PO-02 Live: se vilka som har svarat medan frågan pågår
 - **Prioritet:** P2
