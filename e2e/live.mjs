@@ -90,6 +90,20 @@ async function checkStartVisible(t, label, p) {
 }
 
 /** Väntar på fråga n (1-baserad) och på att kartan är klar. */
+/** PO-02: raden med vem som har svarat under frågan. */
+function answeredRow(p) {
+  return p.evaluate(() => {
+    const status = document.querySelector('.live-status');
+    const chips = [...document.querySelectorAll('.live-answered .live-chip')];
+    return {
+      height: Math.round(status.getBoundingClientRect().height),
+      oneLine: new Set(chips.map((c) => Math.round(c.getBoundingClientRect().top))).size <= 1,
+      chips: chips.map((c) => ({ text: c.textContent, answered: c.classList.contains('is-answered'), away: c.classList.contains('is-away'), me: c.classList.contains('is-me') })),
+      spoken: document.querySelector('.live-status .visually-hidden')?.textContent ?? null,
+    };
+  });
+}
+
 async function waitQuestion(p, n) {
   await p.waitForFunction((n) => document.querySelector('.hud-progress')?.textContent === `${n}/10` && !document.querySelector('.live-standings') && document.querySelector('.map path'), n, { timeout: 30000 });
   await p.waitForTimeout(500);
@@ -116,6 +130,16 @@ async function twoPlayers(run, t) {
     const answer = ANSWERS.get(await questionText(h));
     await clickAnswer(h, answer);
     if (n === 1) {
+      // PO-02: gästen ser direkt att värden har svarat, utan att se om svaret var rätt.
+      const seen = await g
+        .waitForFunction(() => [...document.querySelectorAll('.live-answered .live-chip')].some((c) => c.textContent.startsWith('Anna') && c.classList.contains('is-answered')), null, { timeout: 5000 })
+        .then(() => true, () => false);
+      const row = await answeredRow(g);
+      const me = row.chips.find((c) => c.me);
+      t.check(seen && row.chips.length === 2 && me && !me.answered, `2 spelare: gästen ser "Anna ✓" innan gästen själv har svarat ${JSON.stringify(row.chips)}`);
+      t.check(row.chips.every((c) => !/[✗]|rätt|fel|right|wrong/i.test(c.text)), '2 spelare: raden säger inte om svaret var rätt');
+      t.check(/1 of 2 have answered/.test(row.spoken ?? ''), `2 spelare: skärmläsare får "${row.spoken}" (engelska)`);
+      await t.shot(g, 'svarat-2-android');
       // PO-23: ett klick i havet räknas inte som svar, och gästen (engelska) får samma tips som i solospelet.
       await mapSettled(g);
       const sea = await pointOnMap(g, { lat: 56.0, lon: 18.6 });
@@ -170,6 +194,16 @@ async function twelvePlayers(run, t) {
       e.state = `väntade på fråga ${n}: ${await h.evaluate(() => `${document.querySelector('.hud-progress')?.textContent} ${document.querySelector('.live-status')?.textContent?.slice(0, 60)}`)}`;
       throw e;
     });
+    if (n === 1 || n === 2) {
+      // PO-02: tolv namn på en rad som inte gör statusraden högre (39 px på iPhone 13 före PO-02).
+      const row = await answeredRow(h);
+      t.check(row.chips.length === 12 && row.oneLine && row.height <= 40, `12 spelare, fråga ${n}: ${row.chips.length} namn på en rad, statusraden ${row.height} px (högst 40)`);
+      if (n === 1) await t.shot(h, 'svarat-12');
+      if (n === 2) {
+        const gone = row.chips.find((c) => c.text.startsWith(BOT_NAMES[10]));
+        t.check(!!gone?.away && gone.text.includes('borta'), `12 spelare: ${BOT_NAMES[10]}, som tappat anslutningen, syns som borta ("${gone?.text}")`);
+      }
+    }
     const answer = ANSWERS.get(await questionText(h));
     if (answer?.code && / i .+ län\?$/.test(await questionText(h))) {
       // Kommunfråga: kartan zoomar in på länet (PO-16).
@@ -183,7 +217,9 @@ async function twelvePlayers(run, t) {
       e.state = `fråga ${n} "${await questionText(h)}": ${await h.evaluate(() => document.querySelector('.live-status')?.textContent?.slice(0, 60))}`;
       throw e;
     });
-    await checkReveal(t, `12 spelare, fråga ${n}`, h, 12);
+    // Den sista boten kopplas ned efter första frågan och svarar inte mer (PO-02, borta).
+    await checkReveal(t, `12 spelare, fråga ${n}`, h, n === 1 ? 12 : 11);
+    if (n === 1) bots[10].close();
     if (n === 1) {
       // Boten kan få avslöjandet en stund efter värden.
       for (let i = 0; i < 20 && bots[0].state.last?.phase !== 'reveal'; i++) await h.waitForTimeout(100);
@@ -205,24 +241,40 @@ async function twelvePlayers(run, t) {
 async function lakeMiss(run, t) {
   const hc = await context(run, 'iphone');
   const h = await page(hc);
-  const code = await createRoom(h, run, 'Anna');
-  const ws = bot(run.base, code, 'Bo', 0);
-  await h.waitForFunction(() => document.querySelectorAll('.live-players li').length === 2);
-  await h.click('.live-mode-chip[data-mode="sjo"]');
-  await h.waitForFunction(() => document.querySelector('.live-mode-chip[data-mode="sjo"]')?.getAttribute('aria-pressed') === 'true');
-  await h.click('.live-lobby-action .btn-primary');
-  await waitQuestion(h, 1);
-  await mapSettled(h);
-  // Mitt på Gotland: land, långt från alla tio sjöar och deras träffytor.
-  const land = await pointOnMap(h, { lat: 57.45, lon: 18.5 });
-  await h.mouse.click(land.x, land.y);
-  await h.waitForSelector('.live-standings', { timeout: 15000 });
-  const toast = (await h.textContent('.toast.is-visible'))?.trim();
-  t.check(/^Fel – \d+ km bort\. Här ligger .+\.$/.test(toast ?? ''), `sjöfråga: en miss på land visar avståndet ("${toast}")`);
-  await t.shot(h, 'sjo-miss-km');
-  t.check(h.errors.length === 0, `sjöfråga: inga fel i sidan ${h.errors.slice(0, 3).join(' | ')}`);
-  ws.close();
-  await hc.close();
+  // Vilket steg som pågår, så att ett fel säger var det fastnade.
+  let step = 'skapar rummet';
+  let ws = null;
+  try {
+    const code = await createRoom(h, run, 'Anna');
+    ws = bot(run.base, code, 'Bo', 0);
+    step = 'väntar på boten';
+    await h.waitForFunction(() => document.querySelectorAll('.live-players li').length === 2);
+    step = 'väljer Sjöar';
+    await h.click('.live-mode-chip[data-mode="sjo"]');
+    await h.waitForFunction(() => document.querySelector('.live-mode-chip[data-mode="sjo"]')?.getAttribute('aria-pressed') === 'true');
+    step = 'startar matchen';
+    await h.click('.live-lobby-action .btn-primary');
+    step = 'väntar på fråga 1';
+    await waitQuestion(h, 1);
+    await mapSettled(h);
+    // Mitt på Gotland: land, långt från alla tio sjöar och deras träffytor.
+    step = 'klickar på Gotland';
+    const land = await pointOnMap(h, { lat: 57.45, lon: 18.5 });
+    await h.mouse.click(land.x, land.y);
+    step = 'väntar på avslöjandet';
+    await h.waitForSelector('.live-standings', { timeout: 15000 });
+    const toast = (await h.textContent('.toast.is-visible'))?.trim();
+    t.check(/^Fel – \d+ km bort\. Här ligger .+\.$/.test(toast ?? ''), `sjöfråga: en miss på land visar avståndet ("${toast}")`);
+    await t.shot(h, 'sjo-miss-km');
+    t.check(h.errors.length === 0, `sjöfråga: inga fel i sidan ${h.errors.slice(0, 3).join(' | ')}`);
+  } catch (e) {
+    await t.shot(h, 'sjo-fel').catch(() => undefined);
+    e.message = `${step}: ${e.message}`;
+    throw e;
+  } finally {
+    ws?.close();
+    await hc.close();
+  }
 }
 
 export default async function live(run) {

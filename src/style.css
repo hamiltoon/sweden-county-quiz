@@ -2046,3 +2046,63 @@ a {
 .mnemonic-note:empty {
   display: none;
 }
+
+/* Text som bara skärmläsare läser. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/*
+ * PO-02: allas namn under frågan, med ✓ för den som har svarat. En rad som rullar i sidled, lika hög
+ * som texten den ersätter, så att kartan inte blir lägre. Står i mitten när alla får plats.
+ */
+.live-answered {
+  display: flex;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-x: auto;
+  scrollbar-width: none;
+  white-space: nowrap;
+}
+
+.live-answered::-webkit-scrollbar {
+  display: none;
+}
+
+.live-answered li:first-child {
+  margin-left: auto;
+}
+
+.live-answered li:last-child {
+  margin-right: auto;
+}
+
+.live-chip {
+  flex: none;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--border) 16%, var(--panel));
+  color: var(--text);
+  font-size: 0.85rem;
+  line-height: 19px;
+}
+
+.live-chip.is-answered {
+  background: color-mix(in srgb, var(--accent) 16%, var(--panel));
+  font-weight: 700;
+}
+
+.live-chip.is-me {
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.live-chip.is-away {
+  color: var(--muted);
+}

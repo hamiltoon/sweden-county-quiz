@@ -239,7 +239,7 @@ export class LiveView {
         this.toast?.hide();
         // Statusraden först: ställningen från förra frågan försvinner och kartan blir högre, och
         // kartan måste ha sin nya storlek innan den zoomar.
-        this.game.status.textContent = statusText(state, Boolean(me?.answered));
+        this.renderStatus(state, Boolean(me?.answered));
         map.resize();
         // Kommunfrågan säger vilket län kommunen ligger i, så kartan zoomar in på länet (PO-16).
         if (gq?.kind === 'kommun') map.focusGroup(gq.municipality.county);
@@ -250,7 +250,7 @@ export class LiveView {
       }
       const answered = Boolean(me?.answered) || this.picked;
       map.setInteractive(!answered);
-      this.game.status.textContent = statusText(state, answered);
+      this.renderStatus(state, answered);
       if (newPhase) this.runTimer(q.endsAt, LIVE_QUESTION_MS);
       return;
     }
@@ -391,7 +391,7 @@ export class LiveView {
       this.picked = true;
       this.conn()?.send({ type: 'answer', question: q.index, ...answer });
       this.map?.setInteractive(false);
-      if (this.game) this.game.status.textContent = statusText(state, true);
+      this.renderStatus(state, true);
     };
     if (isPointKind(q.kind)) {
       // Städerna: klicket är svaret, servern räknar avståndet.
@@ -410,6 +410,41 @@ export class LiveView {
       const hint = q.kind === 'landskap' ? t().game.clickProvince : q.kind === 'kommun' ? t().game.clickMunicipality : t().game.clickCounty;
       this.toast?.show(hint, 'info', CONFIG.toastMs);
     }
+  }
+
+  /**
+   * Statusraden under frågan: allas namn, med ✓ för den som har svarat (PO-02). Raden visar inte om
+   * svaret var rätt, och den rullar i sidled när namnen inte får plats. Skärmläsare får som förut
+   * "N av M har svarat"; själva raden ändras för ofta för att läsas upp.
+   */
+  private renderStatus(state: LiveState, answered: boolean): void {
+    const status = this.game?.status;
+    if (!status) return;
+    const text = statusText(state, answered);
+    if (state.players.length <= 1) {
+      status.textContent = text;
+      return;
+    }
+    const scroll = status.querySelector('.live-answered')?.scrollLeft ?? 0;
+    const row = el(
+      'ul',
+      { class: 'live-answered', 'aria-hidden': 'true' },
+      ...state.players.map((p) => {
+        const me = p.id === state.you;
+        const done = p.answered || (me && answered);
+        const cls = ['live-chip', done ? 'is-answered' : '', p.connected ? '' : 'is-away', me ? 'is-me' : ''].filter(Boolean).join(' ');
+        return el(
+          'li',
+          { class: cls, 'data-player': p.id },
+          shortName(p.name),
+          done ? el('span', { class: 'live-check' }, ' ✓') : null,
+          p.connected ? null : el('span', { class: 'live-chip-away' }, ` · ${t().live.away.toLowerCase()}`),
+        );
+      }),
+    );
+    status.replaceChildren(row, el('span', { class: 'visually-hidden' }, text));
+    // Raden byggs om vid varje svar; den ska inte hoppa tillbaka om man har rullat i den.
+    row.scrollLeft = scroll;
   }
 
   /** Hur mycket av kartan överst eller nederst som rätt/fel-rutan täcker, med lite luft. */
@@ -583,6 +618,11 @@ function renderPlayers(state: LiveState, tag: (p: LivePlayer) => string): HTMLEl
       ),
     ),
   );
+}
+
+/** Längre namn kortas i raden med vem som har svarat, så att fler får plats. */
+function shortName(name: string): string {
+  return name.length > 10 ? `${name.slice(0, 9).trimEnd()}…` : name;
 }
 
 function statusText(state: LiveState, answered: boolean): string {
