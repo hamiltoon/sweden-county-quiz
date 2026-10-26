@@ -76,11 +76,11 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
 
 | Status | Punkter |
 |---|---|
-| Pågår (utvecklaren) | PO-02 |
-| Nästa | Live-paketet: PO-03, PO-04 |
+| Pågår (utvecklaren) | – (pausat 2026-10-26 på Johns begäran) |
+| Nästa | PO-02b (ordningen i svarsraden), sedan PO-03, PO-04 |
 | Väntar på UX-verifiering | – |
 | Väntar på svar från John | – |
-| Klart | PO-01, PO-01b, PO-06, PO-14, PO-15, PO-16, PO-17, PO-22, PO-23, PO-29, PO-29b, PO-30, PO-31, PO-33, PO-40 |
+| Klart | PO-01, PO-01b, PO-06, PO-14, PO-15, PO-16, PO-17, PO-02, PO-22, PO-23, PO-29, PO-29b, PO-30, PO-31, PO-33, PO-40 |
 
 ## Backlog i prioritetsordning
 
@@ -432,7 +432,7 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
 - **Acceptanskriterier:** skrivs innan start.
 
 ### PO-02 Live: se vilka som har svarat medan frågan pågår
-- **Status:** Godkänd av UX på staging 2026-10-26 ([#41](https://github.com/hamiltoon/sweden-county-quiz/pull/41)); krav 6–7 läggs till före produktion.
+- **Status:** ✅ Klar 2026-10-26 (krav 1–5), i produktion via [#41](https://github.com/hamiltoon/sweden-county-quiz/pull/41) (version 0fdd2a58). Krav 6–7 görs som PO-02b.
 - **Insats:** S (servern skickar redan `answered` per spelare)
 - **Koppling:** IDEER.md "Göra live mer levande" 2
 - **Värde:** Pressen när man ser "Erika ✓" medan man själv letar på kartan. I dag står bara "1 av 2 har svarat".
@@ -443,8 +443,8 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
   3. Med 12 spelare får raden plats på en mobil som iPhone 13 utan att täcka kartan mer än i dag (den får rulla i sidled eller korta namnen).
   4. En spelare som har tappat anslutningen syns som borta.
   5. Svenska och engelska.
-  6. Ordning: eget namn, sedan de som inte har svarat, sist de som har svarat ihopslagna till "✓ N"; alla som inte har svarat syns utan scroll i sidled (annars "+N till"). (Tillagt efter UX 2026-10-26.)
-  7. Lugn övergång när någon svarar; ingen rörelse med "minska rörelse".
+  6. (PO-02b) Ordning: eget namn, sedan de som inte har svarat, sist de som har svarat ihopslagna till "✓ N"; alla som inte har svarat syns utan scroll i sidled (annars "+N till"). (Tillagt efter UX 2026-10-26.)
+  7. (PO-02b) Lugn övergång när någon svarar; ingen rörelse med "minska rörelse".
 
 ### PO-03 Live: nedräkning 3–2–1 före varje fråga
 - **Prioritet:** P2
@@ -685,6 +685,7 @@ Fynd från UX-specialisten (UX-01, UX-02 …) läggs in här med prioritet och k
 
 ## Klart
 
+- **PO-02** Live: se vilka som har svarat (✓ per namn, utan rätt/fel). I produktion 2026-10-26 via [#41](https://github.com/hamiltoon/sweden-county-quiz/pull/41).
 - **PO-23 och PO-40** Live: samma hjälp vid miss som i solospelet; minnesregler omgång 2 (42 regler, tipsrad i alla lägen). I produktion 2026-10-26 via [#39](https://github.com/hamiltoon/sweden-county-quiz/pull/39).
 - **PO-33 och PO-17** Minnesregler i spelet (slutskärm, avslöjande, tipsrad, röster, /minnesregler) och Spela igen utan scroll. I produktion 2026-10-26 via [#37](https://github.com/hamiltoon/sweden-county-quiz/pull/37).
 - **PO-15** Avslöjandet lär ut: felklick och rätt svar i samma vy, namnet på kartan, linje med avstånd, 4 s med paus. I produktion 2026-10-26 via [#35](https://github.com/hamiltoon/sweden-county-quiz/pull/35).
