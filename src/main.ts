@@ -12,6 +12,7 @@ import { SwedenMap, type MapClick, type ResultState } from './map/map';
 import { renderMiniMap } from './map/minimap';
 import { regionSteps } from './map/adjacency';
 import { COUNTIES_URL, LAKES_URL, NEIGHBORS_URL, regionsFor } from './map/sources';
+import { kommunMapOptions } from './game/variant';
 import { el, clear } from './ui/dom';
 import { Toast } from './ui/toast';
 import { renderEnd, renderRecapLegend, renderStart } from './ui/screens';
@@ -196,7 +197,14 @@ async function showGame(mode: Mode): Promise<void> {
     return;
   }
 
-  const map = new SwedenMap(mapEl, topology, { objectName: regions.objectName, groupBy: regions.groupBy, lakes, neighbors, lakeMode });
+  const map = new SwedenMap(mapEl, topology, {
+    objectName: regions.objectName,
+    groupBy: regions.groupBy,
+    lakes,
+    neighbors,
+    lakeMode,
+    ...(mode === 'kommun' ? kommunMapOptions() : {}),
+  });
   // Kommunläget: vid fel kommun säger vi hur många kommuner bort den var.
   const steps = mode === 'kommun' ? regionSteps(topology, regions.objectName) : null;
   const game = new Game(mode);
@@ -254,7 +262,10 @@ async function showGame(mode: Mode): Promise<void> {
       finishRound();
       return;
     }
-    if (map.isTransformed) map.resetZoom();
+    // Kommunfrågan säger vilket län kommunen ligger i, så kartan zoomar in på länet (PO-16).
+    const q = game.current;
+    if (q?.kind === 'kommun') map.focusGroup(q.municipality.county);
+    else if (map.isTransformed) map.resetZoom();
     updateHud();
     locked = false;
     map.setInteractive(true);
@@ -382,6 +393,8 @@ async function showGame(mode: Mode): Promise<void> {
   });
 
   updateHud();
+  const first = game.current;
+  if (first?.kind === 'kommun') map.focusGroup(first.municipality.county);
 }
 
 /** Minikarta färgad efter hur varje fråga gick, med förklaring och antal. */

@@ -6,7 +6,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
-import { ANSWERS, COUNTY_BY_CODE, Suite, clickAnswer, context, page } from './lib.mjs';
+import { ANSWERS, COUNTY_BY_CODE, Suite, clickAnswer, context, page, url } from './lib.mjs';
 
 const AXE = readFileSync(createRequire(import.meta.url).resolve('axe-core/axe.min.js'), 'utf8');
 
@@ -75,7 +75,7 @@ async function scheme(run, t, dark) {
   const name = dark ? 'mörkt' : 'ljust';
   const ctx = await context(run, 'iphone', { dark });
   const p = await page(ctx);
-  await p.goto(run.base);
+  await p.goto(url(run));
   await p.waitForSelector('.mode-btn-live');
   await p.waitForTimeout(500);
   await axe(t, p, `${name}, startskärmen`);
@@ -145,7 +145,7 @@ async function scheme(run, t, dark) {
   });
   await t.shot(p, `${name}-slut`);
   // Lobbyn i live.
-  await p.goto(run.base);
+  await p.goto(url(run));
   await p.click('.mode-btn-live');
   await p.fill('.live-entry input[name=live-name]', 'Axe');
   await p.click('.live-entry button:has-text("Skapa ett rum")');

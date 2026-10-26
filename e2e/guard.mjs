@@ -3,7 +3,7 @@
  * topplistan, skapa passkeys eller ändra ett kontos språk. Här prövas att anropen verkligen stoppas
  * i webbläsaren, innan de lämnar den, och att skyddet är på för alla andra adresser.
  */
-import { GUARDED, Suite, context, isGuarded, page } from './lib.mjs';
+import { GUARDED, Suite, context, isGuarded, page, url } from './lib.mjs';
 
 export default async function guard(run) {
   const t = new Suite(run, 'guard');
@@ -15,7 +15,7 @@ export default async function guard(run) {
   // Samma skydd som mot produktionen, här påslaget oavsett adress.
   const ctx = await context(run, 'desktop', { guard: true });
   const p = await page(ctx);
-  await p.goto(run.base);
+  await p.goto(url(run));
   const attempts = [
     ['POST', '/api/scores'],
     ['POST', '/api/passkey/register/options'],

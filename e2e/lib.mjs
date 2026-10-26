@@ -28,6 +28,11 @@ export const DEVICES = {
   desktop: { viewport: { width: 1280, height: 800 } },
 };
 
+/** Adressen till en sida, med varianten (?v=…) om testerna körs för en. */
+export function url(run, path = '') {
+  return new URL(path, run.base).href + (run.variant ? `?v=${run.variant}` : '');
+}
+
 export function isGuarded(base) {
   return !UNGUARDED_HOSTS.includes(new URL(base).hostname);
 }
@@ -47,8 +52,13 @@ export const GUARDED = [
  * En webbläsarkontext. Utom mot staging och localhost (eller med guard: true) stoppas alla anrop i
  * GUARDED innan de lämnar webbläsaren, och varje stoppat anrop räknas som ett fel i testet.
  */
-export async function context(run, device, { dark = false, lang = 'sv', guard = isGuarded(run.base) } = {}) {
-  const ctx = await run.browser.newContext({ ...DEVICES[device], colorScheme: dark ? 'dark' : 'light', locale: lang === 'sv' ? 'sv-SE' : 'en-GB' });
+export async function context(run, device, { dark = false, lang = 'sv', guard = isGuarded(run.base), reducedMotion = false } = {}) {
+  const ctx = await run.browser.newContext({
+    ...DEVICES[device],
+    colorScheme: dark ? 'dark' : 'light',
+    locale: lang === 'sv' ? 'sv-SE' : 'en-GB',
+    reducedMotion: reducedMotion ? 'reduce' : 'no-preference',
+  });
   ctx.blocked = [];
   if (guard) {
     for (const { path, methods } of GUARDED) {
@@ -67,6 +77,8 @@ export async function context(run, device, { dark = false, lang = 'sv', guard = 
 export async function page(ctx) {
   const p = await ctx.newPage();
   p.errors = [];
+  p.requests = [];
+  p.on('request', (r) => p.requests.push(new URL(r.url()).pathname));
   p.on('pageerror', (e) => p.errors.push(e.message));
   p.on('console', (m) => m.type() === 'error' && p.errors.push(m.text()));
   return p;
@@ -161,6 +173,29 @@ export async function pointIn(p, selector) {
   return null;
 }
 
+/**
+ * Klickar på svaret tills spelet tar emot det (rätt/fel-rutan visas eller frågan byts). I variant
+ * C förstorar ett klick på en för liten kommun kartan i stället, och då klickas det igen.
+ */
+export async function answerAccepted(p, answer) {
+  const before = await questionText(p);
+  for (let attempt = 0; attempt < 4; attempt++) {
+    // Efter en förstoring (variant C) måste zoomen vara klar innan nästa klick räknas ut.
+    if (attempt > 0) await mapSettled(p);
+    await clickAnswer(p, answer);
+    const accepted = await p
+      .waitForFunction(
+        (before) => !!document.querySelector('.toast-ok.is-visible, .toast-bad.is-visible, .live-standings') || document.querySelector('.question')?.textContent?.trim() !== before || (document.querySelector('.live-status')?.textContent ?? '').length > 0 && !!document.querySelector('.map-svg.is-locked'),
+        before,
+        { timeout: 900 },
+      )
+      .then(() => true, () => false);
+    if (accepted) return;
+    await p.waitForTimeout(400);
+  }
+  throw new Error(`svaret togs inte emot efter fyra klick (${before})`);
+}
+
 /** Klickar på svaret, eller (wrong) på något annat. */
 export async function clickAnswer(p, answer) {
   if (answer.point) {
@@ -171,6 +206,36 @@ export async function clickAnswer(p, answer) {
   const pt = await pointIn(p, sel);
   if (!pt) throw new Error(`hittar ingen punkt i ${sel}`);
   return p.mouse.click(pt.x, pt.y);
+}
+
+const MUNICIPALITY_COUNTY = new Map(MUNICIPALITIES.map((m) => [m.code, m.county]));
+const COUNTY_MUNICIPALITIES = new Map(COUNTIES.map((c) => [c.code, MUNICIPALITIES.filter((m) => m.county === c.code).map((m) => m.code)]));
+export const SMALLEST_MUNICIPALITIES = { '0183': 'Sundbyberg', '0184': 'Solna', '1407': 'Öckerö' };
+
+/** Väntar tills kartan står still (zoomen är klar), högst tre sekunder. */
+export async function mapSettled(p) {
+  let last = null;
+  for (let i = 0; i < 15; i++) {
+    const now = await p.evaluate(() => document.querySelector('.map-root')?.getAttribute('transform') ?? '');
+    if (now === last) return;
+    last = now;
+    await p.waitForTimeout(200);
+  }
+}
+
+/**
+ * Hur väl länet för kommunen `code` fyller kartan: andelen av kartans bredd och höjd som länets
+ * kommuner täcker, och om hela länet syns.
+ */
+export function countyFill(p, code) {
+  const codes = COUNTY_MUNICIPALITIES.get(MUNICIPALITY_COUNTY.get(code)) ?? [];
+  return p.evaluate((codes) => {
+    const m = document.querySelector('.map').getBoundingClientRect();
+    const rects = codes.map((c) => document.querySelector(`path.county[data-code="${c}"]`)?.getBoundingClientRect()).filter(Boolean);
+    const x0 = Math.min(...rects.map((r) => r.left)), x1 = Math.max(...rects.map((r) => r.right));
+    const y0 = Math.min(...rects.map((r) => r.top)), y1 = Math.max(...rects.map((r) => r.bottom));
+    return { share: Math.max((x1 - x0) / m.width, (y1 - y0) / m.height), inside: x0 >= m.left - 2 && x1 <= m.right + 2 && y0 >= m.top - 2 && y1 <= m.bottom + 2 };
+  }, codes);
 }
 
 export async function questionText(p) {

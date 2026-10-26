@@ -2,7 +2,7 @@
  * Startskärmen: Spela live syns utan att man scrollar, på iPhone 13 och en liten Android. På
  * staging finns banderollen och "[Staging]" i titeln, på produktionen inte.
  */
-import { Suite, context, isStaging, page } from './lib.mjs';
+import { Suite, context, isStaging, page, url } from './lib.mjs';
 
 const PRODUCTION = 'sverigespelet.hamiltoon.workers.dev';
 
@@ -11,7 +11,7 @@ export default async function start(run) {
   for (const [device, dark, lang] of [['iphone', false, 'sv'], ['android', true, 'en']]) {
     const ctx = await context(run, device, { dark, lang });
     const p = await page(ctx);
-    await p.goto(run.base);
+    await p.goto(url(run));
     await p.waitForSelector('.mode-btn-live');
     const r = await p.locator('.mode-btn-live').boundingBox();
     const vh = p.viewportSize().height;
@@ -21,7 +21,7 @@ export default async function start(run) {
     const title = await p.title();
     const expected = lang === 'sv' ? 'STAGING – testmiljö, inte den riktiga topplistan' : 'STAGING – test environment, not the real leaderboard';
     if (isStaging(run.base)) {
-      t.check(banner === expected, `${device}: staging visar banderollen "${banner}"`);
+      t.check(!!banner?.startsWith(expected), `${device}: staging visar banderollen "${banner}"`);
       t.check(title.startsWith('[Staging] '), `${device}: titeln börjar med [Staging] ("${title}")`);
       const top = await p.locator('#staging-banner').boundingBox();
       t.check(!!top && top.y === 0, `${device}: banderollen ligger överst`);

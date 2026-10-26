@@ -992,6 +992,30 @@ a {
   pointer-events: none;
 }
 
+/* Variant B (PO-16): osynliga träffytor runt de kommuner som just nu är för små på skärmen. */
+.small-hit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 18px;
+  vector-effect: non-scaling-stroke;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+.small-hit.is-small {
+  pointer-events: stroke;
+}
+
+.small-core {
+  fill: transparent;
+  stroke: none;
+  pointer-events: none;
+}
+
+.small-core.is-small {
+  pointer-events: fill;
+}
+
 /* Länsgränserna ovanpå kommunkartan. */
 .group-border {
   fill: none;
@@ -1392,6 +1416,14 @@ a {
   color: var(--muted);
   font-size: 0.9rem;
   text-align: center;
+}
+
+/*
+ * Det som får fokus med tangentbordet scrollas fram ovanför knappfältet nederst, i stället för att
+ * hamna under det (WCAG 2.4.11, PO-31).
+ */
+.screen-lobby {
+  scroll-padding-bottom: calc(88px + var(--safe-bottom));
 }
 
 /* Starta matchen (eller vem som startar) ligger kvar nederst medan lobbyn scrollar. */
