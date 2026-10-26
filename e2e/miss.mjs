@@ -15,13 +15,14 @@ const MUNICIPALITY_COUNTY = new Map(MUNICIPALITIES.map((m) => [m.code, m.county]
 /** Län långt ifrån varandra, att klicka fel på. */
 const FAR_COUNTIES = ['BD', 'M', 'I', 'S'];
 
-/** Tre felsvar för frågan: andra län, kommuner i samma län eller residensstäder långt bort. */
+/**
+ * Felsvar för frågan: andra län, kommuner i samma län eller residensstäder långt bort. Det behövs
+ * tre; för kommuner finns fler att ta till om någon inte går att träffa (t.ex. under rutan).
+ */
 function wrongAnswers(mode, answer) {
   if (mode === 'kommun') {
     const county = MUNICIPALITY_COUNTY.get(answer.code);
-    return MUNICIPALITIES.filter((m) => m.county === county && m.code !== answer.code)
-      .slice(0, 3)
-      .map((m) => ({ code: m.code }));
+    return MUNICIPALITIES.filter((m) => m.county === county && m.code !== answer.code).map((m) => ({ code: m.code }));
   }
   if (answer.point) {
     // Residensstäder minst 150 km bort (gränsen för rätt är 30 km).
@@ -89,20 +90,26 @@ async function miss(p, mode) {
   const answer = ANSWERS.get(q);
   if (!answer) throw new Error(`känner inte igen frågan "${q}"`);
   const wrong = wrongAnswers(mode, answer);
-  for (const w of wrong.slice(0, -1)) {
-    await answerAccepted(p, w);
-    // Vänta tills den korta felrutan gått, så att nästa felsvar tas emot för sig.
-    await sleep(p, 1400);
+  let given = 0;
+  for (const w of wrong) {
+    if (given < 2) {
+      // Ett felsvar som inte går att träffa hoppas över; nästa tas i stället.
+      if (!(await answerAccepted(p, w).then(() => true, () => false))) continue;
+      given++;
+      // Vänta tills den korta felrutan gått, så att nästa felsvar tas emot för sig.
+      await sleep(p, 1400);
+      continue;
+    }
+    // Det sista felsvaret klickas inte om i onödan (ett klick till på kartan skulle gå vidare i b
+    // och c), bara om det förstorade kartan i stället för att räknas (små kommuner).
+    await watch(p, q, '.toast-action');
+    for (let attempt = 0; attempt < 4; attempt++) {
+      if (!(await clickAnswer(p, w).then(() => true, () => false))) break;
+      if (await p.waitForSelector('.toast-action', { timeout: 4000 }).then(() => true, () => false)) return { q, answer };
+      await mapSettled(p);
+    }
   }
-  // Det sista felsvaret klickas inte om i onödan (ett klick till på kartan skulle gå vidare i b och c),
-  // bara om det förstorade kartan i stället för att räknas (små kommuner).
-  await watch(p, q, '.toast-action');
-  for (let attempt = 0; attempt < 4; attempt++) {
-    await clickAnswer(p, wrong.at(-1));
-    if (await p.waitForSelector('.toast-action', { timeout: 4000 }).then(() => true, () => false)) return { q, answer };
-    await mapSettled(p);
-  }
-  throw new Error(`det sista felsvaret togs inte emot (${q})`);
+  throw new Error(`frågan gick inte att missa med tre felsvar (${q})`);
 }
 
 /**
