@@ -76,11 +76,11 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
 
 | Status | Punkter |
 |---|---|
-| Pågår (utvecklaren) | PO-15 till produktion, sedan PO-33 |
+| Pågår (utvecklaren) | PO-33 Minnesregler |
 | Nästa | Live-paketet: PO-23, PO-02, PO-03, PO-04 |
 | Väntar på UX-verifiering | – |
 | Väntar på svar från John | – |
-| Klart | PO-01, PO-01b, PO-06, PO-14, PO-16, PO-22, PO-29, PO-29b, PO-30, PO-31 |
+| Klart | PO-01, PO-01b, PO-06, PO-14, PO-15, PO-16, PO-22, PO-29, PO-29b, PO-30, PO-31 |
 
 ## Backlog i prioritetsordning
 
@@ -197,7 +197,7 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
   6. axe-core hittar inga kontrastfel på spelskärmen eller slutskärmen.
 
 ### PO-15 Avslöjandet lär ut var rätt svar ligger
-- **Status:** ✅ Godkänd av UX på staging 2026-10-26 (krav 1–10). Går till produktion via [#35](https://github.com/hamiltoon/sweden-county-quiz/pull/35).
+- **Status:** ✅ Klar 2026-10-26, i produktion via [#35](https://github.com/hamiltoon/sweden-county-quiz/pull/35) (version 4e973c52). UX har godkänt krav 1–10. Hinttexten ändras till "Håll ned på kartan …" i PO-33-PR:en.
 - **Beslut (PO, 2026-10-26):** variant C. Spelet går vidare efter 4 s (pausas när man håller fingret på kartan), och en
   streckad linje visar avståndet från felklicket till rätt svar ("364 km"). UX: riktningen är lättare att minnas än en
   siffra. A bröt flytet med ett extra tryck per miss. En miss med minnesregel väntar på ett tryck (PO-33).
@@ -619,7 +619,7 @@ Fynd från UX-specialisten (UX-01, UX-02 …) läggs in här med prioritet och k
 | UX-04 | Spela live under vecket | ✅ Klar | PO-06 |
 | UX-05 | Spela igen under vecket | P2 | PO-17 |
 | UX-06 | Skyddat namn avvisas först efter en omgång | P2 | PO-18 |
-| UX-07 | Avslöjandet lär ut för lite | P1 | PO-15 |
+| UX-07 | Avslöjandet lär ut för lite | ✅ Klar | PO-15 |
 | UX-08 | Inbjudningssidan förklarar inget | P2 | PO-19 |
 | UX-09 | ✕ avslutar utan bekräftelse | P3 | PO-20 |
 | UX-10 | Namnbyte lämnar gamla resultat | P3 | PO-21 |
@@ -630,7 +630,7 @@ Fynd från UX-specialisten (UX-01, UX-02 …) läggs in här med prioritet och k
 | UX-15 | Live-timern saknar siffror och 3–2–1 | P2 | PO-03 |
 | UX-16 | Live: klick i havet ignoreras tyst | P2 | PO-23 |
 | UX-17 | Live: sjömiss ger bara "Fel." | P2 | PO-23 |
-| UX-18 | Avslöjandets zoom ignorerar minska rörelse | P1 | PO-15 |
+| UX-18 | Avslöjandets zoom ignorerar minska rörelse | ✅ Klar | PO-15 |
 | UX-19 | "Klicka"/"Tap" på fel enhet | P3 | PO-24 |
 | UX-20 | Första besöket: texter i fel ordning | P3 | PO-24 |
 | UX-21 | Smal kolumn på dator | Parkerad | – |
@@ -646,6 +646,7 @@ Fynd från UX-specialisten (UX-01, UX-02 …) läggs in här med prioritet och k
 
 ## Klart
 
+- **PO-15** Avslöjandet lär ut: felklick och rätt svar i samma vy, namnet på kartan, linje med avstånd, 4 s med paus. I produktion 2026-10-26 via [#35](https://github.com/hamiltoon/sweden-county-quiz/pull/35).
 - **PO-30** Live: målets namn syns ovanpå prickarna. I produktion 2026-10-26 via [#34](https://github.com/hamiltoon/sweden-county-quiz/pull/34).
 - **PO-16 och PO-31** Kommuner zoomar in på länet (variant C, förstoring av små kommuner, nedtonad omgivning); fokus i lobbyn. I produktion 2026-10-26 via [#33](https://github.com/hamiltoon/sweden-county-quiz/pull/33).
 - **PO-14 och PO-29b** Rätt och fel syns för alla (UX-02, UX-03); staging-banderoll och stramare tester. I produktion 2026-10-25 via [#30](https://github.com/hamiltoon/sweden-county-quiz/pull/30).
