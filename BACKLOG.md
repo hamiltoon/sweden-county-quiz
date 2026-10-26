@@ -400,6 +400,37 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
 - **Insats:** S
 - **Koppling:** UX vid PO-33 (sidan är cirka 8 000 px lång)
 
+### PO-40 Minnesregler, omgång 2
+- **Prioritet:** P1, efter PO-23 (liten)
+- **Insats:** S
+- **Koppling:** PO-33; regler från kreativ ledare, faktagranskade av PO: `docs/minnesregler-omgang2.json`
+- **Värde:** Regler för residensstäder som saknade dem (Visby, Karlstad, Västerås/Uppsala, Linköping, Jönköping,
+  Örebro, Malmö, Göteborg), för Fler städer (Helsingborg, Kiruna, Sundsvall, Borås) och tankeregler för Kommuner och
+  Residensstäder, så att alla lägen får en tipsrad.
+- **Acceptanskriterier:**
+  1. De 15 reglerna ligger i `src/data/mnemonics.ts` med rätt `targets` (residensstäder, städer i Fler städer, kommuner).
+  2. Den nya kategorin `stad` gäller frågorna i Fler städer, och typen `Tankeregel` visas som andra tankeregler.
+  3. Residensstäder, Kommuner och Fler städer får en tipsrad i lägeskortet.
+  4. e2e: en regel ur omgång 2 visas efter en miss i Fler städer, och tipsraden finns i de tre lägena.
+
+### PO-41 Kvällens karta (K-11)
+- **Prioritet:** P2, efter live-paketet
+- **Insats:** S
+- **Koppling:** Kreativ ledare, omgång 2; bygger på PO-01 (rummet sparar klicken) och PO-33
+- **Värde:** När en live-kväll slutar visar pallen gruppens svåraste fråga, t.ex. "Kvällens svåraste: Kronoberg (4 av 5
+  missade)", med minnesregeln intill. Kvällen slutar med något man lär sig tillsammans.
+- **Acceptanskriterier:** skrivs innan start.
+
+### PO-42 Ledtrådstrappan (K-13)
+- **Prioritet:** P2, efter PO-03 (nedräkningen)
+- **Insats:** S
+- **Koppling:** Kreativ ledare, omgång 2; PO-33
+- **Värde:** I live visas en ledtråd när halva tiden har gått, t.ex. minnesregelns `short` eller "gränsar till Dalarna".
+  Svar efter ledtråden ger lite färre poäng. Den som ligger efter får hjälp i stället för straff, och alla läser en regel
+  i rätt ögonblick.
+- **Beslut (PO):** live påverkar inte topplistan, så poängändringen kräver inte John. Exakt avdrag bestäms före start.
+- **Acceptanskriterier:** skrivs innan start.
+
 ### PO-02 Live: se vilka som har svarat medan frågan pågår
 - **Prioritet:** P2
 - **Insats:** S (servern skickar redan `answered` per spelare)
@@ -611,6 +642,7 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
 | K-04 Gränslarmet i bilen | Rolig geografi i verkligheten, men en webbapp kan inte följa positionen med skärmen släckt på iPhone. Kanske senare. |
 | K-07 Rita Sverige blind | Kul inledning på en live-match, men osäkert hur poängen ska räknas. Kanske senare. |
 | K-05 Mänskliga kartan, K-08 Missmonstret, K-09 Kylskåpskartan, K-10 Sabotagekort | Nej för nu: kräver många i samma rum (K-05), överlappar PO-13 (K-08), används sällan (K-09) eller straffar den som ligger efter i en familj med olika nivåer (K-10). |
+| K-12 Revansch på missarna, K-14 Lag i live, K-15 Hur långt?, K-16 Rummets nålar, K-17 Grannfrågan | Kanske (omgång 2): bra lärande, men väntar tills live-paketet, PO-41 och PO-42 är ute. K-16 löser integritetsproblemet i K-01 och är först i tur. |
 
 ## UX-fynd
 
