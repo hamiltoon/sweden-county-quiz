@@ -160,6 +160,8 @@ async function startAndPage(run, t) {
   await p.goto(url(run));
   const tip = (await p.textContent('.mode-btn[data-mode="lan"] .mode-tip').catch(() => null))?.trim();
   t.check(/^Tips: /.test(tip ?? '') && [...tip].length <= SHORT_MAX + 6, `lägeskortet för län har en tipsrad: "${tip}"`);
+  const lakeTip = (await p.textContent('.mode-btn[data-mode="sjo"] .mode-tip').catch(() => null))?.trim();
+  t.check(lakeTip === 'Tips: Slutar sjön på -jaure eller -träsk ligger den i Lappland.', `lägeskortet för sjöar har en tipsrad: "${lakeTip}"`);
   t.check(!(await p.$('.mode-btn[data-mode="ort"] .mode-tip')), 'lägeskortet för fler städer har ingen tipsrad (ingen tankeregel)');
 
   await p.click('a.mnemonic-link');
