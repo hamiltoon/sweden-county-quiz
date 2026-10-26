@@ -76,11 +76,11 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
 
 | Status | Punkter |
 |---|---|
-| Pågår (utvecklaren) | PO-33 + PO-17 till produktion (#37), sedan PO-23 |
+| Pågår (utvecklaren) | PO-23 |
 | Nästa | Live-paketet: PO-23, PO-02, PO-03, PO-04 |
 | Väntar på UX-verifiering | – |
 | Väntar på svar från John | – |
-| Klart | PO-01, PO-01b, PO-06, PO-14, PO-15, PO-16, PO-22, PO-29, PO-29b, PO-30, PO-31 |
+| Klart | PO-01, PO-01b, PO-06, PO-14, PO-15, PO-16, PO-17, PO-22, PO-29, PO-29b, PO-30, PO-31, PO-33 |
 
 ## Backlog i prioritetsordning
 
@@ -245,7 +245,7 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
      8c. I mörkt läge har länsgränsen kontrast minst 3:1 mot både länets och omgivningens fyllning (WCAG 1.4.11).
 
 ### PO-17 Slutskärmen: Spela igen utan att scrolla
-- **Status:** ✅ Godkänd av UX på staging 2026-10-26. Byggd i samma PR som PO-33 ([#37](https://github.com/hamiltoon/sweden-county-quiz/pull/37)), med knappfält nederst.
+- **Status:** ✅ Klar 2026-10-26, i produktion med PO-33 via [#37](https://github.com/hamiltoon/sweden-county-quiz/pull/37).
 - **Insats:** S
 - **Koppling:** UX-05, UX-29
 - **Värde:** "En gång till" ska vara ett tryck. I dag ligger knappen under vecket, på Android 360 px två skärmhöjder ner.
@@ -336,7 +336,7 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
 - **Acceptanskriterier:** skrivs när den blir aktuell; utvärderas efter att PO-16 krav 8 har använts en tid.
 
 ### PO-33 Minnesregler i spelet
-- **Status:** Godkänd av UX på staging 2026-10-26 ([#37](https://github.com/hamiltoon/sweden-county-quiz/pull/37)), med rättning före produktion: en rad per regel, kompakt visning (högst 3 plus "Visa alla"), länk från slutskärmen och guard för /api/mnemonics.
+- **Status:** ✅ Klar 2026-10-26, i produktion via [#37](https://github.com/hamiltoon/sweden-county-quiz/pull/37) (version be18d1ec). Underlaget läses på `GET /api/mnemonics`; spelarnas sida är `/minnesregler`.
 - **Insats:** M–L
 - **Koppling:** Johns idé 2026-10-26; riktningen "lära sig geografi". Första förslagen: `docs/minnesregler-forslag.json` (26 regler, faktagranskade, ej betygsatta).
 - **Värde:** Spelet lär inte bara ut var saker ligger, utan knep för att komma ihåg dem: ramsor, paradoxer, historia
@@ -622,7 +622,7 @@ Fynd från UX-specialisten (UX-01, UX-02 …) läggs in här med prioritet och k
 | UX-02 | Rätt/fel-rutan har för låg kontrast | ✅ Godkänd | PO-14 |
 | UX-03 | Rött mot grönt är enda skillnaden | ✅ Godkänd | PO-14 |
 | UX-04 | Spela live under vecket | ✅ Klar | PO-06 |
-| UX-05 | Spela igen under vecket | P2 | PO-17 |
+| UX-05 | Spela igen under vecket | ✅ Klar | PO-17 |
 | UX-06 | Skyddat namn avvisas först efter en omgång | P2 | PO-18 |
 | UX-07 | Avslöjandet lär ut för lite | ✅ Klar | PO-15 |
 | UX-08 | Inbjudningssidan förklarar inget | P2 | PO-19 |
@@ -646,11 +646,12 @@ Fynd från UX-specialisten (UX-01, UX-02 …) läggs in här med prioritet och k
 | UX-26 | Topplistans flikar | P3 | PO-25 |
 | UX-27 | Passkey-knappen tar över startskärmen | P3 | PO-26 |
 | UX-28 | Klippkant i grannkartan | Parkerad | – |
-| UX-29 | "Nytt bästa resultat!" på första omgången | P2 | PO-17 |
+| UX-29 | "Nytt bästa resultat!" på första omgången | ✅ Klar | PO-17 |
 | UX-30 | Fokus vid skärmbyte, h1 saknas | P3 | PO-25 |
 
 ## Klart
 
+- **PO-33 och PO-17** Minnesregler i spelet (slutskärm, avslöjande, tipsrad, röster, /minnesregler) och Spela igen utan scroll. I produktion 2026-10-26 via [#37](https://github.com/hamiltoon/sweden-county-quiz/pull/37).
 - **PO-15** Avslöjandet lär ut: felklick och rätt svar i samma vy, namnet på kartan, linje med avstånd, 4 s med paus. I produktion 2026-10-26 via [#35](https://github.com/hamiltoon/sweden-county-quiz/pull/35).
 - **PO-30** Live: målets namn syns ovanpå prickarna. I produktion 2026-10-26 via [#34](https://github.com/hamiltoon/sweden-county-quiz/pull/34).
 - **PO-16 och PO-31** Kommuner zoomar in på länet (variant C, förstoring av små kommuner, nedtonad omgivning); fokus i lobbyn. I produktion 2026-10-26 via [#33](https://github.com/hamiltoon/sweden-county-quiz/pull/33).
