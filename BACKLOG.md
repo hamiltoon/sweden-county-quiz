@@ -77,7 +77,7 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
 | Status | Punkter |
 |---|---|
 | Pågår (utvecklaren) | PO-33 Minnesregler |
-| Nästa | Live-paketet: PO-23, PO-02, PO-03, PO-04 |
+| Nästa | PO-17 (Spela igen, mer angelägen med reglerna på slutskärmen), sedan live-paketet: PO-23, PO-02, PO-03, PO-04 |
 | Väntar på UX-verifiering | – |
 | Väntar på svar från John | – |
 | Klart | PO-01, PO-01b, PO-06, PO-14, PO-15, PO-16, PO-22, PO-29, PO-29b, PO-30, PO-31 |
@@ -245,7 +245,7 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
      8c. I mörkt läge har länsgränsen kontrast minst 3:1 mot både länets och omgivningens fyllning (WCAG 1.4.11).
 
 ### PO-17 Slutskärmen: Spela igen utan att scrolla
-- **Prioritet:** P2
+- **Prioritet:** P1, direkt efter PO-33 (minnesreglerna gör slutskärmen längre)
 - **Insats:** S
 - **Koppling:** UX-05, UX-29
 - **Värde:** "En gång till" ska vara ett tryck. I dag ligger knappen under vecket, på Android 360 px två skärmhöjder ner.
@@ -336,7 +336,7 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
 - **Acceptanskriterier:** skrivs när den blir aktuell; utvärderas efter att PO-16 krav 8 har använts en tid.
 
 ### PO-33 Minnesregler i spelet
-- **Prioritet:** P1, direkt efter PO-15 (regeln visas i avslöjandet som PO-15 bygger)
+- **Status:** Godkänd av UX på staging 2026-10-26 ([#37](https://github.com/hamiltoon/sweden-county-quiz/pull/37)), med rättning före produktion: en rad per regel, kompakt visning (högst 3 plus "Visa alla"), länk från slutskärmen och guard för /api/mnemonics.
 - **Insats:** M–L
 - **Koppling:** Johns idé 2026-10-26; riktningen "lära sig geografi". Första förslagen: `docs/minnesregler-forslag.json` (26 regler, faktagranskade, ej betygsatta).
 - **Värde:** Spelet lär inte bara ut var saker ligger, utan knep för att komma ihåg dem: ramsor, paradoxer, historia
@@ -394,6 +394,11 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
 - **Insats:** S
 - **Koppling:** UX vid PO-15 (variant A som val för den som vill plugga i lugn och ro)
 - **Acceptanskriterier:** skrivs när den blir aktuell.
+
+### PO-39 /minnesregler: hoppa-länkar till kategorierna
+- **Prioritet:** P3
+- **Insats:** S
+- **Koppling:** UX vid PO-33 (sidan är cirka 8 000 px lång)
 
 ### PO-02 Live: se vilka som har svarat medan frågan pågår
 - **Prioritet:** P2
