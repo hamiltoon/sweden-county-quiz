@@ -194,7 +194,8 @@ export function renderEnd(
     extras.helped ?? null,
     list(t().end.shaky, shaky),
     missed.length + shaky.length === 0 ? el('p', { class: 'perfect' }, t().end.perfect) : null,
-    el('div', { class: 'btn-row' }, again, menu),
+    // Knapparna ligger kvar nederst medan slutskärmen scrollar (PO-17).
+    el('div', { class: 'btn-row end-actions' }, again, menu),
   );
 }
 

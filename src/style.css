@@ -1511,12 +1511,17 @@ a {
  * Det som får fokus med tangentbordet scrollas fram ovanför knappfältet nederst, i stället för att
  * hamna under det (WCAG 2.4.11, PO-31).
  */
-.screen-lobby {
+.screen-lobby,
+.screen-result {
   scroll-padding-bottom: calc(88px + var(--safe-bottom));
 }
 
-/* Starta matchen (eller vem som startar) ligger kvar nederst medan lobbyn scrollar. */
-.live-lobby-action {
+/*
+ * Starta matchen (eller vem som startar) ligger kvar nederst medan lobbyn scrollar, och likaså
+ * Spela igen och Byt läge på slutskärmen (PO-17).
+ */
+.live-lobby-action,
+.end-actions {
   position: sticky;
   bottom: calc(-16px - var(--safe-bottom));
   z-index: 1;

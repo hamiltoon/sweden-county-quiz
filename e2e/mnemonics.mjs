@@ -13,7 +13,7 @@ import { COUNTIES } from '../src/data/counties.ts';
 import { PROVINCES } from '../src/data/provinces.ts';
 import { LAKES } from '../src/data/lakes.ts';
 import { MUNICIPALITIES } from '../src/data/municipalities.ts';
-import { ANSWERS, Suite, answerAccepted, context, isGuarded, page, questionText, url } from './lib.mjs';
+import { ANSWERS, Suite, answerAccepted, context, endLayout, isGuarded, page, questionText, url } from './lib.mjs';
 import { axe } from './a11y.mjs';
 import { miss } from './miss.mjs';
 
@@ -148,12 +148,10 @@ async function revealAndEnd(run, t) {
   t.check(end.sameRule === 1 && names.every((n) => end.about?.includes(n)), `slutskärmen: regeln står en gång med sjöarna i rubriken ("${end.about}")`);
   t.check(end.text === `💡 ${rule.short}` && end.more && end.votes === 2, `slutskärmen: kort text, Mer och 👍/👎 ${JSON.stringify({ text: end.text, more: end.more, votes: end.votes })}`);
   t.check(end.link === '/minnesregler', `slutskärmen: länken "Alla minnesregler" (${end.link})`);
-  const layout = await p.evaluate(() => {
-    const again = document.querySelector('.btn-row .btn-primary').getBoundingClientRect().top + scrollY;
-    const rules = document.querySelector('.mnemonic-rules').getBoundingClientRect().height;
-    return { again: Math.round(again), rules: Math.round(rules) };
-  });
-  t.note(`slutskärmen efter tio missade sjöar på 360 × 740: Spela igen ${layout.again} px ned, varav minnesreglerna ${layout.rules} px`);
+  const rulesHeight = await p.$eval('.mnemonic-rules', (el) => Math.round(el.getBoundingClientRect().height));
+  t.note(`slutskärmen efter tio missade sjöar på 360 × 740: minnesreglerna tar ${rulesHeight} px`);
+  const fits = await endLayout(p);
+  t.check(fits.buttonsVisible && fits.scoreVisible && !fits.covered, `slutskärmen med ${end.rows} regler: Spela igen och Byt läge syns utan scroll, poängen överst, inget under knappfältet ${JSON.stringify(fits)}`);
   await p.$eval('.mnemonic-rules', (el) => el.scrollIntoView({ block: 'start' }));
   await t.shot(p, 'slutskarm-regel');
   await p.click('.mnemonic-show-all');
@@ -184,6 +182,7 @@ async function revealAndEnd(run, t) {
   await p.click('.btn-row .btn-primary');
   await p.waitForSelector('.screen-game .map path');
   await finishRound(p, '');
+  t.check(await p.isVisible('.new-best'), 'nästa omgång: 10 av 10 efter 0 av 10 är nytt bästa resultat');
   const helped = await p.evaluate(() => document.querySelector('.mnemonic-helped')?.dataset.rule ?? null);
   t.check(!!helped && seenRules.has(helped), `nästa omgång: "Hjälpte minnesregeln?" om ${helped}, en regel från förra omgången`);
   await t.shot(p, 'hjalpte-regeln');

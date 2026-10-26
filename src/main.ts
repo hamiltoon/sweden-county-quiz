@@ -7,7 +7,7 @@ import { LAKE_BY_ID } from './data/lakes';
 import { COUNTY_BY_CODE } from './data/counties';
 import { PROVINCE_BY_CODE } from './data/provinces';
 import { MUNICIPALITY_BY_CODE } from './data/municipalities';
-import { getCurrentLiveRoom, getLiveName, getLivePlayerId, saveBest, saveLiveName, setCurrentLiveRoom } from './game/storage';
+import { getBest, getCurrentLiveRoom, getLiveName, getLivePlayerId, saveBest, saveLiveName, setCurrentLiveRoom } from './game/storage';
 import { motionMs, SwedenMap, type FitTarget, type MapClick, type ResultState } from './map/map';
 import { renderMiniMap } from './map/minimap';
 import { regionSteps } from './map/adjacency';
@@ -262,9 +262,11 @@ async function showGame(mode: Mode): Promise<void> {
       percent: summary.percentSolved,
       playedAt: new Date().toISOString(),
     };
-    const isNewBest = saveBest(mode, { score: result.score, percent: result.percent, date: result.playedAt, id: result.id });
+    // Den allra första omgången i ett läge är alltid bäst hittills; den firas inte (UX-29).
+    const hadBest = !!getBest(mode);
+    const isNewBest = saveBest(mode, { score: result.score, percent: result.percent, date: result.playedAt, id: result.id }) && hadBest;
     clear(screen);
-    screen.className = 'screen screen-end';
+    screen.className = 'screen screen-end screen-result';
     screen.append(
       renderEnd(summary, isNewBest, () => void showGame(mode), showStart, {
         leaderboard: renderEndLeaderboard(mode, result),

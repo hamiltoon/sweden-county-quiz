@@ -257,6 +257,37 @@ export function countyFill(p, code) {
   }, codes);
 }
 
+/**
+ * PO-17: slutskärmen utan scroll. Spela igen och Byt läge syns helt, poängen syns överst, och när man
+ * scrollar till slutet ligger allt innehåll ovanför knappfältet (det täcker inget).
+ */
+export async function endLayout(p) {
+  await p.evaluate(() => document.querySelector('.screen-end').scrollTo(0, 0));
+  await p.waitForTimeout(150);
+  const top = await p.evaluate(() => {
+    const inView = (el) => {
+      const r = el?.getBoundingClientRect();
+      return !!r && r.top >= 0 && r.bottom <= innerHeight + 1;
+    };
+    return {
+      buttons: [...document.querySelectorAll('.end-actions .btn')].map(inView),
+      score: inView(document.querySelector('.score-ring')) && inView(document.querySelector('.recap-map')),
+    };
+  });
+  await p.evaluate(() => {
+    const s = document.querySelector('.screen-end');
+    s.scrollTo(0, s.scrollHeight);
+  });
+  await p.waitForTimeout(150);
+  const bottom = await p.evaluate(() => {
+    const bar = document.querySelector('.end-actions').getBoundingClientRect();
+    const before = document.querySelector('.end-actions').previousElementSibling?.getBoundingClientRect();
+    return { covered: !!before && before.bottom > bar.top + 1 };
+  });
+  await p.evaluate(() => document.querySelector('.screen-end').scrollTo(0, 0));
+  return { buttonsVisible: top.buttons.length === 2 && top.buttons.every(Boolean), scoreVisible: top.score, covered: bottom.covered };
+}
+
 export async function questionText(p) {
   return ((await p.textContent('.question')) ?? '').trim();
 }
