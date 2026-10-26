@@ -33,7 +33,7 @@ import { countyName, municipalityName, provinceName, t } from '../i18n';
 import type { LiveConnection } from './connection';
 import { renderQr } from './qr';
 import { toGameQuestion } from './question';
-import { kommunMapOptions } from '../game/variant';
+import { kommunMapOptions, takeMagnifyHint } from '../map/kommun';
 
 /** Kartan för en sorts fråga, som main.ts laddar. */
 export interface LiveMaps {
@@ -371,6 +371,7 @@ export class LiveView {
       ...(kind === 'kommun' ? kommunMapOptions() : {}),
     });
     map.onClick = (click) => this.answer(click);
+    map.onMagnify = () => takeMagnifyHint() && this.toast?.show(t().game.magnified, 'info', 2000);
     this.map = map;
     this.maps = maps;
   }

@@ -992,28 +992,9 @@ a {
   pointer-events: none;
 }
 
-/* Variant B (PO-16): osynliga träffytor runt de kommuner som just nu är för små på skärmen. */
-.small-hit {
-  fill: none;
-  stroke: transparent;
-  stroke-width: 18px;
-  vector-effect: non-scaling-stroke;
-  stroke-linejoin: round;
-  pointer-events: none;
-}
-
-.small-hit.is-small {
-  pointer-events: stroke;
-}
-
-.small-core {
-  fill: transparent;
-  stroke: none;
-  pointer-events: none;
-}
-
-.small-core.is-small {
-  pointer-events: fill;
+/* Kommunkartan: utanför länet som frågan nämner tonas kartan ned (länsgränserna syns ändå). */
+.county.is-outside {
+  opacity: 0.45;
 }
 
 /* Länsgränserna ovanpå kommunkartan. */

@@ -12,7 +12,7 @@ import { SwedenMap, type MapClick, type ResultState } from './map/map';
 import { renderMiniMap } from './map/minimap';
 import { regionSteps } from './map/adjacency';
 import { COUNTIES_URL, LAKES_URL, NEIGHBORS_URL, regionsFor } from './map/sources';
-import { kommunMapOptions } from './game/variant';
+import { kommunMapOptions, takeMagnifyHint } from './map/kommun';
 import { el, clear } from './ui/dom';
 import { Toast } from './ui/toast';
 import { renderEnd, renderRecapLegend, renderStart } from './ui/screens';
@@ -205,6 +205,7 @@ async function showGame(mode: Mode): Promise<void> {
     lakeMode,
     ...(mode === 'kommun' ? kommunMapOptions() : {}),
   });
+  map.onMagnify = () => takeMagnifyHint() && toast.show(t().game.magnified, 'info', CONFIG.toastMs);
   // Kommunläget: vid fel kommun säger vi hur många kommuner bort den var.
   const steps = mode === 'kommun' ? regionSteps(topology, regions.objectName) : null;
   const game = new Game(mode);

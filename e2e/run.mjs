@@ -3,7 +3,6 @@
  *
  *   --verbose     skriv ut alla kontroller, inte bara de som fallerar
  *   --only=a,b    kör bara vissa tester (start, solo, live, guard, a11y)
- *   --variant=b   kör med ?v=b (PO-16: varianterna a, b och c på staging)
  *   --any-build   vänta inte på att servern kör bygget i dist/
  *
  * Före testerna väntar run.mjs (upp till tre minuter) på att servern serverar samma bygge som
@@ -26,16 +25,14 @@ const args = process.argv.slice(2);
 const base = (args.find((a) => /^https?:/.test(a)) ?? process.env.BASE ?? STAGING).replace(/\/?$/, '/');
 const only = args.find((a) => a.startsWith('--only='))?.slice(7).split(',');
 const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-const variant = args.find((a) => a.startsWith('--variant='))?.slice(10);
 const run = {
   base,
-  variant,
   verbose: args.includes('--verbose'),
   out: join(process.cwd(), 'e2e-results', stamp),
   browser: await chromium.launch(),
 };
 
-console.log(`Acceptanstester mot ${base}${variant ? ` med variant ${variant}` : ''}${isGuarded(base) ? ' (inte staging eller localhost: skrivande anrop stoppas)' : ''}`);
+console.log(`Acceptanstester mot ${base}${isGuarded(base) ? ' (inte staging eller localhost: skrivande anrop stoppas)' : ''}`);
 if (!args.includes('--any-build')) await waitForBuild(base);
 
 /** Väntar tills servern serverar samma huvudskript som dist/index.html pekar på. */

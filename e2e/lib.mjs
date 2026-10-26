@@ -28,9 +28,9 @@ export const DEVICES = {
   desktop: { viewport: { width: 1280, height: 800 } },
 };
 
-/** Adressen till en sida, med varianten (?v=…) om testerna körs för en. */
+/** Adressen till en sida. */
 export function url(run, path = '') {
-  return new URL(path, run.base).href + (run.variant ? `?v=${run.variant}` : '');
+  return new URL(path, run.base).href;
 }
 
 export function isGuarded(base) {
@@ -174,13 +174,13 @@ export async function pointIn(p, selector) {
 }
 
 /**
- * Klickar på svaret tills spelet tar emot det (rätt/fel-rutan visas eller frågan byts). I variant
- * C förstorar ett klick på en för liten kommun kartan i stället, och då klickas det igen.
+ * Klickar på svaret tills spelet tar emot det (rätt/fel-rutan visas eller frågan byts). Ett klick
+ * på en för liten kommun förstorar kartan i stället, och då klickas det igen.
  */
 export async function answerAccepted(p, answer) {
   const before = await questionText(p);
   for (let attempt = 0; attempt < 4; attempt++) {
-    // Efter en förstoring (variant C) måste zoomen vara klar innan nästa klick räknas ut.
+    // Efter en förstoring måste zoomen vara klar innan nästa klick räknas ut.
     if (attempt > 0) await mapSettled(p);
     await clickAnswer(p, answer);
     const accepted = await p
@@ -198,6 +198,8 @@ export async function answerAccepted(p, answer) {
 
 /** Klickar på svaret, eller (wrong) på något annat. */
 export async function clickAnswer(p, answer) {
+  // Kartan kan fortfarande zooma in på länet; koordinaterna gäller först när den står still.
+  await mapSettled(p);
   if (answer.point) {
     const pt = await pointOnMap(p, answer.point);
     return p.mouse.click(pt.x, pt.y);

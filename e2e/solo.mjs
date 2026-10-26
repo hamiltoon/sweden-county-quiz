@@ -60,6 +60,40 @@ async function playRound(run, t, mode) {
   await ctx.close();
 }
 
+/**
+ * PO-16: ett tryck på en för liten kommun förstorar kartan och förklarar det de tre första gångerna
+ * på enheten, och utanför länet är kartan nedtonad.
+ */
+async function kommunMagnify(run, t) {
+  const ctx = await context(run, 'iphone');
+  const p = await page(ctx);
+  await p.goto(url(run));
+  await p.click('.mode-btn[data-mode="kommun"]');
+  await p.waitForFunction(() => / i .+ län\?$/.test(document.querySelector('.question')?.textContent ?? '') && document.querySelector('.map path'));
+  await mapSettled(p);
+  const dim = await p.evaluate(() => ({ outside: document.querySelectorAll('path.county.is-outside').length, all: document.querySelectorAll('path.county').length }));
+  t.check(dim.outside > 200 && dim.outside < dim.all, `kommun: kartan utanför länet är nedtonad (${dim.outside} av ${dim.all} kommuner)`);
+  const scale = () => p.evaluate(() => Number(/scale\(([\d.]+)/.exec(document.querySelector('.map-root').getAttribute('transform') ?? '')?.[1] ?? 1));
+  const hints = [];
+  for (let i = 0; i < 4; i++) {
+    // Från hela Sverige, där Sundbyberg är långt under 28 px.
+    await p.click('button[aria-label="Återställ zoom"]');
+    await mapSettled(p);
+    const box = await p.$eval('path.county[data-code="0183"]', (el) => { const r = el.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; });
+    const before = await scale();
+    await p.mouse.click(box.x, box.y);
+    await p.waitForTimeout(250);
+    hints.push(await p.evaluate(() => document.querySelector('.toast-info.is-visible')?.textContent?.trim() ?? ''));
+    await mapSettled(p);
+    t.check((await scale()) > before * 1.4, `kommun: tryck ${i + 1} på Sundbyberg förstorar kartan (×${before.toFixed(1)} → ×${(await scale()).toFixed(1)})`);
+    if (i === 0) await t.shot(p, 'kommun-forstorat');
+    await p.waitForTimeout(1800);
+  }
+  t.check(hints.slice(0, 3).every((h) => h === 'Liten kommun – förstorat, tryck igen') && hints[3] === '', `kommun: förklaringen visas de tre första gångerna (${hints.map((h) => h || '–').join(' | ')})`);
+  t.check(p.errors.length === 0, `kommun, förstoring: inga fel i sidan ${p.errors.slice(0, 3).join(' | ')}`);
+  await ctx.close();
+}
+
 /** PO-16: med "minska rörelse" zoomar kartan in på länet direkt, utan animation. */
 async function kommunReducedMotion(run, t) {
   const ctx = await context(run, 'android', { reducedMotion: true });
@@ -79,6 +113,7 @@ export default async function solo(run) {
   await Promise.all([
     ...MODES.map((mode) => playRound(run, t, mode).catch((e) => t.check(false, `${mode}: ${e.message.split('\n')[0]}`))),
     kommunReducedMotion(run, t).catch((e) => t.check(false, `kommun med minska rörelse: ${e.message.split('\n')[0]}`)),
+    kommunMagnify(run, t).catch((e) => t.check(false, `kommun, förstoring: ${e.message.split('\n')[0]}`)),
   ]);
   return t;
 }

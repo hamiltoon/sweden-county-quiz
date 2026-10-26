@@ -78,6 +78,7 @@ export const en: Messages = {
     clickCounty: 'Tap a county',
     clickProvince: 'Tap a province',
     clickMunicipality: 'Tap a municipality',
+    magnified: 'Small municipality – zoomed in, tap again',
     right: (points) => `Right! +${points} pts`,
     rightLake: (rank, points) => `Right! ${rank} · +${points} pts`,
     rightCity: (km, place, points) => `Right! ${km} km from ${place} · +${points} pts`,
