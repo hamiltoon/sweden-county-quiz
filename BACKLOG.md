@@ -67,11 +67,11 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
 
 | Status | Punkter |
 |---|---|
-| Pågår (utvecklaren) | PO-16 i varianter (med PO-31 och e2e som väntar på bygghash) |
-| Nästa | PO-30, sedan PO-15 i varianter |
+| Pågår (utvecklaren) | PO-30 |
+| Nästa | PO-15 i varianter |
 | Väntar på UX-verifiering | – |
 | Väntar på svar från John | – |
-| Klart | PO-01, PO-01b, PO-06, PO-14, PO-22, PO-29, PO-29b |
+| Klart | PO-01, PO-01b, PO-06, PO-14, PO-16, PO-22, PO-29, PO-29b, PO-31 |
 
 ## Backlog i prioritetsordning
 
@@ -205,7 +205,7 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
   7. Svenska och engelska.
 
 ### PO-16 Kommuner: kartan zoomar in på länet
-- **Prioritet:** P1, pågår sedan 2026-10-26. Tre varianter byggda ([#33](https://github.com/hamiltoon/sweden-county-quiz/pull/33)).
+- **Status:** ✅ Klar 2026-10-26, i produktion via [#33](https://github.com/hamiltoon/sweden-county-quiz/pull/33) (version a27ce283). UX har godkänt C med krav 7–8; 8c (mörkt läge) uppfyllt med fyllning 3,32:1 och gräns 3,44:1, mätt i e2e.
 - **Beslut (PO, 2026-10-26):** variant C. Ett tryck på en för liten kommun förstorar kartan i stället för att räknas som svar.
   A gav för låg träffsäkerhet för de minsta kommunerna (Öckerö 0,24–0,28). B lät träffytorna ta upp till 49 % av
   grannkommunerna och lärde ut fel geografi. C är exakt och visar kommunen bland sina grannar.
@@ -226,6 +226,7 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
   6. Med "minska rörelse" sker zoomen utan animation.
   7. Vid förstoringen visas en hint, "Liten kommun – förstorat, tryck igen" (sv/en), de tre första gångerna per enhet.
   8. Ytan utanför länet tonas ned, och zoomen går mjukt från den vy man har, så att man ser var länet ligger.
+     8c. I mörkt läge har länsgränsen kontrast minst 3:1 mot både länets och omgivningens fyllning (WCAG 1.4.11).
 
 ### PO-17 Slutskärmen: Spela igen utan att scrolla
 - **Prioritet:** P2
@@ -305,7 +306,7 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
   2. Med 12 prickar inom 30 km från målet går målets namn att läsa helt på iPhone 13 och Android 360.
 
 ### PO-31 Lobbyn: fokus hamnar inte under Starta-fältet
-- **Status:** ✅ Godkänd av UX på staging 2026-10-26, går ut med PO-16 ([#33](https://github.com/hamiltoon/sweden-county-quiz/pull/33)).
+- **Status:** ✅ Klar 2026-10-26, i produktion med PO-16 ([#33](https://github.com/hamiltoon/sweden-county-quiz/pull/33)).
 - **Insats:** S (en rad CSS, `scroll-padding-bottom`)
 - **Koppling:** UX-fynd vid verifieringen av PO-29b (WCAG 2.4.11); följer av PO-22
 - **Acceptanskriterier:**
@@ -514,7 +515,7 @@ Fynd från UX-specialisten (UX-01, UX-02 …) läggs in här med prioritet och k
 
 | UX-id | Fynd | Prioritet | PO-punkt |
 |---|---|---|---|
-| UX-01 | Kommuner: målen för små, zoomen nollställs | P1 | PO-16 |
+| UX-01 | Kommuner: målen för små, zoomen nollställs | ✅ Klar | PO-16 |
 | UX-02 | Rätt/fel-rutan har för låg kontrast | ✅ Godkänd | PO-14 |
 | UX-03 | Rött mot grönt är enda skillnaden | ✅ Godkänd | PO-14 |
 | UX-04 | Spela live under vecket | ✅ Klar | PO-06 |
@@ -547,6 +548,7 @@ Fynd från UX-specialisten (UX-01, UX-02 …) läggs in här med prioritet och k
 
 ## Klart
 
+- **PO-16 och PO-31** Kommuner zoomar in på länet (variant C, förstoring av små kommuner, nedtonad omgivning); fokus i lobbyn. I produktion 2026-10-26 via [#33](https://github.com/hamiltoon/sweden-county-quiz/pull/33).
 - **PO-14 och PO-29b** Rätt och fel syns för alla (UX-02, UX-03); staging-banderoll och stramare tester. I produktion 2026-10-25 via [#30](https://github.com/hamiltoon/sweden-county-quiz/pull/30).
 - **PO-29** Staging och automatiska acceptanstester. Mergad i [#29](https://github.com/hamiltoon/sweden-county-quiz/pull/29), godkänd av UX 2026-10-25.
 - **PO-01 och PO-01b** Live: allas klick, snabbast och ett avslöjande som håller med 12 spelare. Driftsatt i #22, #25 och #27, godkänd av UX 2026-10-25.
