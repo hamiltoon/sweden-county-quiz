@@ -205,7 +205,10 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
   7. Svenska och engelska.
 
 ### PO-16 Kommuner: kartan zoomar in på länet
-- **Prioritet:** P1, pågår sedan 2026-10-26. Byggs som två till tre varianter på staging (?v=a/b/c) som UX testar och PO väljer mellan.
+- **Prioritet:** P1, pågår sedan 2026-10-26. Tre varianter byggda ([#33](https://github.com/hamiltoon/sweden-county-quiz/pull/33)).
+- **Beslut (PO, 2026-10-26):** variant C. Ett tryck på en för liten kommun förstorar kartan i stället för att räknas som svar.
+  A gav för låg träffsäkerhet för de minsta kommunerna (Öckerö 0,24–0,28). B lät träffytorna ta upp till 49 % av
+  grannkommunerna och lärde ut fel geografi. C är exakt och visar kommunen bland sina grannar.
 - **Insats:** M
 - **Koppling:** UX-01
 - **Värde:** 274 av 290 kommuner är mindre än ett finger på en iPhone, och zoomen nollställs vid varje fråga, så man
@@ -220,6 +223,9 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
   4. I live gäller samma inzoomning, och kommunkartan laddas redan i lobbyn när läget innehåller kommuner, så att
      ingen förlorar tid på laddning.
   5. Övriga lägen påverkas inte.
+  6. Med "minska rörelse" sker zoomen utan animation.
+  7. Vid förstoringen visas en hint, "Liten kommun – förstorat, tryck igen" (sv/en), de tre första gångerna per enhet.
+  8. Ytan utanför länet tonas ned, och zoomen går mjukt från den vy man har, så att man ser var länet ligger.
 
 ### PO-17 Slutskärmen: Spela igen utan att scrolla
 - **Prioritet:** P2
@@ -299,11 +305,18 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
   2. Med 12 prickar inom 30 km från målet går målets namn att läsa helt på iPhone 13 och Android 360.
 
 ### PO-31 Lobbyn: fokus hamnar inte under Starta-fältet
-- **Prioritet:** P3 (tas med i nästa PR som rör lobbyn)
+- **Status:** ✅ Godkänd av UX på staging 2026-10-26, går ut med PO-16 ([#33](https://github.com/hamiltoon/sweden-county-quiz/pull/33)).
 - **Insats:** S (en rad CSS, `scroll-padding-bottom`)
 - **Koppling:** UX-fynd vid verifieringen av PO-29b (WCAG 2.4.11); följer av PO-22
 - **Acceptanskriterier:**
   1. Med tangentbord på iPhone 13 hamnar inget fokuserat chip under det klistrade Starta-fältet.
+
+### PO-32 Kommuner: liten Sverige-karta med länet ifyllt
+- **Prioritet:** P3
+- **Insats:** S–M
+- **Koppling:** UX-förslag vid verifieringen av PO-16
+- **Värde:** När kartan zoomar in på länet behöver man inte veta var länet ligger. En liten karta i hörnet håller kvar det lärandet.
+- **Acceptanskriterier:** skrivs när den blir aktuell; utvärderas efter att PO-16 krav 8 har använts en tid.
 
 ### PO-02 Live: se vilka som har svarat medan frågan pågår
 - **Prioritet:** P2
