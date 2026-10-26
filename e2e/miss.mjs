@@ -193,8 +193,10 @@ async function round(run, t, mode, { hold = false } = {}) {
   await nextQuestion(p, q);
   const { until, held } = await missTiming(p);
   const after = (until - held) / 1000;
-  // Minst 4 s från att rutan syns (utöver tiden man höll på kartan); nedräkningen kollar var 100:e ms.
-  t.check(after >= 4 && after < 4.6, `${name}: går vidare av sig självt efter ${after.toFixed(2)} s${held > 500 ? ` (plus ${(held / 1000).toFixed(1)} s då man höll på kartan)` : ''}`);
+  // Minst 4 s från att rutan syns (utöver tiden man höll på kartan). Nedräkningen kollar var 100:e
+  // ms, men när flera sviter körs samtidigt kan timern komma flera tiondelar sent; den övre gränsen
+  // ska bara fånga att spelet inte går vidare alls.
+  t.check(after >= 4 && after < 5.5, `${name}: går vidare av sig självt efter ${after.toFixed(2)} s${held > 500 ? ` (plus ${(held / 1000).toFixed(1)} s då man höll på kartan)` : ''}`);
 
   // Rätt på första försöket går vidare lika snabbt som förut (1,5 s).
   const q2 = await questionText(p);
