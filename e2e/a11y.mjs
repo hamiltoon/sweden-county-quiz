@@ -169,8 +169,40 @@ async function checkToast(t, p, label, icon) {
   t.check(shown.includes(icon), `${label}: rutan har ikonen ${icon}`);
 }
 
+/**
+ * PO-16 krav 8c: i mörkt läge skiljer sig länet i en kommunfråga från den nedtonade omgivningen
+ * med minst 3:1. Omgivningens färg är dess fyllning med sin opacitet ovanpå havet.
+ */
+async function kommunCountyContrast(run, t) {
+  const ctx = await context(run, 'android', { dark: true });
+  const p = await page(ctx);
+  await p.goto(url(run));
+  await p.click('.mode-btn[data-mode="kommun"]');
+  await p.waitForSelector('path.county.is-inside:not([data-result])');
+  const colors = await p.evaluate(() => {
+    const rgb = (value) => {
+      const c = document.createElement('canvas').getContext('2d');
+      c.fillStyle = value;
+      c.fillRect(0, 0, 1, 1);
+      return [...c.getImageData(0, 0, 1, 1).data.slice(0, 3)];
+    };
+    const inside = getComputedStyle(document.querySelector('path.county.is-inside:not([data-result])'));
+    const outside = getComputedStyle(document.querySelector('path.county.is-outside:not([data-result])'));
+    const sea = getComputedStyle(document.querySelector('.map-wrap')).backgroundColor;
+    return { inside: rgb(inside.fill), outside: rgb(outside.fill), opacity: Number(outside.opacity), sea: rgb(sea) };
+  });
+  const behind = colors.outside.map((c, i) => Math.round(c * colors.opacity + colors.sea[i] * (1 - colors.opacity)));
+  const ratio = contrast(colors.inside, behind);
+  t.check(ratio >= 3, `mörkt, kommuner: länet mot omgivningen ${ratio.toFixed(2)}:1 (länet rgb(${colors.inside}), omgivningen rgb(${behind}))`);
+  await t.shot(p, 'morkt-kommun-lan');
+  await ctx.close();
+}
+
 export default async function a11y(run) {
   const t = new Suite(run, 'a11y');
-  await Promise.all([false, true].map((dark) => scheme(run, t, dark).catch((e) => t.check(false, `${dark ? 'mörkt' : 'ljust'}: ${e.message.split('\n')[0]}`))));
+  await Promise.all([
+    ...[false, true].map((dark) => scheme(run, t, dark).catch((e) => t.check(false, `${dark ? 'mörkt' : 'ljust'}: ${e.message.split('\n')[0]}`))),
+    kommunCountyContrast(run, t).catch((e) => t.check(false, `mörkt, kommuner: ${e.message.split('\n')[0]}`)),
+  ]);
   return t;
 }

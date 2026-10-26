@@ -997,14 +997,21 @@ a {
   opacity: 0.45;
 }
 
-/* Mot det mörka havet syns nedtoningen knappt; där lyfts länet i stället. */
+/*
+ * Mot det mörka havet räcker inte nedtoningen: där lyfts länet också, så att det skiljer sig från
+ * omgivningen med minst 3:1 (e2e mäter det), och kommungränserna i länet blir mörka.
+ */
 @media (prefers-color-scheme: dark) {
   .county.is-outside {
-    opacity: 0.6;
+    opacity: 0.35;
+  }
+
+  .county.is-inside {
+    stroke: var(--bg);
   }
 
   .county.is-inside:not([data-result]) {
-    fill: #3b4a66;
+    fill: #61739a;
   }
 }
 
