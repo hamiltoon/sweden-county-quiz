@@ -253,6 +253,13 @@ export function measureReveal(p) {
     const under = (r) => !!toast && r.left < toast.right && r.right > toast.left && r.top < toast.bottom && r.bottom > toast.top;
     const dots = [...document.querySelectorAll('circle.pin-dot')].map((c) => c.getBoundingClientRect());
     const target = document.querySelector('path.county.is-correct, path.county.is-reveal, path.lake.is-correct, path.lake.is-reveal, .marker-reveal .marker-dot');
+    // PO-30: namnet på rätt svar (staden eller sjön) ligger överst och syns helt.
+    const label = document.querySelector('.marker-labels text, .lake-label.is-shown:not(.is-hidden)');
+    const lastPin = [...document.querySelectorAll('circle.pin-dot, text.pin-label')].pop();
+    const labelBox = label?.getBoundingClientRect();
+    const targetLabel = label
+      ? { text: label.textContent, inView: inside(labelBox), underToast: under(labelBox), onTop: !lastPin || !!(lastPin.compareDocumentPosition(label) & Node.DOCUMENT_POSITION_FOLLOWING) }
+      : null;
     const status = document.querySelector('.live-status').getBoundingClientRect();
     const me = document.querySelector('.live-standings .is-me')?.getBoundingClientRect();
     return {
@@ -262,6 +269,7 @@ export function measureReveal(p) {
       targetInView: !!target && inside(target.getBoundingClientRect()),
       standingsShare: status.height / innerHeight,
       ownRowVisible: !!me && me.top >= status.top - 1 && me.bottom <= status.bottom + 1 && me.bottom <= innerHeight + 1,
+      targetLabel,
     };
   });
 }

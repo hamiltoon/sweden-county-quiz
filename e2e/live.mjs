@@ -49,6 +49,10 @@ async function checkReveal(t, label, p, players) {
   const r = await measureReveal(p);
   t.check(r.pins === players, `${label}: ${r.pins} av ${players} prickar`);
   t.check(r.targetInView && r.pinsOutside === 0 && r.pinsUnderToast === 0, `${label}: rätt svar och alla prickar i vyn, ingen under rutan ${JSON.stringify({ target: r.targetInView, utanför: r.pinsOutside, underRutan: r.pinsUnderToast })}`);
+  if (r.targetLabel) {
+    const l = r.targetLabel;
+    t.check(l.inView && !l.underToast && l.onTop, `${label}: namnet "${l.text}" syns helt, ovanpå prickarna ${JSON.stringify({ iVyn: l.inView, underRutan: l.underToast, överst: l.onTop })}`);
+  }
   t.check(r.ownRowVisible && r.standingsShare <= 0.34, `${label}: egna raden syns, ställningen tar ${Math.round(r.standingsShare * 100)} % av höjden`);
 }
 
