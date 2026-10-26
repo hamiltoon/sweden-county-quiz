@@ -102,6 +102,8 @@ async function scheme(run, t, dark) {
         await clickAnswer(p, { code });
         await p.waitForTimeout(600);
       }
+      // Med en minnesregel väntar avslöjandet på ett tryck (PO-33).
+      if (await p.$('.mnemonic-strip')) await p.click('.toast-action');
     } else if (n % 3 === 0) {
       await clickAnswer(p, { code: others(answer.code)[0] });
       await p.waitForTimeout(600);

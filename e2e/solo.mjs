@@ -1,5 +1,5 @@
 /** En hel omgång i varje läge, med rätt svar på varje fråga, fram till slutskärmen. */
-import { ANSWERS, SMALLEST_MUNICIPALITIES, Suite, answerAccepted, context, countyFill, mapSettled, page, pointIn, url } from './lib.mjs';
+import { ANSWERS, SMALLEST_MUNICIPALITIES, Suite, answerAccepted, context, countyFill, endLayout, mapSettled, page, pointIn, url } from './lib.mjs';
 
 const MODES = ['lan', 'landskap', 'kommun', 'stad', 'ort', 'sjo', 'blandat'];
 
@@ -54,6 +54,11 @@ async function playRound(run, t, mode) {
   await p.waitForTimeout(1200);
   const summary = (await p.textContent('.score-sub'))?.trim() ?? '';
   t.check(/^(\d+) av \1 rätt \(100 %\)/.test(summary), `${mode}: slutskärmen efter ${answered} frågor: "${summary}"`);
+  // PO-17: knapparna syns utan scroll, poängen först, och knappfältet täcker inget. UX-29: den
+  // första omgången i ett läge firas inte som nytt rekord.
+  const layout = await endLayout(p);
+  t.check(layout.buttonsVisible && layout.scoreVisible && !layout.covered, `${mode}: Spela igen och Byt läge syns utan scroll, poängen överst, inget under knappfältet ${JSON.stringify(layout)}`);
+  t.check(!(await p.$('.new-best')), `${mode}: "Nytt bästa resultat!" visas inte första gången`);
   await t.shot(p, `${mode}-slut`);
   t.check(p.errors.length === 0, `${mode}: inga fel i sidan ${p.errors.slice(0, 3).join(' | ')}`);
   t.check(ctx.blocked.length === 0, `${mode}: inga stoppade anrop ${ctx.blocked.join(', ')}`);

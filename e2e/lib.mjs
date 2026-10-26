@@ -12,6 +12,7 @@ import { PROVINCES } from '../src/data/provinces.ts';
 import { MUNICIPALITIES } from '../src/data/municipalities.ts';
 import { OTHER_CITIES } from '../src/data/cities.ts';
 import { LAKES } from '../src/data/lakes.ts';
+import { MNEMONICS } from '../src/data/mnemonics.ts';
 
 // Playwright läses med require, så att en global installation också hittas (NODE_PATH).
 const require = createRequire(import.meta.url);
@@ -41,11 +42,15 @@ export function isStaging(base) {
   return new URL(base).hostname === new URL(STAGING).hostname;
 }
 
-/** Det som aldrig får skickas utanför staging och localhost: resultat till topplistan, passkeys och kontots språk. */
+/**
+ * Det som aldrig får skickas utanför staging och localhost: resultat till topplistan, passkeys,
+ * kontots språk och röster, svar, kommentarer och förslag om minnesreglerna.
+ */
 export const GUARDED = [
   { path: '**/api/scores', methods: ['POST'] },
   { path: '**/api/passkey/**', methods: null },
   { path: '**/api/me/language', methods: ['POST'] },
+  { path: '**/api/mnemonics/**', methods: ['POST'] },
 ];
 
 /**
@@ -125,6 +130,18 @@ for (const p of PROVINCES) ANSWERS.set(`Var ligger ${p.name}?`, { code: p.code }
 for (const m of MUNICIPALITIES) ANSWERS.set(`Var ligger ${m.name} i ${COUNTY_NAME.get(m.county)}?`, { code: m.code });
 for (const c of OTHER_CITIES) ANSWERS.set(`Var ligger ${c.name}?`, { point: c });
 for (const l of LAKES) ANSWERS.set(`Var ligger ${l.name}?`, { lake: l.id });
+
+/**
+ * Har svaret i läget en minnesregel med kort text (PO-33)? Då väntar avslöjandet efter en miss på
+ * ett tryck i stället för att räkna ned. Samma val som i spelet: en regel om saken före en tankeregel.
+ */
+export function shortRuleFor(mode, answer) {
+  const [kind, id] = answer.lake ? ['sjo', answer.lake] : answer.point ? (mode === 'stad' ? ['stad', answer.point.code] : [null, null]) : [mode, answer.code];
+  if (!kind) return null;
+  const matching = MNEMONICS.filter((r) => r.targets[kind]?.includes(id));
+  const rule = matching.find((r) => r.category !== 'princip') ?? matching[0];
+  return rule?.short ? rule : null;
+}
 
 export const COUNTY_SEATS = COUNTIES.map((c) => ({ code: c.code, lat: c.lat, lon: c.lon }));
 export const CITY_BY_NAME = new Map(OTHER_CITIES.map((c) => [c.name, c]));
@@ -238,6 +255,37 @@ export function countyFill(p, code) {
     const y0 = Math.min(...rects.map((r) => r.top)), y1 = Math.max(...rects.map((r) => r.bottom));
     return { share: Math.max((x1 - x0) / m.width, (y1 - y0) / m.height), inside: x0 >= m.left - 2 && x1 <= m.right + 2 && y0 >= m.top - 2 && y1 <= m.bottom + 2 };
   }, codes);
+}
+
+/**
+ * PO-17: slutskärmen utan scroll. Spela igen och Byt läge syns helt, poängen syns överst, och när man
+ * scrollar till slutet ligger allt innehåll ovanför knappfältet (det täcker inget).
+ */
+export async function endLayout(p) {
+  await p.evaluate(() => document.querySelector('.screen-end').scrollTo(0, 0));
+  await p.waitForTimeout(150);
+  const top = await p.evaluate(() => {
+    const inView = (el) => {
+      const r = el?.getBoundingClientRect();
+      return !!r && r.top >= 0 && r.bottom <= innerHeight + 1;
+    };
+    return {
+      buttons: [...document.querySelectorAll('.end-actions .btn')].map(inView),
+      score: inView(document.querySelector('.score-ring')) && inView(document.querySelector('.recap-map')),
+    };
+  });
+  await p.evaluate(() => {
+    const s = document.querySelector('.screen-end');
+    s.scrollTo(0, s.scrollHeight);
+  });
+  await p.waitForTimeout(150);
+  const bottom = await p.evaluate(() => {
+    const bar = document.querySelector('.end-actions').getBoundingClientRect();
+    const before = document.querySelector('.end-actions').previousElementSibling?.getBoundingClientRect();
+    return { covered: !!before && before.bottom > bar.top + 1 };
+  });
+  await p.evaluate(() => document.querySelector('.screen-end').scrollTo(0, 0));
+  return { buttonsVisible: top.buttons.length === 2 && top.buttons.every(Boolean), scoreVisible: top.score, covered: bottom.covered };
 }
 
 export async function questionText(p) {

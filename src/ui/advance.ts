@@ -5,7 +5,8 @@ import { t } from '../i18n';
  * PO-15 (variant C): hur solospelet går vidare efter en missad fråga. Knappen "Nästa" räknar ned,
  * och spelet går vidare när tiden är ute, när man trycker på knappen eller när man trycker på kartan.
  * Nedräkningen står still medan man håller fingret på kartan, medan fliken är dold och, för den som
- * använder tangentbordet, medan fokus är i rutan (WCAG 2.2.1).
+ * använder tangentbordet, medan fokus är i rutan (WCAG 2.2.1). Utan nedräkning (en miss med en
+ * minnesregel, PO-33) väntar spelet på ett tryck.
  */
 
 /** Ett tryck (inte ett håll eller en dragning) är kortare och rör sig mindre än så här. */
@@ -41,8 +42,8 @@ export interface Advance {
 export interface AdvanceOptions {
   /** Ytan där ett tryck går vidare och ett håll pausar (kartan). */
   surface: HTMLElement;
-  /** Nedräkningens längd. */
-  ms: number;
+  /** Nedräkningens längd, eller null för att vänta på ett tryck. */
+  ms: number | null;
   /** Har tangentbordet använts i omgången? Då står nedräkningen still medan fokus är i rutan. */
   keyboard: () => boolean;
   onDone: () => void;
@@ -51,8 +52,8 @@ export interface AdvanceOptions {
 export function createAdvance({ surface, ms: total, keyboard, onDone }: AdvanceOptions): Advance {
   const count = el('span', { class: 'advance-count', 'aria-hidden': 'true' });
   const bar = el('span', { class: 'advance-bar', 'aria-hidden': 'true' });
-  const button = el('button', { class: 'toast-action', type: 'button' }, el('span', {}, t().game.next), count, bar);
-  let remaining = total;
+  const button = el('button', { class: 'toast-action', type: 'button' }, el('span', {}, t().game.next), ...(total ? [count, bar] : []));
+  let remaining = total ?? Infinity;
   let since = performance.now();
   let held = 0;
   // Nedräkningen börjar först när rutan syns (se nedan); till dess står den still.
@@ -68,7 +69,7 @@ export function createAdvance({ surface, ms: total, keyboard, onDone }: AdvanceO
   const render = () => {
     const ms = Math.max(0, left());
     count.textContent = String(Math.ceil(ms / 1000));
-    bar.style.transform = `scaleX(${ms / total})`;
+    if (total) bar.style.transform = `scaleX(${ms / total})`;
     button.classList.toggle('is-paused', paused);
   };
   const pause = () => {

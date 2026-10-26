@@ -1,13 +1,13 @@
 import './style.css';
 import type { Topology } from 'topojson-specification';
-import { Game, modeLabel, type AnswerOutcome, type Mode, type Question, type Summary } from './game/game';
+import { Game, modeLabel, questionLabel, type AnswerOutcome, type Mode, type Question, type Summary } from './game/game';
 import { CONFIG } from './game/config';
 import { distanceToShapeKm, nearestOnShape } from './game/geo';
 import { LAKE_BY_ID } from './data/lakes';
 import { COUNTY_BY_CODE } from './data/counties';
 import { PROVINCE_BY_CODE } from './data/provinces';
 import { MUNICIPALITY_BY_CODE } from './data/municipalities';
-import { getCurrentLiveRoom, getLiveName, getLivePlayerId, saveBest, saveLiveName, setCurrentLiveRoom } from './game/storage';
+import { getBest, getCurrentLiveRoom, getLiveName, getLivePlayerId, saveBest, saveLiveName, setCurrentLiveRoom } from './game/storage';
 import { motionMs, SwedenMap, type FitTarget, type MapClick, type ResultState } from './map/map';
 import { renderMiniMap } from './map/minimap';
 import { regionSteps } from './map/adjacency';
@@ -16,6 +16,10 @@ import { kommunMapOptions, takeMagnifyHint } from './map/kommun';
 import { el, clear } from './ui/dom';
 import { Toast } from './ui/toast';
 import { createAdvance, takeHoldHint, type Advance } from './ui/advance';
+import { markSeen, ruleFor, shouldAskHelped, textOf } from './mnemonics';
+import type { Mnemonic } from './data/mnemonics';
+import { renderEndRules, renderHelped } from './mnemonics/ui';
+import { renderMnemonicsPage } from './mnemonics/page';
 import { renderEnd, renderRecapLegend, renderStart } from './ui/screens';
 import { renderEndLeaderboard, renderStartLeaderboard } from './ui/leaderboard';
 import { newResultId } from './api/leaderboard';
@@ -61,13 +65,29 @@ function showStart(): void {
   clear(screen);
   screen.className = 'screen screen-start';
   const brandMap = el('div', { class: 'brand-map' });
-  screen.append(renderStart((mode) => void showGame(mode), renderStartLeaderboard(), brandMap, () => showLive()));
+  screen.append(renderStart((mode) => void showGame(mode), renderStartLeaderboard(), brandMap, () => showLive(), showMnemonics));
   screen.append(renderFooter());
   // Förladda kartan i bakgrunden och rita en liten Sverigekarta bredvid rubriken när den finns.
   void Promise.all([loadTopology(COUNTIES_URL), loadOptional(LAKES_URL)])
     .then(([counties, lakes]) => brandMap.append(renderMiniMap({ counties, lakes, width: 46, height: 100 })))
     .catch(() => undefined);
   void loadOptional(NEIGHBORS_URL);
+}
+
+const MNEMONICS_PATH = '/minnesregler';
+/** Öppnades sidan från startskärmen? Då går Tillbaka bakåt i historiken, som webbläsarens knapp. */
+let mnemonicsPushed = false;
+
+/** Sidan med alla minnesregler (PO-33). Webbläsarens bakåtknapp leder tillbaka till startskärmen. */
+function showMnemonics(): void {
+  if (location.pathname !== MNEMONICS_PATH) {
+    history.pushState(null, '', MNEMONICS_PATH);
+    mnemonicsPushed = true;
+  }
+  clear(screen);
+  screen.className = 'screen screen-end';
+  screen.append(renderMnemonicsPage(() => (mnemonicsPushed ? history.back() : goHome())), renderFooter());
+  window.scrollTo(0, 0);
 }
 
 /** Sökvägen för en delad länk till ett live-rum, t.ex. /live/KXR4. */
@@ -210,6 +230,10 @@ async function showGame(mode: Mode): Promise<void> {
   // Kommunläget: vid fel kommun säger vi hur många kommuner bort den var.
   const steps = mode === 'kommun' ? regionSteps(topology, regions.objectName) : null;
   const game = new Game(mode);
+  // Omgångens id: resultatets id på topplistan, och vilken omgång en minnesregel visades i första gången.
+  const round = newResultId();
+  /** Minnesregelns korta text under kartan efter en miss (PO-33). */
+  let ruleStrip: HTMLElement | null = null;
   let locked = false;
   let timer: number | undefined;
   let advance: Advance | null = null;
@@ -232,19 +256,22 @@ async function showGame(mode: Mode): Promise<void> {
     // Samma id i rekordet och på topplistan, så att rekordet inte sparas två gånger om det
     // senare laddas upp som ett tidigare resultat.
     const result = {
-      id: newResultId(),
+      id: round,
       mode,
       score: summary.score,
       percent: summary.percentSolved,
       playedAt: new Date().toISOString(),
     };
-    const isNewBest = saveBest(mode, { score: result.score, percent: result.percent, date: result.playedAt, id: result.id });
+    // Den allra första omgången i ett läge är alltid bäst hittills; den firas inte (UX-29).
+    const hadBest = !!getBest(mode);
+    const isNewBest = saveBest(mode, { score: result.score, percent: result.percent, date: result.playedAt, id: result.id }) && hadBest;
     clear(screen);
-    screen.className = 'screen screen-end';
+    screen.className = 'screen screen-end screen-result';
     screen.append(
       renderEnd(summary, isNewBest, () => void showGame(mode), showStart, {
         leaderboard: renderEndLeaderboard(mode, result),
         recap: renderRecap(summary, topology, regions.objectName, lakes),
+        ...endRules(summary, round),
       }),
       renderFooter(),
     );
@@ -266,6 +293,8 @@ async function showGame(mode: Mode): Promise<void> {
     map.clearHighlights();
     map.clearMarkers();
     toast.hide();
+    ruleStrip?.remove();
+    ruleStrip = null;
     if (!game.next()) {
       finishRound();
       return;
@@ -302,21 +331,32 @@ async function showGame(mode: Mode): Promise<void> {
    * PO-15: efter en missad fråga visar kartan det sista felklicket och rätt svar i samma vy, med en
    * linje och avståndet emellan (`nearest` är närmaste punkt på rätt svar). Spelet går vidare med
    * knappen "Nästa", ett tryck på kartan eller efter nedräkningen.
+   * PO-33: har saken en minnesregel med kort text visas den under kartan, och spelet väntar på ett tryck.
    */
-  const missAndContinue = (message: string, click: MapClick, target: FitTarget, nearest: { lon: number; lat: number; km: number } | null) => {
+  const missAndContinue = (q: Question, message: string, click: MapClick, target: FitTarget, nearest: { lon: number; lat: number; km: number } | null) => {
     locked = true;
     map.setInteractive(false);
     if (nearest && Math.round(nearest.km) >= 1) map.showLine(click, nearest, t().game.distance(Math.round(nearest.km)));
+    const rule = ruleFor(q);
+    const short = rule && textOf(rule)?.short;
+    if (rule && short) {
+      markSeen(rule.id, round);
+      ruleStrip = el('p', { class: 'mnemonic-strip', 'data-rule': rule.id, 'aria-live': 'polite' }, el('span', { 'aria-hidden': 'true' }, `${t().mnemonic.bulb} `), short);
+      mapWrap.after(ruleStrip);
+      // Kartan blir lägre; den måste ha sin nya storlek innan vyn räknas ut.
+      map.resize();
+    }
     advance = createAdvance({
       surface: mapEl,
-      ms: CONFIG.revealMissAutoMs,
+      ms: short ? null : CONFIG.revealMissAutoMs,
       keyboard: () => keyboardUsed,
       onDone: () => {
         advance = null;
         nextQuestion();
       },
     });
-    const hint = takeHoldHint() ? [el('p', { class: 'toast-hint' }, t().game.holdHint)] : [];
+    // Hinten om att hålla på kartan gäller bara nedräkningen.
+    const hint = !short && takeHoldHint() ? [el('p', { class: 'toast-hint' }, t().game.holdHint)] : [];
     toast.show(message, 'bad', 0, el('div', { class: 'toast-actions' }, advance.button, ...hint));
     advance.button.focus({ preventScroll: true });
     map.fitView([click], target, toastPadding(), motionMs(CONFIG.revealFitMs));
@@ -353,7 +393,7 @@ async function showGame(mode: Mode): Promise<void> {
         map.highlightLake(target.id, 'reveal');
         map.showLakeLabel(target.id);
         const shape = map.lakeGeometry(target.id);
-        missAndContinue(t().game.missReveal(missText(), target.name), click, { lake: target.id }, shape && nearestOnShape(shape, click.lat, click.lon));
+        missAndContinue(q, t().game.missReveal(missText(), target.name), click, { lake: target.id }, shape && nearestOnShape(shape, click.lat, click.lon));
       } else {
         if (clicked) {
           map.highlightLake(clicked.id, 'wrong');
@@ -390,7 +430,7 @@ async function showGame(mode: Mode): Promise<void> {
           : t().game.wrongWasReveal(regionName(click.code), target.name);
         map.showRegionLabel(target.code, target.name);
         const shape = map.regionGeometry(target.code);
-        missAndContinue(message, click, { code: target.code }, shape && nearestOnShape(shape, click.lat, click.lon));
+        missAndContinue(q, message, click, { code: target.code }, shape && nearestOnShape(shape, click.lat, click.lon));
       } else {
         map.highlight(click.code, 'wrong');
         // Ta inte bort markeringen om frågan hunnit avslutas; då ska felklicket synas med svaret.
@@ -417,7 +457,7 @@ async function showGame(mode: Mode): Promise<void> {
       } else if (outcome.finished) {
         map.addMarker(click.lon, click.lat, 'wrong');
         map.addMarker(target.lon, target.lat, 'reveal', target.name);
-        missAndContinue(t().game.missReveal(t().game.wrongKm(km), target.name), click, { point: target }, { lon: target.lon, lat: target.lat, km: outcome.distanceKm ?? 0 });
+        missAndContinue(q, t().game.missReveal(t().game.wrongKm(km), target.name), click, { point: target }, { lon: target.lon, lat: target.lat, km: outcome.distanceKm ?? 0 });
       } else {
         map.addMarker(click.lon, click.lat, 'wrong');
         toast.show(`${t().game.kmAway(km)} ${attemptsText(outcome.attemptsLeft)}`, 'bad', CONFIG.toastMs);
@@ -472,6 +512,31 @@ function renderRecap(summary: Summary, regions: Topology, objectName: string, la
   return el('div', { class: 'recap' }, map, renderRecapLegend(counts));
 }
 
+/**
+ * Minnesreglerna på slutskärmen (PO-33): regeln under varje missad sak, och en gång "Hjälpte
+ * minnesregeln?" om man nu svarat rätt på något vars regel man såg i en tidigare omgång.
+ */
+function endRules(summary: Summary, round: string): { rules: HTMLElement | null; helped: HTMLElement | null } {
+  let helped: HTMLElement | null = null;
+  for (const r of summary.results) {
+    const rule = r.solved ? ruleFor(r.question) : null;
+    if (rule && shouldAskHelped(rule.id, round)) {
+      helped = renderHelped(rule, questionLabel(r.question));
+      break;
+    }
+  }
+  // En rad per regel, med alla missade saker den gäller, i den ordning de kom.
+  const entries = new Map<string, { rule: Mnemonic; things: string[] }>();
+  for (const r of summary.results) {
+    const rule = r.solved ? null : ruleFor(r.question);
+    if (!rule) continue;
+    const entry = entries.get(rule.id) ?? { rule, things: [] };
+    entry.things.push(questionLabel(r.question));
+    entries.set(rule.id, entry);
+  }
+  return { rules: renderEndRules([...entries.values()], (rule) => markSeen(rule.id, round), showMnemonics), helped };
+}
+
 function attemptsText(left: number): string {
   return left === 1 ? t().game.lastAttempt : t().game.attemptsLeft(left);
 }
@@ -498,6 +563,15 @@ onLangChange(() => {
 });
 const liveLink = LIVE_PATH.exec(location.pathname);
 if (liveLink) showLive(liveLink[1].toUpperCase());
+else if (location.pathname === MNEMONICS_PATH) showMnemonics();
 else showStart();
+// Bakåt och framåt mellan startskärmen och minnesreglerna.
+window.addEventListener('popstate', () => {
+  if (location.pathname === MNEMONICS_PATH) showMnemonics();
+  else if (location.pathname === '/' && screen.querySelector('.mnemonics-page')) {
+    mnemonicsPushed = false;
+    showStart();
+  }
+});
 void adoptAccountLanguage();
 registerServiceWorker();

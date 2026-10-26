@@ -11,7 +11,7 @@
  */
 import { MUNICIPALITIES } from '../src/data/municipalities.ts';
 import { axe } from './a11y.mjs';
-import { ALL_CODES, ANSWERS, COUNTY_BY_CODE, Suite, answerAccepted, clickAnswer, context, mapSettled, page, questionText, url } from './lib.mjs';
+import { ALL_CODES, ANSWERS, COUNTY_BY_CODE, Suite, answerAccepted, clickAnswer, context, mapSettled, shortRuleFor, page, questionText, url } from './lib.mjs';
 
 const MUNICIPALITY_COUNTY = new Map(MUNICIPALITIES.map((m) => [m.code, m.county]));
 /** Län långt ifrån varandra, att klicka fel på. */
@@ -83,7 +83,7 @@ function measureMiss(p) {
 const sleep = (p, ms) => p.waitForTimeout(ms);
 
 /** Svarar rätt på frågorna tills läget har den sortens fråga som ska missas (blandat behövs inte här). */
-async function nextQuestion(p, last) {
+export async function nextQuestion(p, last) {
   return p
     .waitForFunction((last) => {
       const text = document.querySelector('.question')?.textContent?.trim();
@@ -93,11 +93,18 @@ async function nextQuestion(p, last) {
 }
 
 /** Missar första frågan med tre felsvar. Ger frågan och rätt svar. */
-async function miss(p, mode) {
-  const q = await nextQuestion(p, '');
+export async function miss(p, mode, { withRule = false } = {}) {
+  let q = await nextQuestion(p, '');
   await sleep(p, 450);
-  const answer = ANSWERS.get(q);
+  let answer = ANSWERS.get(q);
   if (!answer) throw new Error(`känner inte igen frågan "${q}"`);
+  // Nedräkningen gäller bara en miss utan minnesregel (PO-33); frågor med regel besvaras rätt.
+  for (let i = 0; !withRule && shortRuleFor(mode, answer) && i < 12; i++) {
+    await answerAccepted(p, answer);
+    q = await nextQuestion(p, q);
+    await sleep(p, 450);
+    answer = ANSWERS.get(q);
+  }
   const wrong = wrongAnswers(mode, answer);
   let given = 0;
   for (const w of wrong) {
@@ -173,7 +180,7 @@ async function round(run, t, mode, { hold = false } = {}) {
   const place = q.replace(/^Var ligger /, '').replace(/ i .+ län\?$/, '').replace(/\?$/, '');
   t.check(r.label?.text === place && r.label.visible, `${name}: namnet "${r.label?.text}" står på kartan och syns (väntat "${place}")`);
   t.check(r.button === 'Nästa' && focused, `${name}: knappen "${r.button}" har fokus`);
-  t.check(r.hint === 'Håll fingret på kartan för att titta längre', `${name}: hinten första gången på enheten ("${r.hint}")`);
+  t.check(r.hint === 'Håll ned på kartan för att titta längre', `${name}: hinten första gången på enheten ("${r.hint}")`);
   // Avståndet står på linjen, eller saknas om linjen är för kort (under 40 px) eller trång.
   t.check(r.line && (r.distance === null || (/^\d+ km$/.test(r.distance) && !r.distanceOnName)), `${name}: linjen till rätt svar, avståndet "${r.distance ?? 'dolt'}" täcker inte namnet`);
 
@@ -186,8 +193,10 @@ async function round(run, t, mode, { hold = false } = {}) {
   await nextQuestion(p, q);
   const { until, held } = await missTiming(p);
   const after = (until - held) / 1000;
-  // Minst 4 s från att rutan syns (utöver tiden man höll på kartan); nedräkningen kollar var 100:e ms.
-  t.check(after >= 4 && after < 4.6, `${name}: går vidare av sig självt efter ${after.toFixed(2)} s${held > 500 ? ` (plus ${(held / 1000).toFixed(1)} s då man höll på kartan)` : ''}`);
+  // Minst 4 s från att rutan syns (utöver tiden man höll på kartan). Nedräkningen kollar var 100:e
+  // ms, men när flera sviter körs samtidigt kan timern komma flera tiondelar sent; den övre gränsen
+  // ska bara fånga att spelet inte går vidare alls.
+  t.check(after >= 4 && after < 5.5, `${name}: går vidare av sig självt efter ${after.toFixed(2)} s${held > 500 ? ` (plus ${(held / 1000).toFixed(1)} s då man höll på kartan)` : ''}`);
 
   // Rätt på första försöket går vidare lika snabbt som förut (1,5 s).
   const q2 = await questionText(p);
@@ -263,7 +272,7 @@ async function english(run, t) {
     await sleep(p, 1600);
   }
   const r = await measureMiss(p);
-  t.check(r.button === 'Next' && r.hint === 'Hold your finger on the map to look longer', `engelska: knappen "${r.button}", hinten "${r.hint}"`);
+  t.check(r.button === 'Next' && r.hint === 'Press and hold the map to look longer', `engelska: knappen "${r.button}", hinten "${r.hint}"`);
   await t.shot(p, 'en-miss');
   await ctx.close();
 }
