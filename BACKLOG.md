@@ -25,6 +25,15 @@ Beslutat med John 2026-10-25. Det är kontrollen av resultatet som begränsar os
 3. **Flera förslag när lösningen är osäker.** Två eller tre agenter bygger varsin variant på staging, och UX testar och rekommenderar; PO väljer. John testar inte. Först ut: PO-15 och PO-16.
 4. **Agenter per uppgift, inte per område.** När 1 och 2 finns kan en kortlivad agent ta en uppgift i egen gren. Den nuvarande utvecklaren sätter ihop och driftsätter.
 
+## Teamet
+
+- **PO** (`session_01PTbzZXZdzDxTaivzKg7RHA`): äger backloggen och prioriteringen.
+- **Utvecklare** (`session_01Rs4gVtMRrBdBX4M4AY6u8m`): bygger, testar och driftsätter; den enda som ändrar spelets kod.
+- **UX-specialist** (`session_01WgCLzguihPg11jmZ85YFnv`): granskar och verifierar.
+- **Kreativ ledare** (`session_013q5y5GDajxYeqiPCfyHUjD`, sedan 2026-10-26): skickar omgångar om 8–10 galna idéer
+  (K-01 …) till PO. PO sorterar dem i ja, kanske och nej med motivering. Ungefär 1 av 10 väntas bli något. Ett ja
+  blir en PO-punkt här. Den kreativa ledaren bygger inget.
+
 ## Kostnad
 
 John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
