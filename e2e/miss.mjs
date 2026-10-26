@@ -65,6 +65,12 @@ function measureMiss(p) {
       label: label ? { text: label.textContent, visible: inside(box(label)) && !under(box(label)) } : null,
       line: !!document.querySelector('line.reveal-line'),
       distance: document.querySelector('.marker-label-wrong')?.textContent ?? null,
+      // Avståndet får inte täcka namnet på rätt svar (UX: Kalmar → Blekinge, 25 km).
+      distanceOnName: (() => {
+        const d = document.querySelector('.marker-label-wrong')?.getBoundingClientRect();
+        const n = label?.getBoundingClientRect();
+        return !!d && !!n && d.left < n.right && d.right > n.left && d.top < n.bottom && d.bottom > n.top;
+      })(),
       button: document.querySelector('.toast.is-visible .toast-action')?.textContent ?? null,
       transform: document.querySelector('.map-root').getAttribute('transform'),
     };
@@ -164,7 +170,7 @@ async function variantRound(run, t, variant, mode, device = 'iphone') {
   const place = q.replace(/^Var ligger /, '').replace(/ i .+ län\?$/, '').replace(/\?$/, '');
   t.check(r.label?.text === place && r.label.visible, `${name}: namnet "${r.label?.text}" står på kartan och syns (väntat "${place}")`);
   t.check(/^Nästa/.test(r.button ?? '') && focused, `${name}: knappen "${r.button}" har fokus`);
-  if (variant === 'c') t.check(r.line && /^\d+ km$/.test(r.distance ?? ''), `${name}: linjen till rätt svar med avståndet "${r.distance}"`);
+  if (variant === 'c') t.check(r.line && /^\d+ km$/.test(r.distance ?? '') && !r.distanceOnName, `${name}: linjen till rätt svar med avståndet "${r.distance}", som inte täcker namnet`);
   else t.check(!r.line, `${name}: ingen linje`);
 
   if (variant === 'a') {
@@ -219,6 +225,23 @@ async function reducedMotion(run, t) {
   await ctx.close();
 }
 
+/** WCAG 2.2.1: en tangenttryckning stoppar nedräkningen, och Enter på knappen går vidare. */
+async function keyboard(run, t) {
+  const ctx = await context(run, 'desktop');
+  const p = await page(ctx);
+  await p.goto(url(run, '?v=c'));
+  await p.click('.mode-btn[data-mode="lan"]');
+  await p.waitForSelector('.screen-game .map path');
+  const { q } = await miss(p, 'lan');
+  await p.keyboard.press('Shift');
+  await sleep(p, 5500);
+  const paused = await p.$eval('.toast-action', (b) => b.classList.contains('is-paused')).catch(() => false);
+  t.check(paused && (await questionText(p)) === q, 'tangentbord: nedräkningen stannar efter en tangenttryckning');
+  await p.keyboard.press('Enter');
+  t.check((await nextQuestion(p, q)) !== q, 'tangentbord: Enter på "Nästa" går vidare');
+  await ctx.close();
+}
+
 /** På engelska heter knappen "Next". Frågorna är på engelska, så svaren gissas: klicka fel län tills en fråga missas. */
 async function english(run, t) {
   const ctx = await context(run, 'android', { lang: 'en' });
@@ -251,6 +274,7 @@ export default async function miss_(run) {
     ...rounds.map(([v, mode]) => variantRound(run, t, v, mode).catch((e) => t.check(false, `${v}, ${mode}: ${e.message.split('\n')[0]}`))),
     reducedMotion(run, t).catch((e) => t.check(false, `minska rörelse: ${e.message.split('\n')[0]}`)),
     english(run, t).catch((e) => t.check(false, `engelska: ${e.message.split('\n')[0]}`)),
+    keyboard(run, t).catch((e) => t.check(false, `tangentbord: ${e.message.split('\n')[0]}`)),
   ]);
   return t;
 }

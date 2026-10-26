@@ -154,6 +154,7 @@ export class SwedenMap {
   private readonly pinsG: Selection<SVGGElement, unknown, null, undefined>;
   private readonly pinLabelsG: Selection<SVGGElement, unknown, null, undefined>;
   private readonly markerLabelsG: Selection<SVGGElement, unknown, null, undefined>;
+  private readonly lineLabelG: Selection<SVGGElement, unknown, null, undefined>;
   private readonly zoomBehavior: ZoomBehavior<SVGSVGElement, unknown>;
   private readonly projection: GeoProjection;
   private readonly path = geoPath();
@@ -173,7 +174,7 @@ export class SwedenMap {
   private focusedGroup: string | null = null;
   private markers: Marker[] = [];
   /** Linjen från felklicket till rätt svar (PO-15, variant C). */
-  private line: { from: [number, number]; to: [number, number] } | null = null;
+  private line: { from: [number, number]; to: [number, number]; label: string } | null = null;
   private pins: PlayerPin[] = [];
   /** Var de synliga sjönamnen hamnade, så att spelarnas namn inte läggs över dem. */
   private lakeLabelBoxes: Box[] = [];
@@ -243,6 +244,7 @@ export class SwedenMap {
     // spelare har klickat runt det (PO-30).
     this.lakeLabelsG = this.root.append('g').attr('class', 'lake-labels');
     this.markerLabelsG = this.root.append('g').attr('class', 'marker-labels');
+    this.lineLabelG = this.root.append('g').attr('class', 'line-labels');
 
     this.coastG
       .selectAll('path')
@@ -525,14 +527,32 @@ export class SwedenMap {
     return g && (g.type === 'Polygon' || g.type === 'MultiPolygon') ? g : null;
   }
 
-  /** En streckad linje mellan två punkter med `label` (t.ex. avståndet) mitt på. */
+  /** En streckad linje mellan två punkter med `label` (t.ex. avståndet) längs linjen. */
   showLine(from: { lon: number; lat: number }, to: { lon: number; lat: number }, label: string): void {
-    this.line = { from: [from.lon, from.lat], to: [to.lon, to.lat] };
-    const a = this.projection([from.lon, from.lat]);
-    const b = this.projection([to.lon, to.lat]);
-    const mid = a && b ? this.projection.invert?.([(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]) : null;
-    if (mid) this.addText(mid[0], mid[1], label, 'wrong');
-    else this.renderMarkers();
+    this.line = { from: [from.lon, from.lat], to: [to.lon, to.lat], label };
+    this.renderMarkers();
+  }
+
+  /**
+   * Var linjens etikett hamnar: mitt på linjen om det är fritt, annars längre mot ena änden eller
+   * en bit vid sidan om, så att den inte täcker namnet på rätt svar (t.ex. en kort linje in i ett län).
+   */
+  private lineLabelAt(a: [number, number], b: [number, number], label: string, k: number): [number, number] {
+    const w = textWidth(label) / k;
+    const h = TEXT_HALF_H / k;
+    const len = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+    const normal = [-(b[1] - a[1]) / len, (b[0] - a[0]) / len];
+    const taken = this.answerBoxes();
+    let first: [number, number] | null = null;
+    for (const along of [0.5, 0.35, 0.65, 0.2, 0.8])
+      for (const side of [0, 16, -16, 28, -28]) {
+        const x = a[0] + (b[0] - a[0]) * along + (normal[0] * side) / k;
+        const y = a[1] + (b[1] - a[1]) * along + (normal[1] * side) / k;
+        first ??= [x, y];
+        const box = { x0: x - w / 2, y0: y - h, x1: x + w / 2, y1: y + h };
+        if (!taken.some((t) => overlaps(box, t))) return [x, y];
+      }
+    return first!;
   }
 
   private addText(lon: number, lat: number, label: string, kind: MarkerKind): void {
@@ -690,6 +710,19 @@ export class SwedenMap {
         nodes[i].setAttribute('y2', String(b[1]));
       })
       .style('stroke-dasharray', `${6 / k} ${5 / k}`);
+    this.lineLabelG
+      .selectAll<SVGTextElement, NonNullable<SwedenMap['line']>>('text')
+      .data(line)
+      .join('text')
+      .attr('class', 'marker-label is-text-only marker-label-wrong')
+      .attr('font-size', 14 / k)
+      .style('stroke-width', `${3 / k}px`)
+      .text((d) => d.label)
+      .each((d, i, nodes) => {
+        const [x, y] = this.lineLabelAt(this.projection(d.from) ?? [0, 0], this.projection(d.to) ?? [0, 0], d.label, k);
+        nodes[i].setAttribute('x', String(x));
+        nodes[i].setAttribute('y', String(y + 5 / k));
+      });
     const groups = this.markersG
       .selectAll<SVGGElement, Marker>('g.marker')
       .data(this.markers.filter((d) => !d.textOnly))

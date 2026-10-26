@@ -43,7 +43,7 @@ export interface Advance {
 /**
  * Knappen "Nästa" och, med `autoMs`, en nedräkning som går vidare av sig själv. Med nedräkning går
  * också ett tryck på `surface` (kartan) vidare, och nedräkningen står still så länge man håller
- * kvar fingret där eller fliken är dold.
+ * kvar fingret där eller fliken är dold, och för gott när man trycker på en tangent.
  */
 export function createAdvance(surface: HTMLElement, autoMs: number | null, onDone: () => void): Advance {
   const count = el('span', { class: 'advance-count', 'aria-hidden': 'true' });
@@ -55,6 +55,9 @@ export function createAdvance(surface: HTMLElement, autoMs: number | null, onDon
   // Nedräkningen börjar först när rutan syns (se nedan); till dess står den still.
   let paused = true;
   let shown = false;
+  // Den som använder tangentbordet får den tid som behövs (WCAG 2.2.1): nedräkningen stannar för
+  // gott, och man går vidare med knappen.
+  let byKeyboard = false;
   let interval: number | undefined;
   let down: { x: number; y: number; at: number } | null = null;
   let shownAt = performance.now();
@@ -73,7 +76,7 @@ export function createAdvance(surface: HTMLElement, autoMs: number | null, onDon
     render();
   };
   const resume = () => {
-    if (!paused || !shown || held > 0 || document.hidden) return;
+    if (!paused || !shown || byKeyboard || held > 0 || document.hidden) return;
     since = performance.now();
     paused = false;
     render();
@@ -98,6 +101,10 @@ export function createAdvance(surface: HTMLElement, autoMs: number | null, onDon
     if (tap) finish();
   };
   const onVisibility = () => (document.hidden ? pause() : resume());
+  const onKey = () => {
+    byKeyboard = true;
+    pause();
+  };
 
   const cancel = () => {
     window.clearInterval(interval);
@@ -106,6 +113,7 @@ export function createAdvance(surface: HTMLElement, autoMs: number | null, onDon
     window.removeEventListener('pointercancel', onUp, true);
     surface.removeEventListener('click', onClick, true);
     document.removeEventListener('visibilitychange', onVisibility);
+    document.removeEventListener('keydown', onKey, true);
   };
   let done = false;
   const finish = () => {
@@ -122,6 +130,7 @@ export function createAdvance(surface: HTMLElement, autoMs: number | null, onDon
     window.addEventListener('pointercancel', onUp, true);
     surface.addEventListener('click', onClick, true);
     document.addEventListener('visibilitychange', onVisibility);
+    document.addEventListener('keydown', onKey, true);
     render();
     // Efter nästa bildruta har rutan ritats; först då börjar de 4 sekunderna, också när kartan har
     // mycket att rita och sidan är seg.
