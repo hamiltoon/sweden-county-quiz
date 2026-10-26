@@ -76,8 +76,8 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
 
 | Status | Punkter |
 |---|---|
-| Pågår (utvecklaren) | PO-33 Minnesregler |
-| Nästa | PO-17 (Spela igen, mer angelägen med reglerna på slutskärmen), sedan live-paketet: PO-23, PO-02, PO-03, PO-04 |
+| Pågår (utvecklaren) | PO-33 + PO-17 till produktion (#37), sedan PO-23 |
+| Nästa | Live-paketet: PO-23, PO-02, PO-03, PO-04 |
 | Väntar på UX-verifiering | – |
 | Väntar på svar från John | – |
 | Klart | PO-01, PO-01b, PO-06, PO-14, PO-15, PO-16, PO-22, PO-29, PO-29b, PO-30, PO-31 |
@@ -245,7 +245,7 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
      8c. I mörkt läge har länsgränsen kontrast minst 3:1 mot både länets och omgivningens fyllning (WCAG 1.4.11).
 
 ### PO-17 Slutskärmen: Spela igen utan att scrolla
-- **Prioritet:** P1, direkt efter PO-33 (minnesreglerna gör slutskärmen längre)
+- **Status:** ✅ Godkänd av UX på staging 2026-10-26. Byggd i samma PR som PO-33 ([#37](https://github.com/hamiltoon/sweden-county-quiz/pull/37)), med knappfält nederst.
 - **Insats:** S
 - **Koppling:** UX-05, UX-29
 - **Värde:** "En gång till" ska vara ett tryck. I dag ligger knappen under vecket, på Android 360 px två skärmhöjder ner.
@@ -291,7 +291,7 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
   3. Efter att värden valt läge eller blandning ligger fokus kvar på det valda chipet.
 
 ### PO-23 Live: samma hjälp vid miss som i solospelet
-- **Prioritet:** P2
+- **Prioritet:** P1, nästa efter PO-33
 - **Insats:** S
 - **Koppling:** UX-16, UX-17
 - **Värde:** I solospelet lär man sig av "250 km bort" och av tipset när man klickar i havet. I live får man bara "Fel." eller ingenting.
