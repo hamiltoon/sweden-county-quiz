@@ -160,6 +160,8 @@ async function twelvePlayers(run, t) {
     await h.waitForSelector('.live-standings', { timeout: 15000 });
     await checkReveal(t, `12 spelare, fråga ${n}`, h, 12);
     if (n === 1) {
+      // Boten kan få avslöjandet en stund efter värden.
+      for (let i = 0; i < 20 && bots[0].state.last?.phase !== 'reveal'; i++) await h.waitForTimeout(100);
       const s = bots[0].state.last;
       const left = s.question.endsAt - s.serverNow;
       t.check(left > 6000 && left <= 7000, `12 spelare: avslöjandet visas i 7 s (${left} ms kvar när det börjar)`);
