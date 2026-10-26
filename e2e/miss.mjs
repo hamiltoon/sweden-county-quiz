@@ -180,7 +180,7 @@ async function round(run, t, mode, { hold = false } = {}) {
   const place = q.replace(/^Var ligger /, '').replace(/ i .+ län\?$/, '').replace(/\?$/, '');
   t.check(r.label?.text === place && r.label.visible, `${name}: namnet "${r.label?.text}" står på kartan och syns (väntat "${place}")`);
   t.check(r.button === 'Nästa' && focused, `${name}: knappen "${r.button}" har fokus`);
-  t.check(r.hint === 'Håll fingret på kartan för att titta längre', `${name}: hinten första gången på enheten ("${r.hint}")`);
+  t.check(r.hint === 'Håll ned på kartan för att titta längre', `${name}: hinten första gången på enheten ("${r.hint}")`);
   // Avståndet står på linjen, eller saknas om linjen är för kort (under 40 px) eller trång.
   t.check(r.line && (r.distance === null || (/^\d+ km$/.test(r.distance) && !r.distanceOnName)), `${name}: linjen till rätt svar, avståndet "${r.distance ?? 'dolt'}" täcker inte namnet`);
 
@@ -270,7 +270,7 @@ async function english(run, t) {
     await sleep(p, 1600);
   }
   const r = await measureMiss(p);
-  t.check(r.button === 'Next' && r.hint === 'Hold your finger on the map to look longer', `engelska: knappen "${r.button}", hinten "${r.hint}"`);
+  t.check(r.button === 'Next' && r.hint === 'Press and hold the map to look longer', `engelska: knappen "${r.button}", hinten "${r.hint}"`);
   await t.shot(p, 'en-miss');
   await ctx.close();
 }
