@@ -25,6 +25,15 @@ Beslutat med John 2026-10-25. Det är kontrollen av resultatet som begränsar os
 3. **Flera förslag när lösningen är osäker.** Två eller tre agenter bygger varsin variant på staging, och UX testar och rekommenderar; PO väljer. John testar inte. Först ut: PO-15 och PO-16.
 4. **Agenter per uppgift, inte per område.** När 1 och 2 finns kan en kortlivad agent ta en uppgift i egen gren. Den nuvarande utvecklaren sätter ihop och driftsätter.
 
+## Teamet
+
+- **PO** (`session_01PTbzZXZdzDxTaivzKg7RHA`): äger backloggen och prioriteringen.
+- **Utvecklare** (`session_01Rs4gVtMRrBdBX4M4AY6u8m`): bygger, testar och driftsätter; den enda som ändrar spelets kod.
+- **UX-specialist** (`session_01WgCLzguihPg11jmZ85YFnv`): granskar och verifierar.
+- **Kreativ ledare** (`session_013q5y5GDajxYeqiPCfyHUjD`, sedan 2026-10-26): skickar omgångar om 8–10 galna idéer
+  (K-01 …) till PO. PO sorterar dem i ja, kanske och nej med motivering. Ungefär 1 av 10 väntas bli något. Ett ja
+  blir en PO-punkt här. Den kreativa ledaren bygger inget.
+
 ## Kostnad
 
 John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
@@ -67,11 +76,11 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
 
 | Status | Punkter |
 |---|---|
-| Pågår (utvecklaren) | – (pausat 2026-10-25 kväll på Johns begäran) |
-| Nästa | PO-16 i varianter, sedan PO-15 i varianter, PO-30 |
+| Pågår (utvecklaren) | PO-15 i varianter |
+| Nästa | PO-33 Minnesregler, sedan live-paketet: PO-23, PO-02, PO-03, PO-04 |
 | Väntar på UX-verifiering | – |
 | Väntar på svar från John | – |
-| Klart | PO-01, PO-01b, PO-06, PO-14, PO-22, PO-29, PO-29b |
+| Klart | PO-01, PO-01b, PO-06, PO-14, PO-16, PO-22, PO-29, PO-29b, PO-30, PO-31 |
 
 ## Backlog i prioritetsordning
 
@@ -118,7 +127,7 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
   5. Testat med 12 spelare i län, residensstad, sjöar och kommuner, på båda skärmstorlekarna.
 
 ### PO-29 Staging och automatiska acceptanstester
-- **Prioritet:** P1, direkt efter PO-01b
+- **Status:** ✅ Klar 2026-10-25 ([#29](https://github.com/hamiltoon/sweden-county-quiz/pull/29)). UX har godkänt kriterium 1–7; kriterium 8 i PO-29b.
 - **Insats:** M–L
 - **Koppling:** Beslut om arbetssätt med John 2026-10-25; felet i PO-01 kriterium 8 nådde produktion
 - **Värde för spelarna:** Det som når John och Erika är redan kontrollerat, så att en kväll i live inte förstörs av ett fel.
@@ -205,7 +214,10 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
   7. Svenska och engelska.
 
 ### PO-16 Kommuner: kartan zoomar in på länet
-- **Prioritet:** P1, efter PO-29. Byggs som två till tre varianter på staging som UX testar och PO väljer mellan.
+- **Status:** ✅ Klar 2026-10-26, i produktion via [#33](https://github.com/hamiltoon/sweden-county-quiz/pull/33) (version a27ce283). UX har godkänt C med krav 7–8; 8c (mörkt läge) uppfyllt med fyllning 3,32:1 och gräns 3,44:1, mätt i e2e.
+- **Beslut (PO, 2026-10-26):** variant C. Ett tryck på en för liten kommun förstorar kartan i stället för att räknas som svar.
+  A gav för låg träffsäkerhet för de minsta kommunerna (Öckerö 0,24–0,28). B lät träffytorna ta upp till 49 % av
+  grannkommunerna och lärde ut fel geografi. C är exakt och visar kommunen bland sina grannar.
 - **Insats:** M
 - **Koppling:** UX-01
 - **Värde:** 274 av 290 kommuner är mindre än ett finger på en iPhone, och zoomen nollställs vid varje fråga, så man
@@ -220,6 +232,10 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
   4. I live gäller samma inzoomning, och kommunkartan laddas redan i lobbyn när läget innehåller kommuner, så att
      ingen förlorar tid på laddning.
   5. Övriga lägen påverkas inte.
+  6. Med "minska rörelse" sker zoomen utan animation.
+  7. Vid förstoringen visas en hint, "Liten kommun – förstorat, tryck igen" (sv/en), de tre första gångerna per enhet.
+  8. Ytan utanför länet tonas ned, och zoomen går mjukt från den vy man har, så att man ser var länet ligger.
+     8c. I mörkt läge har länsgränsen kontrast minst 3:1 mot både länets och omgivningens fyllning (WCAG 1.4.11).
 
 ### PO-17 Slutskärmen: Spela igen utan att scrolla
 - **Prioritet:** P2
@@ -290,7 +306,7 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
   4. Topplistan och tidigare resultat lämnas orörda.
 
 ### PO-30 Live: målets namn syns ovanpå prickarna
-- **Prioritet:** P2
+- **Status:** ✅ Klar 2026-10-26, i produktion via [#34](https://github.com/hamiltoon/sweden-county-quiz/pull/34) (version 6d905c86). UX godkände med 12 spelare och 10 avslöjanden.
 - **Insats:** S
 - **Koppling:** UX-verifieringen av PO-01b (putsning)
 - **Värde:** När alla klickat nära rätt svar täcker prickarna målets namn ("Umeå", "Uddjaure"). Namnet är det man ska lära sig.
@@ -299,11 +315,65 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
   2. Med 12 prickar inom 30 km från målet går målets namn att läsa helt på iPhone 13 och Android 360.
 
 ### PO-31 Lobbyn: fokus hamnar inte under Starta-fältet
-- **Prioritet:** P3 (tas med i nästa PR som rör lobbyn)
+- **Status:** ✅ Klar 2026-10-26, i produktion med PO-16 ([#33](https://github.com/hamiltoon/sweden-county-quiz/pull/33)).
 - **Insats:** S (en rad CSS, `scroll-padding-bottom`)
 - **Koppling:** UX-fynd vid verifieringen av PO-29b (WCAG 2.4.11); följer av PO-22
 - **Acceptanskriterier:**
   1. Med tangentbord på iPhone 13 hamnar inget fokuserat chip under det klistrade Starta-fältet.
+
+### PO-32 Kommuner: liten Sverige-karta med länet ifyllt
+- **Prioritet:** P3
+- **Insats:** S–M
+- **Koppling:** UX-förslag vid verifieringen av PO-16
+- **Värde:** När kartan zoomar in på länet behöver man inte veta var länet ligger. En liten karta i hörnet håller kvar det lärandet.
+- **Acceptanskriterier:** skrivs när den blir aktuell; utvärderas efter att PO-16 krav 8 har använts en tid.
+
+### PO-33 Minnesregler i spelet
+- **Prioritet:** P1, direkt efter PO-15 (regeln visas i avslöjandet som PO-15 bygger)
+- **Insats:** M–L
+- **Koppling:** Johns idé 2026-10-26; riktningen "lära sig geografi". Första förslagen: `docs/minnesregler-forslag.json` (26 regler, faktagranskade, ej betygsatta).
+- **Värde:** Spelet lär inte bara ut var saker ligger, utan knep för att komma ihåg dem: ramsor, paradoxer, historia
+  och gärna lite konstiga bilder. John och familjen avgör själva vilka regler som är bra, direkt i spelet.
+- **Vad som gör en regel bra:** stämmer, kort, ger en bild, säger något om läget, gärna lite konstig, helst för flera saker.
+- **Beslut (PO):** betygsättningen sker i spelet, inte på en separat sida (John 2026-10-26). Rösterna sparas i en ny
+  tabell i den befintliga D1-databasen. De påverkar inte topplistan, och ingen ny Cloudflare-resurs behövs.
+- **Efter UX-granskning 2026-10-26:** tyngdpunkten ligger på slutskärmen, där man har tid att läsa, inte i avslöjandet.
+  Sållningen skyddas mot att ett enda 👎 tar bort en regel, och mot att vem som helst röstar bort regler.
+  Faktafelet i "Väster-paradoxen" är rättat i förslagen.
+- **Acceptanskriterier:**
+  1. Reglerna ligger som data i repot: id, kategori, vilka län, landskap, sjöar eller kommuner de gäller, `short` (högst
+     110 tecken), `text` och `why`. Förslagen i `docs/minnesregler-forslag.json` finns med från start. Nya regler och
+     ändringar kommer via PR som PO godkänner.
+  2. **Slutskärmen (huvudplatsen):** under de missade frågorna får varje missad sak som har en regel en rad med
+     "💡 " och regelns `text`, och `why` går att fälla ut. Där finns 👍 och 👎.
+  3. **Avslöjandet:** efter en miss visas bara `short`, nederst, utan att kartan krymper till under cirka 400 px på
+     360×740. Ingen röstning där. Det kräver att PO-15 väntar på ett tryck efter en miss. Annars visas inget i avslöjandet.
+  4. **Lägeskortet:** en tankeregel (kategori princip) för läget visas som en kort tipsrad i lägets kort på
+     startskärmen, t.ex. "Tips: VHS = västkusten". Ingen banderoll eller dialog.
+  5. **"Hjälpte regeln?":** när man svarar rätt på en sak vars regel visats vid ett tidigare tillfälle på enheten,
+     frågar slutskärmen en gång "Hjälpte minnesregeln?" med 👍/👎. Det sparas separat från vanliga röster.
+  6. **Röster:** 👍/👎 sparas på servern per regel och enhet. Man kan ändra sin röst. Begränsat per IP som
+     topplistan. Påverkar inte topplistan. Kommentarer finns bara på /minnesregler, inte i spelet.
+  7. **Sållning:** ett 👎 döljer regeln direkt bara på den egna enheten. För alla döljs ingen regel automatiskt.
+     En regel med minst 5 röster och fler 👎 än 👍 markeras som "ifrågasatt", och PO avgör om den skrivs om eller tas bort.
+  8. **Sidan /minnesregler,** länkad från startskärmen: alla regler per kategori med röster, "hjälpte"-andel och
+     kommentarer. Där kan man rösta, kommentera och föreslå en egen regel eller en önskan.
+  9. PO kan läsa röster, "hjälpte"-svar, kommentarer, förslag och ifrågasatta regler via API, t.ex. `GET /api/mnemonics`.
+  10. Svenska. I engelskt läge visas en regel bara om den har en engelsk text. De flesta regler är ordlekar, så det
+      engelska läget får få regler, och det är medvetet.
+  11. Live påverkas inte än.
+  12. e2e: en regel visas på slutskärmen efter en miss, `short` i avslöjandet är högst 110 tecken och kartan minst
+      400 px på 360×740, en röst sparas på staging, och guard stoppar röster mot produktion.
+- **Mått:** svaren på "Hjälpte regeln?" (kriterium 5), kompletterat med andelen rätt nästa gång samma sak kommer. Underlaget blir tunt med få spelare.
+
+### PO-34 Förlorarens ramsa (K-02)
+- **Prioritet:** P2, efter PO-33 (bygger på dess röstning)
+- **Insats:** M
+- **Koppling:** Kreativ ledare, omgång 1
+- **Värde:** Efter en live-match hittar den som kom sist på en minnesregel för frågan som flest missade, och de andra
+  röstar. En vinnande regel kommer in i PO-33 med namn ("Erikas regel"). Den som hittar på en regel själv minns den
+  bäst, förlusten blir rolig, och familjen fyller på med egna regler.
+- **Acceptanskriterier:** skrivs när PO-33 är i produktion.
 
 ### PO-02 Live: se vilka som har svarat medan frågan pågår
 - **Prioritet:** P2
@@ -346,6 +416,14 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
   3. Med inställningen "minska rörelse" i telefonen (`prefers-reduced-motion`) hoppar raderna direkt till sina platser.
   4. Svenska och engelska.
 
+### PO-35 Soffläget: tv:n visar kartan, telefonerna svarar (K-03)
+- **Prioritet:** P2, nästa stora live-satsning efter live-paketet (PO-23, PO-02–PO-04)
+- **Insats:** M
+- **Koppling:** Kreativ ledare, omgång 1; riktningen "man spelar när man ses"
+- **Värde:** När familjen sitter i samma rum visar en stor skärm (tv eller laptop) kartan, frågan och allas prickar,
+  och telefonerna används för att svara. Avslöjandet blir gemensamt, och alla pekar på tv:n.
+- **Acceptanskriterier:** skrivs innan start. En utgångspunkt är en visar-vy av ett befintligt rum, utan att den räknas som spelare.
+
 ### PO-10 Utmana en kompis
 - **Prioritet:** P2, först efter live-paketet (PO-02–PO-04)
 - **Insats:** M
@@ -374,6 +452,15 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
   3. Övningsomgången ställer bara de frågorna, och en fråga som besvaras rätt direkt två gånger i rad försvinner ur listan.
   4. Övningsomgångar sparas inte på topplistan och ändrar inte bästa resultat.
   5. Svenska och engelska.
+
+### PO-36 Siluetten: känn igen formen (K-06)
+- **Prioritet:** P2, efter PO-13
+- **Insats:** S–M
+- **Koppling:** Kreativ ledare, omgång 1; liknar "Omvänt läge" i IDEER.md
+- **Värde:** Ett län, landskap eller en sjö visas som en ensam siluett, och man väljer namnet bland några alternativ.
+  Efteråt landar formen på sin plats. Man lär sig formen och inte bara läget, och formerna ger nya bilder till
+  minnesreglerna (Gotland som en tand).
+- **Acceptanskriterier:** skrivs innan start.
 
 ### PO-07 Live: skiljetecken vid lika poäng
 - **Prioritet:** P2 (efter PO-13; billig när PO-01 sparar svarstiderna)
@@ -494,6 +581,10 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
 | Svårighetsnivå "Expert" och omvänt läge | Nya spelsätt; väntar tills live-paketet är klart. Omvänt läge (flerval) skulle också ge ett sätt att spela utan att peka på kartan (UX-11). |
 | Spela kartan med tangentbord och skärmläsare (UX-11) | Stort arbete (L) för ingen i dagens spelarkrets. Tas upp om spelet ska nå fler, troligast via omvänt läge. |
 | Bredare layout på dator (UX-21), liggande mobil (UX-23), klippkant i grannkartan (UX-28) | Spelet spelas på mobil i stående läge; liten nytta för spelarna i dag. |
+| K-01 Familjens nålar (egna platser som riktmärken) | Stark lärandeidé, men privata platser får inte bli publika i ett öppet spel. Tas upp igen om de kan sparas på enheten eller bara i ett live-rum. |
+| K-04 Gränslarmet i bilen | Rolig geografi i verkligheten, men en webbapp kan inte följa positionen med skärmen släckt på iPhone. Kanske senare. |
+| K-07 Rita Sverige blind | Kul inledning på en live-match, men osäkert hur poängen ska räknas. Kanske senare. |
+| K-05 Mänskliga kartan, K-08 Missmonstret, K-09 Kylskåpskartan, K-10 Sabotagekort | Nej för nu: kräver många i samma rum (K-05), överlappar PO-13 (K-08), används sällan (K-09) eller straffar den som ligger efter i en familj med olika nivåer (K-10). |
 
 ## UX-fynd
 
@@ -501,7 +592,7 @@ Fynd från UX-specialisten (UX-01, UX-02 …) läggs in här med prioritet och k
 
 | UX-id | Fynd | Prioritet | PO-punkt |
 |---|---|---|---|
-| UX-01 | Kommuner: målen för små, zoomen nollställs | P1 | PO-16 |
+| UX-01 | Kommuner: målen för små, zoomen nollställs | ✅ Klar | PO-16 |
 | UX-02 | Rätt/fel-rutan har för låg kontrast | ✅ Godkänd | PO-14 |
 | UX-03 | Rött mot grönt är enda skillnaden | ✅ Godkänd | PO-14 |
 | UX-04 | Spela live under vecket | ✅ Klar | PO-06 |
@@ -534,6 +625,8 @@ Fynd från UX-specialisten (UX-01, UX-02 …) läggs in här med prioritet och k
 
 ## Klart
 
+- **PO-30** Live: målets namn syns ovanpå prickarna. I produktion 2026-10-26 via [#34](https://github.com/hamiltoon/sweden-county-quiz/pull/34).
+- **PO-16 och PO-31** Kommuner zoomar in på länet (variant C, förstoring av små kommuner, nedtonad omgivning); fokus i lobbyn. I produktion 2026-10-26 via [#33](https://github.com/hamiltoon/sweden-county-quiz/pull/33).
 - **PO-14 och PO-29b** Rätt och fel syns för alla (UX-02, UX-03); staging-banderoll och stramare tester. I produktion 2026-10-25 via [#30](https://github.com/hamiltoon/sweden-county-quiz/pull/30).
 - **PO-29** Staging och automatiska acceptanstester. Mergad i [#29](https://github.com/hamiltoon/sweden-county-quiz/pull/29), godkänd av UX 2026-10-25.
 - **PO-01 och PO-01b** Live: allas klick, snabbast och ett avslöjande som håller med 12 spelare. Driftsatt i #22, #25 och #27, godkänd av UX 2026-10-25.
