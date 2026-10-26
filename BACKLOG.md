@@ -375,6 +375,13 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
   bäst, förlusten blir rolig, och familjen fyller på med egna regler.
 - **Acceptanskriterier:** skrivs när PO-33 är i produktion.
 
+### PO-37 Zooma med fingrarna under avslöjandet
+- **Prioritet:** P3
+- **Insats:** S
+- **Koppling:** utvecklarens förslag vid PO-15
+- **Värde:** Den som vill se rätt svar närmare kan nypa och zooma innan man går vidare.
+- **Acceptanskriterier:** skrivs när den blir aktuell. Nypande får inte räknas som "tryck för att gå vidare".
+
 ### PO-02 Live: se vilka som har svarat medan frågan pågår
 - **Prioritet:** P2
 - **Insats:** S (servern skickar redan `answered` per spelare)
