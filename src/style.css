@@ -1785,14 +1785,17 @@ a {
   z-index: 2;
 }
 
-/* Slutskärmen: regeln under den missade saken i listan. */
-.result-list li {
-  flex-wrap: wrap;
+/* Slutskärmen: en kompakt rad per regel under de missade sakerna, högst tre innan "Visa alla". */
+.mnemonic-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .mnemonic {
-  flex-basis: 100%;
-  margin-top: 8px;
   padding: 10px 12px;
   border-radius: 10px;
   background: color-mix(in srgb, var(--accent) 7%, var(--panel));
@@ -1810,6 +1813,7 @@ a {
 }
 
 .mnemonic-why summary,
+.mnemonic-more summary,
 .mnemonic-discuss summary {
   min-height: 32px;
   padding: 6px 0;
@@ -1818,8 +1822,58 @@ a {
   font-weight: 600;
 }
 
-.mnemonic-why p {
+.mnemonic-why p,
+.mnemonic-more p {
   margin: 4px 0 0;
+}
+
+.mnemonic-more .mnemonic-why {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.mnemonic-foot {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.mnemonic-foot .mnemonic-more {
+  flex: 1;
+  min-width: 0;
+}
+
+.mnemonic-foot .vote-row {
+  flex: none;
+  margin-top: 0;
+  justify-content: flex-end;
+  max-width: 60%;
+}
+
+.mnemonic-foot .mnemonic-note {
+  flex-basis: 100%;
+  text-align: right;
+}
+
+/* "Visa alla (N)" och länken till alla regler på en rad under listan. */
+.mnemonic-rules-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.mnemonic-show-all {
+  flex: none;
+  min-height: 44px;
+  padding: 8px 16px;
+}
+
+.mnemonic-rules-foot .mnemonic-link {
+  margin-left: auto;
 }
 
 .vote-row {
@@ -1979,4 +2033,9 @@ a {
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--muted);
+}
+
+/* Anteckningen under röstknapparna tar bara plats när den har text. */
+.mnemonic-note:empty {
+  display: none;
 }

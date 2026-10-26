@@ -17,7 +17,8 @@ import { el, clear } from './ui/dom';
 import { Toast } from './ui/toast';
 import { createAdvance, takeHoldHint, type Advance } from './ui/advance';
 import { markSeen, ruleFor, shouldAskHelped, textOf } from './mnemonics';
-import { renderHelped, renderRule } from './mnemonics/ui';
+import type { Mnemonic } from './data/mnemonics';
+import { renderEndRules, renderHelped } from './mnemonics/ui';
 import { renderMnemonicsPage } from './mnemonics/page';
 import { renderEnd, renderRecapLegend, renderStart } from './ui/screens';
 import { renderEndLeaderboard, renderStartLeaderboard } from './ui/leaderboard';
@@ -513,7 +514,7 @@ function renderRecap(summary: Summary, regions: Topology, objectName: string, la
  * Minnesreglerna på slutskärmen (PO-33): regeln under varje missad sak, och en gång "Hjälpte
  * minnesregeln?" om man nu svarat rätt på något vars regel man såg i en tidigare omgång.
  */
-function endRules(summary: Summary, round: string): { ruleFor: (q: Question) => HTMLElement | null; helped: HTMLElement | null } {
+function endRules(summary: Summary, round: string): { rules: HTMLElement | null; helped: HTMLElement | null } {
   let helped: HTMLElement | null = null;
   for (const r of summary.results) {
     const rule = r.solved ? ruleFor(r.question) : null;
@@ -522,23 +523,16 @@ function endRules(summary: Summary, round: string): { ruleFor: (q: Question) => 
       break;
     }
   }
-  // Varje regel visas en gång, under den första missade saken den gäller, med alla sakerna utskrivna.
-  const things = new Map<string, string[]>();
+  // En rad per regel, med alla missade saker den gäller, i den ordning de kom.
+  const entries = new Map<string, { rule: Mnemonic; things: string[] }>();
   for (const r of summary.results) {
     const rule = r.solved ? null : ruleFor(r.question);
-    if (rule) things.set(rule.id, [...(things.get(rule.id) ?? []), questionLabel(r.question)]);
+    if (!rule) continue;
+    const entry = entries.get(rule.id) ?? { rule, things: [] };
+    entry.things.push(questionLabel(r.question));
+    entries.set(rule.id, entry);
   }
-  const shown = new Set<string>();
-  return {
-    ruleFor: (q) => {
-      const rule = ruleFor(q);
-      if (!rule || shown.has(rule.id)) return null;
-      shown.add(rule.id);
-      markSeen(rule.id, round);
-      return renderRule(rule, things.get(rule.id));
-    },
-    helped,
-  };
+  return { rules: renderEndRules([...entries.values()], (rule) => markSeen(rule.id, round), showMnemonics), helped };
 }
 
 function attemptsText(left: number): string {

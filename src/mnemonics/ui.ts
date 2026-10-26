@@ -1,6 +1,6 @@
 /** Minnesreglerna på skärmen: röstknapparna, raden på slutskärmen och "Hjälpte minnesregeln?". */
 import type { Mnemonic } from '../data/mnemonics';
-import { lang, t } from '../i18n';
+import { t } from '../i18n';
 import { el } from '../ui/dom';
 import { answerHelped, myVotes, textOf, vote } from './index';
 
@@ -32,21 +32,69 @@ export function renderVoteButtons(rule: Mnemonic, onChange?: (value: 1 | -1 | 0)
   return el('div', { class: 'vote-row' }, up, down, note);
 }
 
+/** Så många regler syns på slutskärmen innan "Visa alla". */
+const END_RULES_VISIBLE = 3;
+
 /**
- * Regeln med 💡, "Varför?" att fälla ut och röstknapparna (slutskärmen, krav 2). Gäller den flera
- * av de missade sakerna står de först, eftersom regeln bara visas en gång.
+ * En regel på slutskärmen: de missade sakerna den gäller som rubrik, den korta texten med 💡, "Mer"
+ * som fäller ut hela texten och varför den fungerar, och röstknapparna. Rösten gäller regeln.
  */
-export function renderRule(rule: Mnemonic, things: string[] = []): HTMLElement | null {
+function renderRuleRow(rule: Mnemonic, things: string[]): HTMLElement | null {
   const text = textOf(rule);
   if (!text) return null;
-  return el(
-    'div',
-    { class: 'mnemonic', 'data-rule': rule.id },
-    things.length > 1 ? el('p', { class: 'mnemonic-about' }, t().mnemonic.about(new Intl.ListFormat(lang(), { type: 'conjunction' }).format(things))) : null,
-    el('p', { class: 'mnemonic-text' }, el('span', { 'aria-hidden': 'true' }, `${t().mnemonic.bulb} `), text.text),
-    text.why ? el('details', { class: 'mnemonic-why' }, el('summary', {}, t().mnemonic.why), el('p', {}, text.why)) : null,
-    renderVoteButtons(rule),
+  const more = [text.short && text.short !== text.text ? el('p', {}, text.text) : null, text.why ? el('p', { class: 'mnemonic-why' }, text.why) : null].filter(
+    (n): n is HTMLParagraphElement => !!n,
   );
+  return el(
+    'li',
+    { class: 'mnemonic', 'data-rule': rule.id },
+    el('p', { class: 'mnemonic-about' }, things.join(', ')),
+    el('p', { class: 'mnemonic-text' }, el('span', { 'aria-hidden': 'true' }, `${t().mnemonic.bulb} `), text.short ?? text.text),
+    // "Mer" och röstknapparna på samma rad, så att raden blir låg.
+    el(
+      'div',
+      { class: 'mnemonic-foot' },
+      more.length ? el('details', { class: 'mnemonic-more' }, el('summary', {}, t().mnemonic.more), ...more) : el('span', { class: 'mnemonic-more' }),
+      renderVoteButtons(rule),
+    ),
+  );
+}
+
+/**
+ * Minnesreglerna för de missade sakerna på slutskärmen (PO-33): en rad per regel, högst
+ * END_RULES_VISIBLE innan "Visa alla (N)", och en länk till alla regler. `onShown` får varje regel
+ * när den syns.
+ */
+export function renderEndRules(entries: { rule: Mnemonic; things: string[] }[], onShown: (rule: Mnemonic) => void, onAllRules: () => void): HTMLElement | null {
+  const rows = entries.map(({ rule, things }) => ({ rule, row: renderRuleRow(rule, things) })).filter((e): e is { rule: Mnemonic; row: HTMLLIElement } => !!e.row);
+  if (!rows.length) return null;
+  rows.forEach(({ rule, row }, i) => {
+    if (i < END_RULES_VISIBLE) onShown(rule);
+    else row.hidden = true;
+  });
+  const list = el('ul', { class: 'mnemonic-list' }, ...rows.map((e) => e.row));
+  let showAll: HTMLButtonElement | null = null;
+  if (rows.length > END_RULES_VISIBLE) {
+    showAll = el('button', { class: 'btn btn-link mnemonic-show-all', type: 'button' }, t().mnemonic.showAll(rows.length));
+    showAll.addEventListener('click', () => {
+      rows.slice(END_RULES_VISIBLE).forEach(({ rule, row }) => {
+        row.hidden = false;
+        onShown(rule);
+      });
+      // Fokus till den första regeln som kom fram, så att tangentbordet inte hamnar på en borttagen knapp.
+      const first = rows[END_RULES_VISIBLE].row;
+      first.tabIndex = -1;
+      first.focus();
+      showAll?.remove();
+    });
+  }
+  const link = el('a', { class: 'mnemonic-link', href: '/minnesregler' }, t().mnemonic.allRules);
+  link.addEventListener('click', (e) => {
+    if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+    e.preventDefault();
+    onAllRules();
+  });
+  return el('div', { class: 'result-group mnemonic-rules' }, el('h3', {}, t().mnemonic.endTitle), list, el('div', { class: 'mnemonic-rules-foot' }, showAll, link));
 }
 
 /** "Hjälpte minnesregeln?" efter ett rätt svar på något vars regel man sett förut (krav 5). */

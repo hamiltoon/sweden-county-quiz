@@ -117,7 +117,10 @@ export const sv = {
   mnemonic: {
     bulb: '💡',
     why: 'Varför fungerar den?',
-    about: (things: string) => `Gäller ${things}.`,
+    more: 'Mer',
+    endTitle: 'Minnesregler',
+    showAll: (n: number) => `Visa alla (${n})`,
+    allRules: 'Alla minnesregler',
     good: 'Bra regel',
     bad: 'Dålig regel',
     hiddenHere: 'Regeln visas inte mer på den här enheten.',

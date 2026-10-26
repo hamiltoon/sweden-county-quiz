@@ -141,8 +141,8 @@ export function renderEnd(
     leaderboard?: HTMLElement;
     /** Kartsammanfattning: en minikarta färgad efter hur varje fråga gick. */
     recap?: HTMLElement;
-    /** Minnesregeln för en missad sak, under den i listan (PO-33). */
-    ruleFor?: (q: Question) => HTMLElement | null;
+    /** Minnesreglerna för de missade sakerna, under listan med dem (PO-33). */
+    rules?: HTMLElement | null;
     /** "Hjälpte minnesregeln?" (PO-33). */
     helped?: HTMLElement | null;
   } = {},
@@ -150,7 +150,7 @@ export function renderEnd(
   const missed = summary.results.filter((r) => !r.solved);
   const shaky = summary.results.filter((r) => r.solved && r.attempts > 1);
 
-  const list = (title: string, items: typeof missed, withRules = false) =>
+  const list = (title: string, items: typeof missed) =>
     items.length
       ? el(
           'div',
@@ -165,7 +165,6 @@ export function renderEnd(
                 {},
                 el('span', {}, resultLabel(r.question)),
                 el('span', { class: 'pts' }, t().common.points(r.points)),
-                withRules ? (extras.ruleFor?.(r.question) ?? null) : null,
               ),
             ),
           ),
@@ -190,7 +189,8 @@ export function renderEnd(
       isNewBest ? el('div', { class: 'new-best' }, t().end.newBest) : null,
     ),
     extras.leaderboard,
-    list(t().end.missed, missed, true),
+    list(t().end.missed, missed),
+    extras.rules ?? null,
     extras.helped ?? null,
     list(t().end.shaky, shaky),
     missed.length + shaky.length === 0 ? el('p', { class: 'perfect' }, t().end.perfect) : null,

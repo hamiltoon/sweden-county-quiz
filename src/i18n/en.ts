@@ -118,7 +118,10 @@ export const en: Messages = {
   mnemonic: {
     bulb: '💡',
     why: 'Why does it work?',
-    about: (things) => `About ${things}.`,
+    more: 'More',
+    endTitle: 'Memory rules',
+    showAll: (n) => `Show all (${n})`,
+    allRules: 'All memory rules',
     good: 'Good rule',
     bad: 'Bad rule',
     hiddenHere: 'This rule won’t be shown on this device again.',

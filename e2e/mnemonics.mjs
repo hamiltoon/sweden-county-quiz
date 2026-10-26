@@ -15,7 +15,7 @@ import { LAKES } from '../src/data/lakes.ts';
 import { MUNICIPALITIES } from '../src/data/municipalities.ts';
 import { ANSWERS, Suite, answerAccepted, context, isGuarded, page, questionText, url } from './lib.mjs';
 import { axe } from './a11y.mjs';
-import { miss, nextQuestion } from './miss.mjs';
+import { miss } from './miss.mjs';
 
 const SHORT_MAX = 110;
 /** Sjöar vars regel har en kort text, i den ordning reglerna väljs (en regel om saken före en tankeregel). */
@@ -43,21 +43,8 @@ function checkData(t) {
 /** Sjöarna som har samma regel som `id` (t.ex. Vänern och Vättern). */
 const partnersOf = (id) => LAKES.map((l) => l.id).filter((other) => other !== id && ruleForLake(other)?.id === ruleForLake(id)?.id);
 
-/** Svarar rätt tills frågan gäller en sjö vars regel har kort text och gäller en sjö till; ger frågan. */
-async function untilRuleLake(p, last = '') {
-  for (let i = 0; i < 12; i++) {
-    const q = await nextQuestion(p, last);
-    const lake = ANSWERS.get(q)?.lake;
-    if (lake && ruleForLake(lake)?.short && partnersOf(lake).length) return q;
-    await sleep(p, 450);
-    await answerAccepted(p, ANSWERS.get(q));
-    last = q;
-  }
-  throw new Error('ingen sjö med en kort regel kom');
-}
-
-/** Svarar rätt på resten av omgången, fram till slutskärmen, utom på sjöarna i `missAlso`. */
-async function finishRound(p, last, missAlso = []) {
+/** Svarar rätt på resten av omgången, fram till slutskärmen. */
+async function finishRound(p, last) {
   while (await p.locator('.screen-game').count()) {
     const q = await p
       .waitForFunction((last) => {
@@ -67,15 +54,10 @@ async function finishRound(p, last, missAlso = []) {
       .then((h) => h.jsonValue());
     if (q === '__end__') break;
     await sleep(p, 450);
-    if (missAlso.includes(ANSWERS.get(q).lake)) {
-      await miss(p, 'sjo', { withRule: true });
-      await p.click('.toast-action');
-    } else {
-      await answerAccepted(p, ANSWERS.get(q));
-    }
+    await answerAccepted(p, ANSWERS.get(q));
     last = q;
   }
-  await p.waitForSelector('.screen-end .result-list, .screen-end .perfect', { timeout: 15000 });
+  await p.waitForSelector('.screen-end .btn-row', { timeout: 15000 });
 }
 
 /** En postning till /api/mnemonics: sparad (staging, localhost) eller stoppad (produktionen). */
@@ -84,59 +66,105 @@ function posted(run, ctx, p, path, before) {
   return p.waitForResponse((r) => r.url().includes(`/api/mnemonics/${path}`), { timeout: 8000 }).then((r) => (r.ok() ? 'sparad' : `svar ${r.status()}`), () => 'inget svar');
 }
 
+/** Antal regler (med kort text eller inte) som gäller någon sjö: så många rader får slutskärmen om alla missas. */
+const LAKE_RULES = new Set(LAKES.map((l) => ruleForLake(l.id)?.id).filter(Boolean)).size;
+
+/** Svarar på nästa fråga, eller ger '__end__' när omgången är slut. */
+function nextOrEnd(p, last) {
+  return p
+    .waitForFunction((last) => {
+      const text = document.querySelector('.question')?.textContent?.trim();
+      return !document.querySelector('.screen-game') ? '__end__' : text && text !== last && !text.endsWith('…') ? text : false;
+    }, last, { timeout: 15000 })
+    .then((h) => h.jsonValue());
+}
+
 async function revealAndEnd(run, t) {
   const ctx = await context(run, 'android');
   const p = await page(ctx);
   await p.goto(url(run));
   await p.click('.mode-btn[data-mode="sjo"]');
   await p.waitForSelector('.screen-game .map path');
-  const q = await untilRuleLake(p);
-  const rule = ruleForLake(ANSWERS.get(q).lake);
-  const partners = partnersOf(ANSWERS.get(q).lake);
-  await miss(p, 'sjo', { withRule: true });
-  await sleep(p, 900);
-  const r = await p.evaluate(() => ({
-    strip: document.querySelector('.mnemonic-strip')?.textContent?.trim() ?? null,
-    rule: document.querySelector('.mnemonic-strip')?.dataset.rule ?? null,
-    mapHeight: document.querySelector('.map').getBoundingClientRect().height,
-    stripVisible: (() => {
-      const s = document.querySelector('.mnemonic-strip')?.getBoundingClientRect();
-      return !!s && s.bottom <= innerHeight + 1 && s.top >= 0;
-    })(),
-    countdown: !!document.querySelector('.toast-action .advance-count'),
-  }));
-  await t.shot(p, 'avslojande-regel');
-  t.check(r.rule === rule.id && r.strip === `💡 ${rule.short}` && r.stripVisible, `avslöjandet: "${r.strip}" under kartan (${q})`);
-  t.check(r.mapHeight >= 400, `avslöjandet: kartan är ${Math.round(r.mapHeight)} px hög på 360 × 740 (minst 400)`);
-  t.check(!r.countdown, 'avslöjandet: ingen nedräkning när en regel visas');
-  await sleep(p, 5500);
-  t.check((await questionText(p)) === q, 'avslöjandet: med en regel väntar spelet på ett tryck (står kvar efter 6 s)');
-  await p.click('.toast-action');
-  const next = await nextQuestion(p, q);
-  t.check(!(await p.$('.mnemonic-strip')), 'avslöjandet: regeln försvinner med nästa fråga');
-  await sleep(p, 450);
-  // Missa också den andra sjön med samma regel: regeln ska ändå stå en gång på slutskärmen.
-  if (partners.includes(ANSWERS.get(next).lake)) {
+  // Första omgången: missa alla tio sjöarna. Den första sjön som har en kort regel som den delar med
+  // en annan sjö (t.ex. Vänern och Vättern) kontrolleras i avslöjandet.
+  let rule = null;
+  let ruleLakes = [];
+  let last = '';
+  for (;;) {
+    const q = await nextOrEnd(p, last);
+    if (q === '__end__') break;
+    await sleep(p, 450);
+    const lake = ANSWERS.get(q).lake;
     await miss(p, 'sjo', { withRule: true });
-    await p.click('.toast-action');
-  } else {
-    await answerAccepted(p, ANSWERS.get(next));
+    if (!rule && ruleForLake(lake)?.short && partnersOf(lake).length) {
+      rule = ruleForLake(lake);
+      ruleLakes = [lake, ...partnersOf(lake)];
+      await sleep(p, 900);
+      const r = await p.evaluate(() => ({
+        strip: document.querySelector('.mnemonic-strip')?.textContent?.trim() ?? null,
+        rule: document.querySelector('.mnemonic-strip')?.dataset.rule ?? null,
+        mapHeight: document.querySelector('.map').getBoundingClientRect().height,
+        stripVisible: (() => {
+          const s = document.querySelector('.mnemonic-strip')?.getBoundingClientRect();
+          return !!s && s.bottom <= innerHeight + 1 && s.top >= 0;
+        })(),
+        countdown: !!document.querySelector('.toast-action .advance-count'),
+      }));
+      await t.shot(p, 'avslojande-regel');
+      t.check(r.rule === rule.id && r.strip === `💡 ${rule.short}` && r.stripVisible, `avslöjandet: "${r.strip}" under kartan (${q})`);
+      t.check(r.mapHeight >= 400, `avslöjandet: kartan är ${Math.round(r.mapHeight)} px hög på 360 × 740 (minst 400)`);
+      t.check(!r.countdown, 'avslöjandet: ingen nedräkning när en regel visas');
+      await sleep(p, 5500);
+      t.check((await questionText(p)) === q, 'avslöjandet: med en regel väntar spelet på ett tryck (står kvar efter 6 s)');
+      await p.click('.toast-action');
+      await nextOrEnd(p, q);
+      t.check(!(await p.$('.mnemonic-strip')), 'avslöjandet: regeln försvinner med nästa fråga');
+    } else {
+      await p.click('.toast-action');
+    }
+    last = q;
   }
-  await finishRound(p, next, partners);
+  await p.waitForSelector('.screen-end .mnemonic-rules', { timeout: 15000 });
+  if (!t.check(!!rule, 'första omgången hade en sjö med en kort regel som gäller två sjöar')) return;
 
-  // Slutskärmen: regeln under den missade sjön, med "Varför?" och röstknappar.
+  // Slutskärmen: en rad per regel, de tre första synliga, "Visa alla (N)" och en länk till alla regler.
   const end = await p.evaluate((id) => {
-    const boxes = document.querySelectorAll(`.result-list .mnemonic[data-rule="${id}"]`);
-    const box = boxes[0];
-    return box
-      ? { count: boxes.length, about: box.querySelector('.mnemonic-about')?.textContent ?? null, text: box.querySelector('.mnemonic-text')?.textContent?.trim(), why: !!box.querySelector('details.mnemonic-why'), votes: box.querySelectorAll('.vote-btn').length }
-      : null;
+    const rows = [...document.querySelectorAll('.mnemonic-rules li.mnemonic')];
+    const row = rows.find((r) => r.dataset.rule === id);
+    return {
+      rows: rows.length,
+      visible: rows.filter((r) => !r.hidden).length,
+      sameRule: rows.filter((r) => r.dataset.rule === id).length,
+      showAll: document.querySelector('.mnemonic-show-all')?.textContent ?? null,
+      link: document.querySelector('.mnemonic-rules a.mnemonic-link')?.getAttribute('href') ?? null,
+      about: row?.querySelector('.mnemonic-about')?.textContent ?? null,
+      text: row?.querySelector('.mnemonic-text')?.textContent?.trim() ?? null,
+      more: !!row?.querySelector('details.mnemonic-more'),
+      votes: row?.querySelectorAll('.vote-btn').length ?? 0,
+    };
   }, rule.id);
-  t.check(end?.text === `💡 ${rule.text}` && end.why === !!rule.why && end.votes === 2, `slutskärmen: regeln under den missade sjön med Varför? och 👍/👎 ${JSON.stringify(end)}`);
-  const names = [ANSWERS.get(q).lake, ...partners].map((id) => LAKES.find((l) => l.id === id).name);
-  t.check(end?.count === 1 && names.every((n) => end.about?.includes(n)), `slutskärmen: regeln står en gång för båda sjöarna ("${end?.about}")`);
+  t.check(end.rows === LAKE_RULES && end.visible === 3 && end.showAll === `Visa alla (${LAKE_RULES})`, `slutskärmen: ${end.rows} regler, ${end.visible} synliga och "${end.showAll}"`);
+  const names = ruleLakes.map((id) => LAKES.find((l) => l.id === id).name);
+  t.check(end.sameRule === 1 && names.every((n) => end.about?.includes(n)), `slutskärmen: regeln står en gång med sjöarna i rubriken ("${end.about}")`);
+  t.check(end.text === `💡 ${rule.short}` && end.more && end.votes === 2, `slutskärmen: kort text, Mer och 👍/👎 ${JSON.stringify({ text: end.text, more: end.more, votes: end.votes })}`);
+  t.check(end.link === '/minnesregler', `slutskärmen: länken "Alla minnesregler" (${end.link})`);
+  const layout = await p.evaluate(() => {
+    const again = document.querySelector('.btn-row .btn-primary').getBoundingClientRect().top + scrollY;
+    const rules = document.querySelector('.mnemonic-rules').getBoundingClientRect().height;
+    return { again: Math.round(again), rules: Math.round(rules) };
+  });
+  t.note(`slutskärmen efter tio missade sjöar på 360 × 740: Spela igen ${layout.again} px ned, varav minnesreglerna ${layout.rules} px`);
+  await p.$eval('.mnemonic-rules', (el) => el.scrollIntoView({ block: 'start' }));
   await t.shot(p, 'slutskarm-regel');
-  await axe(t, p, 'slutskärmen med en minnesregel');
+  await p.click('.mnemonic-show-all');
+  const all = await p.evaluate(() => ({
+    visible: [...document.querySelectorAll('.mnemonic-rules li.mnemonic')].filter((r) => !r.hidden).length,
+    focused: document.activeElement?.classList.contains('mnemonic') ?? false,
+  }));
+  t.check(all.visible === LAKE_RULES && all.focused, `slutskärmen: "Visa alla" visar alla ${all.visible} och flyttar fokus till nästa regel`);
+  await p.click(`.mnemonic[data-rule="${rule.id}"] details.mnemonic-more summary`);
+  t.check(await p.isVisible(`.mnemonic[data-rule="${rule.id}"] details.mnemonic-more[open] p`), 'slutskärmen: Mer fäller ut hela texten och varför');
+  await axe(t, p, 'slutskärmen med minnesregler');
   const before = ctx.blocked.length;
   const saving = posted(run, ctx, p, 'vote', before);
   await p.click(`.mnemonic[data-rule="${rule.id}"] .vote-btn[data-vote="1"]`);
@@ -151,12 +179,13 @@ async function revealAndEnd(run, t) {
     t.check(mine[rule.id] === 1, `servern har enhetens röst på ${rule.id} (${JSON.stringify(mine)})`);
   }
 
-  // Nästa omgång: rätt på samma sjö → "Hjälpte minnesregeln?" en gång.
+  // Nästa omgång, med rätt på alla sjöar: "Hjälpte minnesregeln?" om en av reglerna från förra omgången.
+  const seenRules = new Set(LAKES.map((l) => ruleForLake(l.id)?.id).filter(Boolean));
   await p.click('.btn-row .btn-primary');
   await p.waitForSelector('.screen-game .map path');
   await finishRound(p, '');
   const helped = await p.evaluate(() => document.querySelector('.mnemonic-helped')?.dataset.rule ?? null);
-  t.check(helped === rule.id, `nästa omgång: "Hjälpte minnesregeln?" om ${helped} (väntat ${rule.id})`);
+  t.check(!!helped && seenRules.has(helped), `nästa omgång: "Hjälpte minnesregeln?" om ${helped}, en regel från förra omgången`);
   await t.shot(p, 'hjalpte-regeln');
   const helpedBefore = ctx.blocked.length;
   const answering = posted(run, ctx, p, 'helped', helpedBefore);
@@ -167,7 +196,8 @@ async function revealAndEnd(run, t) {
   await p.click('.btn-row .btn-primary');
   await p.waitForSelector('.screen-game .map path');
   await finishRound(p, '');
-  t.check(!(await p.$('.mnemonic-helped')), 'tredje omgången: frågan ställs bara en gång per regel');
+  const again = await p.evaluate(() => document.querySelector('.mnemonic-helped')?.dataset.rule ?? null);
+  t.check(again !== helped, `tredje omgången: frågan om ${helped} ställs inte igen (nu: ${again ?? 'ingen'})`);
   t.check(p.errors.length === 0, `inga fel i sidan ${p.errors.slice(0, 3).join(' | ')}`);
   if (run.guarded) t.check(ctx.blocked.every((b) => b.startsWith('POST /api/mnemonics/') || b.startsWith('POST /api/scores')), `bara stoppade röster och resultat ${ctx.blocked.join(', ')}`);
   await ctx.close();
