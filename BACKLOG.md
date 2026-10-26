@@ -319,6 +319,25 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
 - **Värde:** När kartan zoomar in på länet behöver man inte veta var länet ligger. En liten karta i hörnet håller kvar det lärandet.
 - **Acceptanskriterier:** skrivs när den blir aktuell; utvärderas efter att PO-16 krav 8 har använts en tid.
 
+### PO-33 Minnesregler: lär dig hur man tänker för att komma ihåg
+- **Prioritet:** P2, upptäcktsfas pågår. Byggs efter PO-15, eftersom regeln ska visas i avslöjandet.
+- **Insats:** M (fas 2), L (fas 3)
+- **Koppling:** Johns idé 2026-10-26; riktningen "lära sig geografi"
+- **Värde:** Spelet lär inte bara ut var saker ligger, utan också knep för att komma ihåg dem: ramsor, paradoxer, historia
+  och gärna lite konstiga bilder. En regel som "Väster-länen ligger i öster" rättar tre fel på en gång.
+- **Vad som gör en regel bra:** den stämmer, är kort, ger en bild, säger något om läget, är gärna lite konstig och
+  hjälper helst för flera saker. John avgör.
+- **Faser:**
+  1. **Kurering (pågår):** PO tar fram förslag och John betygsätter dem som bra, sådär eller dålig, med kommentar, på
+     [Minnesregler](https://claude.ai/artifact/Jia78CnwUrqGRjpbAd5k9V). PO läser betygen, skriver om eller stryker och tar fram
+     nya i samma stil som de som fick bra. Bara regler med betyget bra går vidare.
+  2. **I spelet:** efter en miss visas regeln för just den saken i avslöjandet (PO-15). Före en omgång kan en
+     tankeregel för läget visas, t.ex. VHS för västkusten.
+  3. **Familjens egna regler:** man kan tycka till om en regel (👍/👎) och skriva sin egen, så att reglerna blir
+     familjens egna. Kräver lagring på servern, så det är en **fråga till John** innan det byggs.
+- **Mått:** andelen rätt på första försöket för saker där en regel visats, nästa gång samma sak kommer.
+- **Acceptanskriterier:** skrivs för fas 2 när minst 15 regler har fått betyget bra.
+
 ### PO-02 Live: se vilka som har svarat medan frågan pågår
 - **Prioritet:** P2
 - **Insats:** S (servern skickar redan `answered` per spelare)
