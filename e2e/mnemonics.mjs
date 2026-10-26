@@ -13,7 +13,8 @@ import { COUNTIES } from '../src/data/counties.ts';
 import { PROVINCES } from '../src/data/provinces.ts';
 import { LAKES } from '../src/data/lakes.ts';
 import { MUNICIPALITIES } from '../src/data/municipalities.ts';
-import { ANSWERS, Suite, answerAccepted, context, endLayout, isGuarded, page, questionText, url } from './lib.mjs';
+import { OTHER_CITIES } from '../src/data/cities.ts';
+import { ANSWERS, Suite, answerAccepted, context, endLayout, isGuarded, page, questionText, shortRuleFor, url } from './lib.mjs';
 import { axe } from './a11y.mjs';
 import { miss } from './miss.mjs';
 
@@ -21,7 +22,7 @@ const SHORT_MAX = 110;
 /** Sjöar vars regel har en kort text, i den ordning reglerna väljs (en regel om saken före en tankeregel). */
 const ruleForLake = (id) => {
   const matching = MNEMONICS.filter((r) => r.targets.sjo?.includes(id));
-  return matching.find((r) => r.category !== 'princip') ?? matching[0] ?? null;
+  return matching.find((r) => r.category !== 'princip' && r.kind !== 'Tankeregel') ?? matching[0] ?? null;
 };
 const sleep = (p, ms) => p.waitForTimeout(ms);
 
@@ -32,6 +33,7 @@ function checkData(t) {
     landskap: new Set(PROVINCES.map((p) => p.code)),
     sjo: new Set(LAKES.map((l) => l.id)),
     kommun: new Set(MUNICIPALITIES.map((m) => m.code)),
+    ort: new Set(OTHER_CITIES.map((c) => c.name)),
   };
   const unknown = MNEMONICS.flatMap((r) => Object.entries(r.targets).flatMap(([kind, ids]) => ids.filter((id) => !known[kind]?.has(id)).map((id) => `${r.id}:${kind}:${id}`)));
   t.check(unknown.length === 0, `regeldatan: alla ${MNEMONICS.length} regler gäller saker som finns ${unknown.join(', ')}`);
@@ -222,7 +224,11 @@ async function startAndPage(run, t) {
   t.check(/^Tips: /.test(tip ?? '') && [...tip].length <= SHORT_MAX + 6, `lägeskortet för län har en tipsrad: "${tip}"`);
   const lakeTip = (await p.textContent('.mode-btn[data-mode="sjo"] .mode-tip').catch(() => null))?.trim();
   t.check(lakeTip === 'Tips: Slutar sjön på -jaure eller -träsk ligger den i Lappland.', `lägeskortet för sjöar har en tipsrad: "${lakeTip}"`);
-  t.check(!(await p.$('.mode-btn[data-mode="ort"] .mode-tip')), 'lägeskortet för fler städer har ingen tipsrad (ingen tankeregel)');
+  // PO-40: också Residensstäder, Kommuner och Fler städer har en tipsrad.
+  for (const mode of ['stad', 'kommun', 'ort']) {
+    const modeTip = (await p.textContent(`.mode-btn[data-mode="${mode}"] .mode-tip`).catch(() => null))?.trim();
+    t.check(/^Tips: /.test(modeTip ?? ''), `lägeskortet för ${mode} har en tipsrad: "${modeTip}"`);
+  }
 
   await p.click('a.mnemonic-link');
   await p.waitForSelector('.mnemonics-page h1');
@@ -263,6 +269,45 @@ async function startAndPage(run, t) {
   await ctx.close();
 }
 
+/** PO-40: en regel ur omgång 2 visas efter en miss i Fler städer. Svarar rätt tills en stad med regel kommer. */
+async function ortRuleMiss(run, t) {
+  const round2 = new Set(['f-helsingborg', 'f-kiruna', 'f-sundsvall', 'f-boras', 'l-linkoping']);
+  const ctx = await context(run, 'iphone');
+  const p = await page(ctx);
+  await p.goto(url(run));
+  await p.click('.mode-btn[data-mode="ort"]');
+  await p.waitForSelector('.screen-game .map path');
+  let last = '';
+  for (let i = 0; i < 80; i++) {
+    const q = await nextOrEnd(p, last);
+    if (q === '__end__') {
+      // Ingen av städerna med regel kom i den här omgången; spela en till.
+      await p.click('.end-actions .btn-primary');
+      await p.waitForSelector('.screen-game .map path');
+      last = '';
+      continue;
+    }
+    await sleep(p, 450);
+    const answer = ANSWERS.get(q);
+    const rule = shortRuleFor('ort', answer);
+    if (!rule) {
+      await answerAccepted(p, answer);
+      last = q;
+      continue;
+    }
+    await miss(p, 'ort', { withRule: true });
+    await sleep(p, 600);
+    const strip = await p.evaluate(() => ({ rule: document.querySelector('.mnemonic-strip')?.dataset.rule ?? null, text: document.querySelector('.mnemonic-strip')?.textContent?.trim() ?? null }));
+    t.check(round2.has(strip.rule) && strip.rule === rule.id && strip.text === `💡 ${rule.short}`, `Fler städer: regeln ur omgång 2 efter en miss på ${answer.point.name} ("${strip.text}")`);
+    await t.shot(p, 'fler-stader-regel');
+    t.check(p.errors.length === 0, `Fler städer: inga fel i sidan ${p.errors.slice(0, 3).join(' | ')}`);
+    await ctx.close();
+    return;
+  }
+  t.check(false, 'Fler städer: ingen stad med regel kom på 80 frågor');
+  await ctx.close();
+}
+
 /** På engelska har reglerna ingen text än: ingen tipsrad, och sidan säger det. */
 async function english(run, t) {
   const ctx = await context(run, 'android', { lang: 'en' });
@@ -284,6 +329,7 @@ export default async function mnemonics(run) {
     revealAndEnd(run, t).catch((e) => t.check(false, `avslöjande och slutskärm: ${e.message.split('\n')[0]}`)),
     startAndPage(run, t).catch((e) => t.check(false, `lägeskort och sida: ${e.message.split('\n')[0]}`)),
     english(run, t).catch((e) => t.check(false, `engelska: ${e.message.split('\n')[0]}`)),
+    ortRuleMiss(run, t).catch((e) => t.check(false, `Fler städer: ${e.message.split('\n')[0]}`)),
   ]);
   return t;
 }

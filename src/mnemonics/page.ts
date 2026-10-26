@@ -9,7 +9,7 @@ import { el } from '../ui/dom';
 import { comment, fetchMnemonics, myVotes, suggest, textOf } from './index';
 import { renderVoteButtons } from './ui';
 
-const CATEGORIES: MnemonicCategory[] = ['princip', 'lan', 'landskap', 'sjo', 'kommun'];
+const CATEGORIES: MnemonicCategory[] = ['princip', 'lan', 'stad', 'landskap', 'sjo', 'kommun'];
 
 export function renderMnemonicsPage(onBack: () => void): HTMLElement {
   const m = t().mnemonic;
