@@ -76,8 +76,8 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
 
 | Status | Punkter |
 |---|---|
-| Pågår (utvecklaren) | PO-15 (variant C vald, tillägg 8–10) |
-| Nästa | PO-33 Minnesregler, sedan live-paketet: PO-23, PO-02, PO-03, PO-04 |
+| Pågår (utvecklaren) | PO-15 till produktion, sedan PO-33 |
+| Nästa | Live-paketet: PO-23, PO-02, PO-03, PO-04 |
 | Väntar på UX-verifiering | – |
 | Väntar på svar från John | – |
 | Klart | PO-01, PO-01b, PO-06, PO-14, PO-16, PO-22, PO-29, PO-29b, PO-30, PO-31 |
@@ -197,7 +197,7 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
   6. axe-core hittar inga kontrastfel på spelskärmen eller slutskärmen.
 
 ### PO-15 Avslöjandet lär ut var rätt svar ligger
-- **Prioritet:** P1, pågår. Tre varianter byggda ([#35](https://github.com/hamiltoon/sweden-county-quiz/pull/35)).
+- **Status:** ✅ Godkänd av UX på staging 2026-10-26 (krav 1–10). Går till produktion via [#35](https://github.com/hamiltoon/sweden-county-quiz/pull/35).
 - **Beslut (PO, 2026-10-26):** variant C. Spelet går vidare efter 4 s (pausas när man håller fingret på kartan), och en
   streckad linje visar avståndet från felklicket till rätt svar ("364 km"). UX: riktningen är lättare att minnas än en
   siffra. A bröt flytet med ett extra tryck per miss. En miss med minnesregel väntar på ett tryck (PO-33).
@@ -572,6 +572,7 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
   2. Topplistans flikar följer flik-mönstret (tabpanel, piltangenter) och ryms på högst två rader på mobil.
   3. Varje skärm har en h1 och fokus flyttas till skärmens rubrik vid skärmbyte.
   4. I mörkt läge skiljer sig sjöar från land och land från hav med kontrast minst 3:1.
+  5. När man tabbar ut ur rutan efter en miss (PO-15) hamnar fokus på nästa logiska element, inte på body.
 
 ### PO-26 Startskärmen: passkey tar mindre plats
 - **Prioritet:** P3
