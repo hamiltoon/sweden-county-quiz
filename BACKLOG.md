@@ -67,11 +67,11 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
 
 | Status | Punkter |
 |---|---|
-| Pågår (utvecklaren) | PO-30 till produktion, PO-15 i varianter |
+| Pågår (utvecklaren) | PO-15 i varianter |
 | Nästa | Live-paketet: PO-23, PO-02, PO-03, PO-04 |
 | Väntar på UX-verifiering | – |
 | Väntar på svar från John | – |
-| Klart | PO-01, PO-01b, PO-06, PO-14, PO-16, PO-22, PO-29, PO-29b, PO-31 |
+| Klart | PO-01, PO-01b, PO-06, PO-14, PO-16, PO-22, PO-29, PO-29b, PO-30, PO-31 |
 
 ## Backlog i prioritetsordning
 
@@ -297,7 +297,7 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
   4. Topplistan och tidigare resultat lämnas orörda.
 
 ### PO-30 Live: målets namn syns ovanpå prickarna
-- **Status:** ✅ Godkänd av UX på staging 2026-10-26 (12 spelare, 10 avslöjanden, namnet överst och inom kartan). Går till produktion.
+- **Status:** ✅ Klar 2026-10-26, i produktion via [#34](https://github.com/hamiltoon/sweden-county-quiz/pull/34) (version 6d905c86). UX godkände med 12 spelare och 10 avslöjanden.
 - **Insats:** S
 - **Koppling:** UX-verifieringen av PO-01b (putsning)
 - **Värde:** När alla klickat nära rätt svar täcker prickarna målets namn ("Umeå", "Uddjaure"). Namnet är det man ska lära sig.
@@ -548,6 +548,7 @@ Fynd från UX-specialisten (UX-01, UX-02 …) läggs in här med prioritet och k
 
 ## Klart
 
+- **PO-30** Live: målets namn syns ovanpå prickarna. I produktion 2026-10-26 via [#34](https://github.com/hamiltoon/sweden-county-quiz/pull/34).
 - **PO-16 och PO-31** Kommuner zoomar in på länet (variant C, förstoring av små kommuner, nedtonad omgivning); fokus i lobbyn. I produktion 2026-10-26 via [#33](https://github.com/hamiltoon/sweden-county-quiz/pull/33).
 - **PO-14 och PO-29b** Rätt och fel syns för alla (UX-02, UX-03); staging-banderoll och stramare tester. I produktion 2026-10-25 via [#30](https://github.com/hamiltoon/sweden-county-quiz/pull/30).
 - **PO-29** Staging och automatiska acceptanstester. Mergad i [#29](https://github.com/hamiltoon/sweden-county-quiz/pull/29), godkänd av UX 2026-10-25.
