@@ -992,6 +992,34 @@ a {
   pointer-events: none;
 }
 
+/* Kommunkartan: utanför länet som frågan nämner tonas kartan ned (länsgränserna syns ändå). */
+.county.is-outside {
+  opacity: 0.45;
+}
+
+/*
+ * Mot det mörka havet räcker inte nedtoningen: där lyfts länet också, så att det skiljer sig från
+ * omgivningen med minst 3:1 (e2e mäter det), och kommungränserna i länet blir mörka.
+ */
+@media (prefers-color-scheme: dark) {
+  .county.is-outside {
+    opacity: 0.35;
+  }
+
+  .county.is-inside {
+    stroke: var(--bg);
+  }
+
+  .county.is-inside:not([data-result]) {
+    fill: #61739a;
+  }
+
+  /* Länsgränsen med minst 3:1 mot både länet och omgivningen (WCAG 1.4.11). */
+  .map-svg .group-border {
+    stroke-opacity: 0.85;
+  }
+}
+
 /* Länsgränserna ovanpå kommunkartan. */
 .group-border {
   fill: none;
@@ -1392,6 +1420,14 @@ a {
   color: var(--muted);
   font-size: 0.9rem;
   text-align: center;
+}
+
+/*
+ * Det som får fokus med tangentbordet scrollas fram ovanför knappfältet nederst, i stället för att
+ * hamna under det (WCAG 2.4.11, PO-31).
+ */
+.screen-lobby {
+  scroll-padding-bottom: calc(88px + var(--safe-bottom));
 }
 
 /* Starta matchen (eller vem som startar) ligger kvar nederst medan lobbyn scrollar. */

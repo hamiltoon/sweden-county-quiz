@@ -22,7 +22,8 @@ Alla texter finns i `src/i18n/sv.ts` och `src/i18n/en.ts` (samma nycklar, kontro
 
 - **Län** – klicka på rätt län.
 - **Landskap** – klicka på rätt landskap, alla 25.
-- **Kommuner** – 20 slumpade av Sveriges 290 kommuner. Klickar man på fel kommun säger spelet hur många kommuner bort den var, räknat i gränser (öar kopplas till närmaste kommun på fastlandet). Frågan säger vilket län kommunen ligger i ("Var ligger Bjurholms kommun i Västerbottens län?"), och länsgränserna är tjockare på kartan. De minsta kommunerna, som Sundbyberg och Solna, kräver att man zoomar.
+- **Kommuner** – 20 slumpade av Sveriges 290 kommuner. Klickar man på fel kommun säger spelet hur många kommuner bort den var, räknat i gränser (öar kopplas till närmaste kommun på fastlandet). Frågan säger vilket län kommunen ligger i ("Var ligger Bjurholms kommun i Västerbottens län?"), och kartan zoomar mjukt in från vyn man har så att länet fyller den (direkt med "minska rörelse"); länsgränserna är tjockare. Man kan zooma vidare själv, ända till ×40, så att också de minsta kommunerna, som Sundbyberg, Solna och Öckerö, går att träffa. I live laddas kommunkartan redan i lobbyn.
+  Ett tryck på en kommun som är för liten för fingret (under 28 px på skärmen) räknas inte som svar; kartan förstoras i stället runt trycket, och nästa tryck räknas. De tre första gångerna på en enhet förklarar spelet det ("Liten kommun – förstorat, tryck igen"). Utanför länet är kartan nedtonad.
 - **Residensstad** – klicka där staden ligger (inom 30 km, `cityRadiusKm` i `src/game/config.ts`).
 - **Fler städer** – 20 slumpade av Sveriges 75 största städer som inte är residensstäder. Ett klick inom 30 km från staden ger poäng, precis som för residensstäderna.
 - **Sjöar** – klicka på rätt sjö bland Sveriges tio största. Vid en miss på land visas hur långt bort klicket var.
@@ -115,7 +116,9 @@ npm run deploy               # produktion: npm run build && wrangler deploy
 - **guard:** skyddsräcket nedan fungerar.
 
 Testerna körs samtidigt och tar ungefär en och en halv minut. Skärmbilder från varje steg hamnar i
-`e2e-results/<tid>/`. `--only=solo,live` kör bara vissa tester, `--verbose` skriver ut alla kontroller.
+`e2e-results/<tid>/`. `--only=solo,live` kör bara vissa tester, `--verbose` skriver ut alla kontroller. Före testerna väntar sviten (upp till tre minuter) på att servern serverar samma bygge
+som ligger i `dist/`, så att en körning direkt efter en deploy inte testar en blandning av gammalt och
+nytt; `--any-build` hoppar över det.
 
 Utom mot staging och localhost stoppas alla anrop som skulle skriva på topplistan, skapa passkeys
 eller ändra ett kontos språk redan i webbläsaren (`e2e/lib.mjs`). Skyddet är alltså på mot

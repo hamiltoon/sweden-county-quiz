@@ -1,12 +1,17 @@
 /**
  * Acceptanstesterna: `npm run test:e2e -- [adress]` (standard: staging).
  *
- *   --verbose   skriv ut alla kontroller, inte bara de som fallerar
- *   --only=a,b  kör bara vissa tester (start, solo, live, guard, a11y)
+ *   --verbose     skriv ut alla kontroller, inte bara de som fallerar
+ *   --only=a,b    kör bara vissa tester (start, solo, live, guard, a11y)
+ *   --any-build   vänta inte på att servern kör bygget i dist/
+ *
+ * Före testerna väntar run.mjs (upp till tre minuter) på att servern serverar samma bygge som
+ * ligger i dist/, så att en körning direkt efter en deploy inte testar en blandning av gammalt och nytt.
  *
  * Skärmbilderna hamnar i e2e-results/<tid>/<test>/. Utom mot staging och localhost stoppas allt
  * som skulle skriva på topplistan eller skapa passkeys (se lib.mjs).
  */
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { STAGING, chromium, isGuarded } from './lib.mjs';
 import start from './start.mjs';
@@ -28,6 +33,30 @@ const run = {
 };
 
 console.log(`Acceptanstester mot ${base}${isGuarded(base) ? ' (inte staging eller localhost: skrivande anrop stoppas)' : ''}`);
+if (!args.includes('--any-build')) await waitForBuild(base);
+
+/** Väntar tills servern serverar samma huvudskript som dist/index.html pekar på. */
+async function waitForBuild(base) {
+  const local = join(process.cwd(), 'dist', 'index.html');
+  if (!existsSync(local)) return;
+  const script = (html) => /src="(\/assets\/index-[^"]+\.js)"/.exec(html)?.[1] ?? null;
+  const expected = script(readFileSync(local, 'utf8'));
+  if (!expected) return;
+  const until = Date.now() + 3 * 60_000;
+  let served = null;
+  while (Date.now() < until) {
+    served = await fetch(`${base}?build=${Date.now()}`, { cache: 'no-store' })
+      .then((r) => r.text())
+      .then(script, () => null);
+    if (served === expected) {
+      console.log(`Servern kör bygget i dist/ (${expected}).`);
+      return;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+  }
+  console.log(`Servern kör ${served ?? 'okänt bygge'}, inte bygget i dist/ (${expected}). Deploya, eller kör med --any-build.`);
+  process.exit(2);
+}
 const started = Date.now();
 const results = await Promise.all(
   Object.entries(SUITES)

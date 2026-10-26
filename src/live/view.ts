@@ -33,6 +33,7 @@ import { countyName, municipalityName, provinceName, t } from '../i18n';
 import type { LiveConnection } from './connection';
 import { renderQr } from './qr';
 import { toGameQuestion } from './question';
+import { kommunMapOptions, takeMagnifyHint } from '../map/kommun';
 
 /** Kartan för en sorts fråga, som main.ts laddar. */
 export interface LiveMaps {
@@ -144,12 +145,16 @@ export class LiveView {
   // ---------- Lobby ----------
 
   private renderLobby(state: LiveState): void {
+    // Kommunkartan är stor; hämta den redan i lobbyn om matchen kan få kommunfrågor.
+    if (state.mode === 'kommun' || (state.mode === 'blandat' && state.mix.includes('kommun'))) {
+      this.loadMaps('kommun').catch(() => undefined);
+    }
     // Lobbyn ritas om vid varje ändring (någon går med, värden byter läge); fokus ska ligga kvar
     // på samma knapp, så att den som använder tangentbord eller skärmläsare inte tappar platsen.
     const focusKey = (document.activeElement as HTMLElement | null)?.closest<HTMLElement>('[data-focus-key]')?.dataset.focusKey;
     const scrollTop = this.screen.scrollTop;
     clear(this.screen);
-    this.screen.className = 'screen screen-end';
+    this.screen.className = 'screen screen-end screen-lobby';
     const isHost = state.hostId === state.you;
     const host = state.players.find((p) => p.id === state.hostId);
     const url = `${location.origin}/live/${state.code}`;
@@ -230,7 +235,13 @@ export class LiveView {
         map.clearHighlights();
         map.clearMarkers();
         this.toast?.hide();
-        if (map.isTransformed) map.resetZoom();
+        // Statusraden först: ställningen från förra frågan försvinner och kartan blir högre, och
+        // kartan måste ha sin nya storlek innan den zoomar.
+        this.game.status.textContent = statusText(state, Boolean(me?.answered));
+        map.resize();
+        // Kommunfrågan säger vilket län kommunen ligger i, så kartan zoomar in på länet (PO-16).
+        if (gq?.kind === 'kommun') map.focusGroup(gq.municipality.county);
+        else if (map.isTransformed) map.resetZoom();
         // Toasten får inte täcka svaret: nederst för sjöarna och städerna längst norrut.
         const target = gq ? targetPoint(gq) : undefined;
         this.toast?.setPlacement(q.kind === 'sjo' || (target && target.lat > NORTH_TOAST_LAT) ? 'bottom' : 'top');
@@ -357,8 +368,10 @@ export class LiveView {
       lakes: maps.lakes,
       neighbors: maps.neighbors,
       lakeMode: maps.lakeMode,
+      ...(kind === 'kommun' ? kommunMapOptions() : {}),
     });
     map.onClick = (click) => this.answer(click);
+    map.onMagnify = () => takeMagnifyHint() && this.toast?.show(t().game.magnified, 'info', 2000);
     this.map = map;
     this.maps = maps;
   }

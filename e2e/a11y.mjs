@@ -6,7 +6,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
-import { ANSWERS, COUNTY_BY_CODE, Suite, clickAnswer, context, page } from './lib.mjs';
+import { ANSWERS, COUNTY_BY_CODE, Suite, clickAnswer, context, page, url } from './lib.mjs';
 
 const AXE = readFileSync(createRequire(import.meta.url).resolve('axe-core/axe.min.js'), 'utf8');
 
@@ -75,7 +75,7 @@ async function scheme(run, t, dark) {
   const name = dark ? 'mörkt' : 'ljust';
   const ctx = await context(run, 'iphone', { dark });
   const p = await page(ctx);
-  await p.goto(run.base);
+  await p.goto(url(run));
   await p.waitForSelector('.mode-btn-live');
   await p.waitForTimeout(500);
   await axe(t, p, `${name}, startskärmen`);
@@ -123,8 +123,9 @@ async function scheme(run, t, dark) {
       const fill = await p.$eval('path.county[data-result="missed"]', (el) => getComputedStyle(el).fill);
       t.check(/hatch-missed/.test(fill), `${name}: missade län har streck`);
       checkDistinct(t, `${name}, kartan`, {
-        first: await rgbOf(p, 'path.county[data-result="first"]', 'fill'),
-        later: await rgbOf(p, 'path.county[data-result="later"]', 'fill'),
+        // Inte ett län som just nu är markerat som klickat (is-wrong/is-correct har egna färger).
+        first: await rgbOf(p, 'path.county[data-result="first"]:not(.is-wrong):not(.is-correct)', 'fill'),
+        later: await rgbOf(p, 'path.county[data-result="later"]:not(.is-wrong):not(.is-correct)', 'fill'),
         missed: await rgbOf(p, '#hatch-missed .hatch-bg', 'fill'),
       });
       await t.shot(p, `${name}-kartan`);
@@ -145,7 +146,7 @@ async function scheme(run, t, dark) {
   });
   await t.shot(p, `${name}-slut`);
   // Lobbyn i live.
-  await p.goto(run.base);
+  await p.goto(url(run));
   await p.click('.mode-btn-live');
   await p.fill('.live-entry input[name=live-name]', 'Axe');
   await p.click('.live-entry button:has-text("Skapa ett rum")');
@@ -168,8 +169,46 @@ async function checkToast(t, p, label, icon) {
   t.check(shown.includes(icon), `${label}: rutan har ikonen ${icon}`);
 }
 
+/**
+ * PO-16 krav 8c: i mörkt läge skiljer sig länet i en kommunfråga från den nedtonade omgivningen
+ * med minst 3:1. Omgivningens färg är dess fyllning med sin opacitet ovanpå havet.
+ */
+async function kommunCountyContrast(run, t) {
+  const ctx = await context(run, 'android', { dark: true });
+  const p = await page(ctx);
+  await p.goto(url(run));
+  await p.click('.mode-btn[data-mode="kommun"]');
+  await p.waitForSelector('path.county.is-inside:not([data-result])');
+  const colors = await p.evaluate(() => {
+    const rgb = (value) => {
+      const c = document.createElement('canvas').getContext('2d');
+      c.fillStyle = value;
+      c.fillRect(0, 0, 1, 1);
+      return [...c.getImageData(0, 0, 1, 1).data.slice(0, 3)];
+    };
+    const inside = getComputedStyle(document.querySelector('path.county.is-inside:not([data-result])'));
+    const outside = getComputedStyle(document.querySelector('path.county.is-outside:not([data-result])'));
+    const border = getComputedStyle(document.querySelector('path.group-border'));
+    const sea = getComputedStyle(document.querySelector('.map-wrap')).backgroundColor;
+    return { inside: rgb(inside.fill), outside: rgb(outside.fill), opacity: Number(outside.opacity), sea: rgb(sea), border: rgb(border.stroke), borderOpacity: Number(border.strokeOpacity) };
+  });
+  const over = (top, a, bottom) => top.map((c, i) => Math.round(c * a + bottom[i] * (1 - a)));
+  const behind = over(colors.outside, colors.opacity, colors.sea);
+  const ratio = contrast(colors.inside, behind);
+  t.check(ratio >= 3, `mörkt, kommuner: länet mot omgivningen ${ratio.toFixed(2)}:1 (länet rgb(${colors.inside}), omgivningen rgb(${behind}))`);
+  // Länsgränsen mot båda sidor (WCAG 1.4.11): gränsen ritas halvgenomskinlig ovanpå respektive fyllning.
+  const toInside = contrast(over(colors.border, colors.borderOpacity, colors.inside), colors.inside);
+  const toOutside = contrast(over(colors.border, colors.borderOpacity, behind), behind);
+  t.check(toInside >= 3 && toOutside >= 3, `mörkt, kommuner: länsgränsen ${toInside.toFixed(2)}:1 mot länet och ${toOutside.toFixed(2)}:1 mot omgivningen`);
+  await t.shot(p, 'morkt-kommun-lan');
+  await ctx.close();
+}
+
 export default async function a11y(run) {
   const t = new Suite(run, 'a11y');
-  await Promise.all([false, true].map((dark) => scheme(run, t, dark).catch((e) => t.check(false, `${dark ? 'mörkt' : 'ljust'}: ${e.message.split('\n')[0]}`))));
+  await Promise.all([
+    ...[false, true].map((dark) => scheme(run, t, dark).catch((e) => t.check(false, `${dark ? 'mörkt' : 'ljust'}: ${e.message.split('\n')[0]}`))),
+    kommunCountyContrast(run, t).catch((e) => t.check(false, `mörkt, kommuner: ${e.message.split('\n')[0]}`)),
+  ]);
   return t;
 }

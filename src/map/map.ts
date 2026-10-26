@@ -39,6 +39,13 @@ export interface MapOptions {
    * Annars är sjöarna bara riktmärken utan namn, och klicken går igenom till länen.
    */
   lakeMode?: boolean;
+  /** Hur långt man kan zooma in (standard 10). Kommunkartan behöver mer. */
+  maxZoom?: number;
+  /**
+   * Ett klick på ett område som är mindre än SMALL_TARGET_PX på skärmen förstorar kartan runt
+   * klicket i stället för att räknas, så att nästa klick kan träffa rätt (kommunkartan).
+   */
+  magnifySmall?: boolean;
 }
 
 /** `picked`: spelarens svar i live-läget, innan rätt svar visas. */
@@ -83,6 +90,12 @@ interface Marker {
 
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 10;
+/** Minsta storlek (px på skärmen) för att ett område ska gå att träffa säkert med fingret. */
+const SMALL_TARGET_PX = 28;
+/** Inzoomningen på en grupp (länet på kommunkartan): hur mycket av kartan den fyller. */
+const GROUP_FILL = 0.92;
+const GROUP_PAN_MARGIN = 0.15;
+const GROUP_ZOOM_MS = 750;
 const PADDING = 8;
 /** Län och landskap som är så små på skärmen att de får en extra osynlig träffyta. */
 const SMALL_COUNTIES: ReadonlySet<string> = new Set(['K', 'I', 'blekinge', 'oland']);
@@ -143,6 +156,13 @@ export class SwedenMap {
   /** Sveriges yttre kontur (alla län sammanslagna), för kustglöden. */
   private readonly swedenOutline: Geometry;
   private readonly lakeMode: boolean;
+  private readonly groupBy: string | undefined;
+  private readonly maxZoom: number;
+  private readonly magnifySmall: boolean;
+  /** Varje områdes utsträckning i kartans koordinater (vid zoom 1), för träffytorna. */
+  private featureBounds = new Map<string, Box>();
+  /** Gruppen (länet) som focusGroup() senast zoomade in på; resten tonas ned. */
+  private focusedGroup: string | null = null;
   private markers: Marker[] = [];
   private pins: PlayerPin[] = [];
   /** Var de synliga sjönamnen hamnade, så att spelarnas namn inte läggs över dem. */
@@ -157,12 +177,17 @@ export class SwedenMap {
   private readonly resizeObserver: ResizeObserver;
 
   onClick: ((click: MapClick) => void) | null = null;
+  /** Kartan förstorades i stället för att klicket räknades (magnifySmall). */
+  onMagnify: (() => void) | null = null;
 
   constructor(
     private readonly container: HTMLElement,
     topology: Topology,
-    { objectName = 'lan', groupBy, lakes = null, neighbors = null, lakeMode = false }: MapOptions = {},
+    { objectName = 'lan', groupBy, lakes = null, neighbors = null, lakeMode = false, maxZoom = MAX_ZOOM, magnifySmall = false }: MapOptions = {},
   ) {
+    this.groupBy = groupBy;
+    this.maxZoom = maxZoom;
+    this.magnifySmall = magnifySmall;
     ensureResultPatterns();
     const obj = topology.objects[objectName] as GeometryCollection<CountyProps>;
     if (!obj) throw new Error(`TopoJSON saknar objektet "${objectName}"`);
@@ -271,7 +296,7 @@ export class SwedenMap {
     }
 
     this.zoomBehavior = zoom<SVGSVGElement, unknown>()
-      .scaleExtent([MIN_ZOOM, MAX_ZOOM])
+      .scaleExtent([MIN_ZOOM, maxZoom])
       .filter((event: Event) => this.interactive && defaultZoomFilter(event))
       .on('zoom', (event: D3ZoomEvent<SVGSVGElement, unknown>) => {
         this.k = event.transform.k;
@@ -312,16 +337,37 @@ export class SwedenMap {
     this.countiesG.selectAll<SVGPathElement, CountyFeature>('path').attr('d', (d) => this.path(d));
     this.groupBordersG.selectAll<SVGPathElement, Geometry>('path').attr('d', (d) => this.path(d));
     this.hitG.selectAll<SVGPathElement, CountyFeature>('path').attr('d', (d) => this.path(d));
+    this.featureBounds = new Map(
+      this.features.map((d) => {
+        const [[x0, y0], [x1, y1]] = this.path.bounds(d);
+        return [d.properties.code, { x0, y0, x1, y1 }];
+      }),
+    );
     this.lakesG.selectAll<SVGPathElement, LakeFeature>('path').attr('d', (d) => this.path(d));
     this.lakeHitG.selectAll<SVGPathElement, LakeFeature>('path').attr('d', (d) => this.path(d));
+    // Kommunkartan (som zoomar in på länen) får panoreras en bit utanför Sverige, så att ett län
+    // vid kanten, t.ex. Stockholms skärgård, kan ligga helt i bild.
+    const margin = this.groupBy ? GROUP_PAN_MARGIN : 0;
     this.zoomBehavior.translateExtent([
-      [0, 0],
-      [w, h],
+      [-w * margin, -h * margin],
+      [w * (1 + margin), h * (1 + margin)],
     ]);
     this.renderMarkers();
     this.renderResultDots();
     this.renderLakeLabels();
     this.renderPins();
+  }
+
+  /** Om området ligger i eller utanför gruppen som focusGroup() zoomat in på (eller ingen grupp). */
+  private groupClass(d: CountyFeature): '' | 'is-inside' | 'is-outside' {
+    if (!this.groupBy || this.focusedGroup === null) return '';
+    return (d.properties as unknown as Record<string, unknown>)[this.groupBy] === this.focusedGroup ? 'is-inside' : 'is-outside';
+  }
+
+  /** Är området just nu mindre än SMALL_TARGET_PX på skärmen? */
+  private isSmallOnScreen(code: string): boolean {
+    const b = this.featureBounds.get(code);
+    return !!b && Math.min(b.x1 - b.x0, b.y1 - b.y0) * this.k < SMALL_TARGET_PX;
   }
 
   private handleClick(event: MouseEvent): void {
@@ -332,6 +378,14 @@ export class SwedenMap {
     const target = (event.target as Element | null)?.closest?.('path[data-code], path[data-lake]') as SVGPathElement | null;
     const code = target?.dataset.code ?? null;
     const lake = this.lakeMode ? (target?.dataset.lake ?? null) : null;
+    // Ett för litet område förstoras först, så att nästa tryck kan bli rätt.
+    if (this.magnifySmall && code && this.isSmallOnScreen(code) && this.k < this.maxZoom - 0.01) {
+      const b = this.featureBounds.get(code)!;
+      const k = Math.min(this.maxZoom, (SMALL_TARGET_PX * 1.6) / Math.max(Math.min(b.x1 - b.x0, b.y1 - b.y0), 0.01), this.k * 4);
+      this.focusOn(x, y, Math.max(k, this.k * 1.5), motionMs(350));
+      this.onMagnify?.();
+      return;
+    }
     this.onClick({ code, lake, lon: lonLat[0], lat: lonLat[1] });
   }
 
@@ -357,7 +411,8 @@ export class SwedenMap {
   }
 
   clearHighlights(): void {
-    this.countiesG.selectAll('path').attr('class', 'county');
+    // Nedtoningen utanför länet (focusGroup) är ingen markering och ligger kvar.
+    this.countiesG.selectAll<SVGPathElement, CountyFeature>('path').attr('class', (d) => `county ${this.groupClass(d)}`.trim());
     this.lakesG.selectAll('path').attr('class', 'lake');
     this.lakeLabelsG.selectAll('text').classed('is-shown', false);
     this.renderLakeLabels();
@@ -663,6 +718,35 @@ export class SwedenMap {
     if (f) this.focusBounds(this.path.bounds(f), duration);
   }
 
+  /**
+   * Zoomar in så att alla områden med `groupBy`-värdet `group` fyller kartan, t.ex. länet som en
+   * kommunfråga nämner, och tonar ned resten. Zoomen går mjukt från vyn man har, så att man ser
+   * var i Sverige länet ligger; med "minska rörelse" sker den direkt.
+   */
+  focusGroup(group: string): void {
+    if (!this.groupBy) return;
+    // Frågetexten kan just ha bytt antal rader; kartan måste ha sin nya storlek innan den zoomar.
+    this.resize();
+    const key = this.groupBy;
+    const inGroup = (d: CountyFeature) => (d.properties as unknown as Record<string, unknown>)[key] === group;
+    this.focusedGroup = group;
+    this.countiesG
+      .selectAll<SVGPathElement, CountyFeature>('path')
+      .classed('is-outside', (d) => this.groupClass(d) === 'is-outside')
+      .classed('is-inside', (d) => this.groupClass(d) === 'is-inside');
+    const boxes = this.features
+      .filter(inGroup)
+      .map((d) => this.featureBounds.get(d.properties.code))
+      .filter((b): b is Box => !!b);
+    if (!boxes.length) return;
+    const x0 = Math.min(...boxes.map((b) => b.x0));
+    const y0 = Math.min(...boxes.map((b) => b.y0));
+    const x1 = Math.max(...boxes.map((b) => b.x1));
+    const y1 = Math.max(...boxes.map((b) => b.y1));
+    const k = Math.min(this.maxZoom, GROUP_FILL / Math.max((x1 - x0) / this.width, (y1 - y0) / this.height));
+    this.focusOn((x0 + x1) / 2, (y0 + y1) / 2, Math.max(1, k), motionMs(GROUP_ZOOM_MS));
+  }
+
   /** Zoomar mjukt in på en sjö. */
   focusLake(id: string, duration = 500): void {
     const f = this.lakeFeatures.find((d) => d.properties.id === id);
@@ -756,6 +840,11 @@ export class SwedenMap {
 
 function shortName(name: string): string {
   return name.length > PIN_LABEL_CHARS ? `${name.slice(0, PIN_LABEL_CHARS - 1).trimEnd()}…` : name;
+}
+
+/** Animationens längd, eller 0 om användaren har valt "minska rörelse". */
+function motionMs(ms: number): number {
+  return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : ms;
 }
 
 /** Samma standardfilter som d3-zoom använder: ignorera ctrl+hjul-konflikter och sekundära musknappar. */

@@ -3,12 +3,12 @@
  * varje avslöjande ska rätt svar och allas prickar synas i vyn och inte ligga under rätt/fel-rutan,
  * och den egna raden i ställningen ska synas helt.
  */
-import { ALL_CODES, ANSWERS, CITY_BY_NAME, COUNTY_BY_CODE, COUNTY_SEATS, Suite, clickAnswer, context, measureReveal, page, questionText } from './lib.mjs';
+import { ALL_CODES, ANSWERS, CITY_BY_NAME, COUNTY_BY_CODE, COUNTY_SEATS, Suite, answerAccepted, clickAnswer, context, countyFill, mapSettled, measureReveal, page, questionText, url } from './lib.mjs';
 
 const BOT_NAMES = ['Erika', 'Maximilian', 'Åsa', 'Bo', 'Charlotte', 'Didrik', 'Elsa-Maj', 'Frans', 'Gun', 'Hjalmar', 'Ingrid'];
 
-async function createRoom(p, base, name) {
-  await p.goto(base);
+async function createRoom(p, run, name) {
+  await p.goto(url(run));
   await p.click('.mode-btn-live');
   await p.fill('.live-entry input[name=live-name]', name);
   await p.click('.live-entry button:has-text("Skapa ett rum")');
@@ -52,6 +52,25 @@ async function checkReveal(t, label, p, players) {
   t.check(r.ownRowVisible && r.standingsShare <= 0.34, `${label}: egna raden syns, ställningen tar ${Math.round(r.standingsShare * 100)} % av höjden`);
 }
 
+/** Med tangentbordet hamnar inget fokuserat chip eller knapp under knappfältet i lobbyn (PO-31). */
+async function checkFocusNotObscured(t, label, p) {
+  await p.focus('.live-mode-chip');
+  const hidden = [];
+  for (let i = 0; i < 12; i++) {
+    const r = await p.evaluate(() => {
+      const el = document.activeElement;
+      const bar = document.querySelector('.live-lobby-action');
+      if (!el || bar.contains(el) || el.contains(bar)) return null;
+      const box = el.getBoundingClientRect();
+      return { name: el.textContent.trim(), bottom: box.bottom, barTop: bar.getBoundingClientRect().top };
+    });
+    if (r && r.bottom > r.barTop + 1) hidden.push(`${r.name} (${Math.round(r.bottom - r.barTop)} px)`);
+    await p.keyboard.press('Tab');
+  }
+  t.check(hidden.length === 0, `${label}: fokus hamnar aldrig under knappfältet ${hidden.join(', ')}`);
+  await p.evaluate(() => { document.querySelector('.screen-end').scrollTop = 0; });
+}
+
 /** Värden når Starta matchen utan att scrolla (PO-22). */
 async function checkStartVisible(t, label, p) {
   const r = await p.evaluate(() => {
@@ -74,12 +93,13 @@ async function twoPlayers(run, t) {
   const gc = await context(run, 'android', { dark: true, lang: 'en' });
   const h = await page(hc);
   const g = await page(gc);
-  const code = await createRoom(h, run.base, 'Anna');
-  await g.goto(`${run.base}live/${code}`);
+  const code = await createRoom(h, run, 'Anna');
+  await g.goto(url(run, `live/${code}`));
   await g.fill('.live-entry input[name=live-name]', 'Bo');
   await g.click('.live-entry .btn-primary');
   await h.waitForFunction(() => document.querySelectorAll('.live-players li').length === 2);
   await checkStartVisible(t, 'iPhone', h);
+  await checkFocusNotObscured(t, 'iPhone', h);
   await t.shot(h, 'lobby-2');
   await h.click('.live-lobby-action .btn-primary');
   for (let n = 1; n <= 10; n++) {
@@ -110,7 +130,7 @@ async function twoPlayers(run, t) {
 async function twelvePlayers(run, t) {
   const hc = await context(run, 'android');
   const h = await page(hc);
-  const code = await createRoom(h, run.base, 'John');
+  const code = await createRoom(h, run, 'John');
   const bots = BOT_NAMES.map((name, i) => bot(run.base, code, name, i));
   await h.waitForFunction(() => document.querySelectorAll('.live-players li').length === 12, null, { timeout: 20000 });
   // Före valet av läge: Playwright scrollar fram chippen när den klickar på dem.
@@ -122,15 +142,26 @@ async function twelvePlayers(run, t) {
     await h.click(`.live-mix-chip[data-kind="${kind}"]`);
     await h.waitForFunction((k) => document.querySelector(`.live-mix-chip[data-kind="${k}"]`)?.getAttribute('aria-pressed') === 'true', kind);
   }
+  // PO-16: kommunkartan hämtas redan i lobbyn när blandningen innehåller kommuner.
+  const preloaded = await h.waitForFunction(() => performance.getEntriesByType('resource').some((e) => e.name.includes('/data/kommuner.topo.json')), null, { timeout: 5000 }).then(() => true, () => false);
+  t.check(preloaded, '12 spelare: kommunkartan hämtas redan i lobbyn');
   await t.shot(h, 'lobby-12');
   await h.click('.live-lobby-action .btn-primary');
   for (let n = 1; n <= 10; n++) {
     await waitQuestion(h, n);
-    const box = await h.locator('.map').boundingBox();
-    await h.mouse.click(box.x + box.width * 0.45, box.y + box.height * 0.6);
+    const answer = ANSWERS.get(await questionText(h));
+    if (answer?.code && / i .+ län\?$/.test(await questionText(h))) {
+      // Kommunfråga: kartan zoomar in på länet (PO-16).
+      await mapSettled(h);
+      const fill = await countyFill(h, answer.code);
+      t.check(fill.inside && fill.share >= 0.6, `12 spelare, fråga ${n} (kommun): länet fyller kartan (${Math.round(fill.share * 100)} %)`);
+    }
+    await answerAccepted(h, answer);
     await h.waitForSelector('.live-standings', { timeout: 15000 });
     await checkReveal(t, `12 spelare, fråga ${n}`, h, 12);
     if (n === 1) {
+      // Boten kan få avslöjandet en stund efter värden.
+      for (let i = 0; i < 20 && bots[0].state.last?.phase !== 'reveal'; i++) await h.waitForTimeout(100);
       const s = bots[0].state.last;
       const left = s.question.endsAt - s.serverNow;
       t.check(left > 6000 && left <= 7000, `12 spelare: avslöjandet visas i 7 s (${left} ms kvar när det börjar)`);
