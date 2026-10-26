@@ -188,12 +188,18 @@ async function kommunCountyContrast(run, t) {
     };
     const inside = getComputedStyle(document.querySelector('path.county.is-inside:not([data-result])'));
     const outside = getComputedStyle(document.querySelector('path.county.is-outside:not([data-result])'));
+    const border = getComputedStyle(document.querySelector('path.group-border'));
     const sea = getComputedStyle(document.querySelector('.map-wrap')).backgroundColor;
-    return { inside: rgb(inside.fill), outside: rgb(outside.fill), opacity: Number(outside.opacity), sea: rgb(sea) };
+    return { inside: rgb(inside.fill), outside: rgb(outside.fill), opacity: Number(outside.opacity), sea: rgb(sea), border: rgb(border.stroke), borderOpacity: Number(border.strokeOpacity) };
   });
-  const behind = colors.outside.map((c, i) => Math.round(c * colors.opacity + colors.sea[i] * (1 - colors.opacity)));
+  const over = (top, a, bottom) => top.map((c, i) => Math.round(c * a + bottom[i] * (1 - a)));
+  const behind = over(colors.outside, colors.opacity, colors.sea);
   const ratio = contrast(colors.inside, behind);
   t.check(ratio >= 3, `mörkt, kommuner: länet mot omgivningen ${ratio.toFixed(2)}:1 (länet rgb(${colors.inside}), omgivningen rgb(${behind}))`);
+  // Länsgränsen mot båda sidor (WCAG 1.4.11): gränsen ritas halvgenomskinlig ovanpå respektive fyllning.
+  const toInside = contrast(over(colors.border, colors.borderOpacity, colors.inside), colors.inside);
+  const toOutside = contrast(over(colors.border, colors.borderOpacity, behind), behind);
+  t.check(toInside >= 3 && toOutside >= 3, `mörkt, kommuner: länsgränsen ${toInside.toFixed(2)}:1 mot länet och ${toOutside.toFixed(2)}:1 mot omgivningen`);
   await t.shot(p, 'morkt-kommun-lan');
   await ctx.close();
 }
