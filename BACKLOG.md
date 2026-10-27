@@ -58,6 +58,8 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
 
 ## Så prioriterar vi
 
+- **Balans (John 2026-10-26):** blanda lärande, fel och live i stället för att ta allt live först.
+
 - **Vilka som spelar:** främst John och de närmaste, t.ex. Erika, som tävlar mot varandra, oftast i live på mobilen.
   Det som gör live roligare att spela *tillsammans* går därför först.
 - **Vad vi går efter:** värde per insats, ungefär som RICE men utan siffror vi inte har.
@@ -76,11 +78,11 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
 
 | Status | Punkter |
 |---|---|
-| Pågår (utvecklaren) | PO-02 |
-| Nästa | Live-paketet: PO-03, PO-04 |
+| Pågår (utvecklaren) | – (pausat 2026-10-26 på Johns begäran) |
+| Nästa | PO-02b, PO-18, PO-28, PO-10, sedan PO-03, PO-04, sedan PO-13, PO-41, PO-42 (blandat lärande och live, John 2026-10-26) |
 | Väntar på UX-verifiering | – |
 | Väntar på svar från John | – |
-| Klart | PO-01, PO-01b, PO-06, PO-14, PO-15, PO-16, PO-17, PO-22, PO-23, PO-29, PO-29b, PO-30, PO-31, PO-33, PO-40 |
+| Klart | PO-01, PO-01b, PO-06, PO-14, PO-15, PO-16, PO-17, PO-02, PO-22, PO-23, PO-29, PO-29b, PO-30, PO-31, PO-33, PO-40 |
 
 ## Backlog i prioritetsordning
 
@@ -256,7 +258,7 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
   4. "Nytt bästa resultat!" visas inte på den allra första omgången i ett läge (UX-29).
 
 ### PO-18 Namn: säg direkt om namnet är skyddat
-- **Prioritet:** P2
+- **Prioritet:** P1, efter PO-02b (ett fel som tar bort resultat i tysthet)
 - **Insats:** S–M
 - **Koppling:** UX-06
 - **Värde:** I dag godtas ett skyddat namn när man skriver det, och först efter en hel omgång kommer beskedet att
@@ -301,7 +303,7 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
   3. Svenska och engelska.
 
 ### PO-28 Residensstad: prick i stället för ifyllt län
-- **Prioritet:** P2
+- **Prioritet:** P1, efter PO-18
 - **Insats:** S
 - **Koppling:** UX-12; **beslut av John 2026-10-25:** prick, utan att nollställa topplistan
 - **Värde:** När hela länet färgas efter varje svar kan de sista städerna räknas ut genom uteslutning. Med en prick
@@ -432,7 +434,7 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
 - **Acceptanskriterier:** skrivs innan start.
 
 ### PO-02 Live: se vilka som har svarat medan frågan pågår
-- **Prioritet:** P2
+- **Status:** ✅ Klar 2026-10-26 (krav 1–5), i produktion via [#41](https://github.com/hamiltoon/sweden-county-quiz/pull/41) (version 0fdd2a58). Krav 6–7 görs som PO-02b.
 - **Insats:** S (servern skickar redan `answered` per spelare)
 - **Koppling:** IDEER.md "Göra live mer levande" 2
 - **Värde:** Pressen när man ser "Erika ✓" medan man själv letar på kartan. I dag står bara "1 av 2 har svarat".
@@ -443,6 +445,8 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
   3. Med 12 spelare får raden plats på en mobil som iPhone 13 utan att täcka kartan mer än i dag (den får rulla i sidled eller korta namnen).
   4. En spelare som har tappat anslutningen syns som borta.
   5. Svenska och engelska.
+  6. (PO-02b) Ordning: eget namn, sedan de som inte har svarat, sist de som har svarat ihopslagna till "✓ N"; alla som inte har svarat syns utan scroll i sidled (annars "+N till"). (Tillagt efter UX 2026-10-26.)
+  7. (PO-02b) Lugn övergång när någon svarar; ingen rörelse med "minska rörelse".
 
 ### PO-03 Live: nedräkning 3–2–1 före varje fråga
 - **Prioritet:** P2
@@ -481,7 +485,7 @@ John vill inte att driften blir dyr. PO följer upp förbrukningen i Cloudflare.
 - **Acceptanskriterier:** skrivs innan start. En utgångspunkt är en visar-vy av ett befintligt rum, utan att den räknas som spelare.
 
 ### PO-10 Utmana en kompis
-- **Prioritet:** P2, först efter live-paketet (PO-02–PO-04)
+- **Prioritet:** P1, efter PO-28 (före PO-03 och PO-04; John 2026-10-26). Kriterierna skärps innan start.
 - **Insats:** M
 - **Koppling:** IDEER.md "Socialt"; Johns riktning 2026-10-25
 - **Värde:** Tävla och lära sig även när man inte ses: "Slå mina 52 poäng på län!". Efteråt ser båda var den andra
@@ -683,6 +687,7 @@ Fynd från UX-specialisten (UX-01, UX-02 …) läggs in här med prioritet och k
 
 ## Klart
 
+- **PO-02** Live: se vilka som har svarat (✓ per namn, utan rätt/fel). I produktion 2026-10-26 via [#41](https://github.com/hamiltoon/sweden-county-quiz/pull/41).
 - **PO-23 och PO-40** Live: samma hjälp vid miss som i solospelet; minnesregler omgång 2 (42 regler, tipsrad i alla lägen). I produktion 2026-10-26 via [#39](https://github.com/hamiltoon/sweden-county-quiz/pull/39).
 - **PO-33 och PO-17** Minnesregler i spelet (slutskärm, avslöjande, tipsrad, röster, /minnesregler) och Spela igen utan scroll. I produktion 2026-10-26 via [#37](https://github.com/hamiltoon/sweden-county-quiz/pull/37).
 - **PO-15** Avslöjandet lär ut: felklick och rätt svar i samma vy, namnet på kartan, linje med avstånd, 4 s med paus. I produktion 2026-10-26 via [#35](https://github.com/hamiltoon/sweden-county-quiz/pull/35).
